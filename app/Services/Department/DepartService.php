@@ -5,7 +5,6 @@ namespace App\Services\Department;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\DepartTransPermProperty;
-use App\Models\DepartTransPermPropertyDetails;
 use Illuminate\Support\Facades\DB;
 
 class DepartService
