@@ -22,7 +22,7 @@ class DepartService
 
   public function findOne(int $id): array
   {
-    $data = Depart::with('user')->findOrFail($id);
+    $data = Depart::with(['user', 'transPerms.departs'])->findOrFail($id);
 
     return [
       'data' => $data
