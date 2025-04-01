@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Department;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
-use App\Models\Depart;
 use App\Services\Department\DepartService;
 
 class DepartController extends Controller
