@@ -9,9 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Depart extends Model
 {
-    /** @use HasFactory<\Database\Factories\DepartFactory> */
-    use HasFactory;
-
     protected $fillable = [
         'user_id',
         'name',
