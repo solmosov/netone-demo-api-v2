@@ -41,7 +41,7 @@ class StoreProductStockRequest extends FormRequest
                 ->where('polka_id', $polka_id)
                 ->exists()
             ) {
-                $validator->errors()->add('product_id', 'Bu product va polka juftligi allaqachon mavjud.');
+                $validator->errors()->add('product_id', 'Bu mahsulot va polka juftligi allaqachon mavjud.');
             }
         });
     }
