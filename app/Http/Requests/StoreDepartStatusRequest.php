@@ -24,7 +24,7 @@ class StoreDepartStatusRequest extends FormRequest
     public function messages():array
     {
         return [
-            'name.required' => "Bo'lim status allaqachon mavjud",
+            'name.required' => "Bu bo'lim status allaqachon mavjud",
         ];
     }
 }

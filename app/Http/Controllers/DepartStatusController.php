@@ -38,7 +38,7 @@ class DepartStatusController extends Controller
         return response()->json([
             'message' => $result['message'],
             'data' => DepartStatusResource::make($result['data'])
-        ]);
+        ], 201);
     }
 
 
