@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Department\DepartStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Depart extends Model
 {
@@ -26,6 +28,14 @@ class Depart extends Model
             'depart_trans_perm_property',
             'depart_id',
             'trans_perm_id'
+        );
+    }
+
+    public function departStatuses(): HasMany
+    {
+        return $this->hasMany(
+            DepartStatus::class,
+            'depart_id',
         );
     }
 }
