@@ -34,18 +34,19 @@ class DepartStatusService
   }
   public function update(array $data, int $id)
   {
-    $data = DepartStatus::where('id', $id);
+    $departStatus = DepartStatus::findOrFail($id);
 
-    $data->update($data);
+    $departStatus->update($data);
 
     return [
       'message' => "Bo'lim status yangilandi",
-      'data' => $data,
+      'data' => $departStatus,
     ];
   }
   public function delete(int $id)
   {
-    DepartStatus::where('id', $id)->deleteOrFail();
+    $departStatus = DepartStatus::findOrFail($id);
+    $departStatus->deleteOrFail();
 
     return [
       'message' => "Bo'lim status o'chirildi"
