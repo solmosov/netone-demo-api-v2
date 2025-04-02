@@ -13,7 +13,7 @@ class DepartStatusPolicy
      */
     public function viewAny(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -21,7 +21,7 @@ class DepartStatusPolicy
      */
     public function view(): bool
     {
-        return false;
+        return true;
     }
 
     /**

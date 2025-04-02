@@ -19,11 +19,11 @@ class DepartStatusController extends Controller
     {
         // Gate
         Gate::authorize('viewAny', DepartStatus::class);
-
+        
         $result = $this->departStatusService->findAll();
 
         return [
-            'data' => DepartStatusResource::make($result['data'])
+            'data' => DepartStatusResource::collection($result['data'])
         ];
     }
 
