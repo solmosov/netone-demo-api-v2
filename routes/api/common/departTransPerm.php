@@ -3,4 +3,4 @@
 use App\Http\Controllers\Department\DepartPermissionController;
 use Illuminate\Support\Facades\Route;
 
-Route::apiResource('departments/permissions', DepartPermissionController::class);
+Route::apiResource('departments/transfer-permissions', DepartPermissionController::class);
