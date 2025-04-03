@@ -20,7 +20,7 @@ require __DIR__ . "/api/common/expense.php";
 require __DIR__ . "/api/common/wallet.php";
 require __DIR__ . "/api/common/orderReturn.php";
 require __DIR__ . "/api/common/polka.php";
-require __DIR__ . "/api/common/departTransPerm.php";
+require __DIR__ . "/api/common/transPerm.php";
 require __DIR__ . "/api/common/departStatus.php";
 require __DIR__ . "/api/common/depart.php";
 
