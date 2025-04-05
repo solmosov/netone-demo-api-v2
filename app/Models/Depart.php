@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Depart extends Model
 {
@@ -19,6 +20,11 @@ class Depart extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function departStock(): HasOne
+    {
+        return $this->hasOne(DepartStock::class, 'depart_id');
     }
 
     public function transPerms(): BelongsToMany
