@@ -10,6 +10,7 @@ class DepartTrans extends Model
 
     protected $fillable = [
         'user_id',
+        'trans_perm_id',
         'from_depart_id',
         'to_depart_id',
         'comment',
@@ -18,6 +19,11 @@ class DepartTrans extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function transPerm(): BelongsTo
+    {
+        return $this->belongsTo(TransPerm::class, 'trans_perm_id');
     }
 
     public function fromDepart(): BelongsTo

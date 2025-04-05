@@ -16,6 +16,7 @@ class StoreDepartTransRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'trans_perm_id' => 'required|numeric|exists:trans_perms,id',
             'from_depart_id' => 'required|numeric|exists:departs,id',
             'to_depart_id' => 'required|numeric|exists:departs,id',
             'product_list' => 'required|array',

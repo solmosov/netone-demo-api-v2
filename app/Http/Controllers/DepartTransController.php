@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDepartTransRequest;
 use App\Http\Requests\UpdateDepartTransRequest;
 use App\Models\DepartTrans;
+use App\Services\TransferProduct\DepartTransService;
 
 class DepartTransController extends Controller
 {
+    public function __construct(
+        protected DepartTransService $departTransService,
+    ) {}
+
     public function index()
     {
         //
@@ -16,7 +21,11 @@ class DepartTransController extends Controller
 
     public function store(StoreDepartTransRequest $request)
     {
-        dd($request->validated());
+        $result = $this->departTransService->create($request->validated());
+
+        return response()->json([
+            'message' => $result['message'],
+        ]);
     }
 
 
