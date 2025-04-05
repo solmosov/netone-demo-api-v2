@@ -33,16 +33,4 @@ class DepartTransController extends Controller
     {
         //
     }
-
-
-    public function update(UpdateDepartTransRequest $request, DepartTrans $departTrans)
-    {
-        //
-    }
-
-
-    public function destroy(DepartTrans $departTrans)
-    {
-        //
-    }
 }
