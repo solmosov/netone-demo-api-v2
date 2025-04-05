@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Polka extends Model
@@ -13,11 +14,17 @@ class Polka extends Model
 
     protected $fillable = [
         'name',
-        'parent_id'
+        'parent_id',
+        'owner_id'
     ];
 
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->with('children');
+    }
+
+    public function ownerUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_id');
     }
 }
