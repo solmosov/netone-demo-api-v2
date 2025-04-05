@@ -38,4 +38,14 @@ class Depart extends Model
             'depart_id',
         );
     }
+
+    public function fromDepartTransfers(): HasMany
+    {
+        return $this->hasMany(DepartTrans::class, 'from_depart_id');
+    }
+
+    public function toDepartTransfers(): HasMany
+    {
+        return $this->hasMany(DepartTrans::class, 'to_depart_id');
+    }
 }
