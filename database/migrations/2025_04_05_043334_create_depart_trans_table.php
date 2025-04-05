@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('depart_trans', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained('users');
             $table->foreignId('from_depart_id')->constrained('departs');
             $table->foreignId('to_depart_id')->constrained('departs');
             $table->string('comment')->nullable();
