@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DepartTrans extends Model
 {
@@ -34,5 +35,10 @@ class DepartTrans extends Model
     public function toDepart(): BelongsTo
     {
         return $this->belongsTo(Depart::class, 'to_depart_id');
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(DepartTransDetails::class, 'depart_trans_id');
     }
 }
