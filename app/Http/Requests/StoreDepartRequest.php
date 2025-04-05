@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StoreDepartRequest extends FormRequest
 {
@@ -17,6 +20,15 @@ class StoreDepartRequest extends FormRequest
     {
         return [
             'user_id' => 'nullable|numeric|exists:users,id',
+            // 'polka_id' => 'required|numeric|exists:polkas,id',
+            'polka_id' => [
+                'required',
+                'numeric',
+                'exists:polkas,id',
+                Rule::exists('polkas', 'id')->where(function ($query) {
+                    $query->whereNull('owner_id')->orWhere('owner_id', Auth::id());
+                }),
+            ],
             'name' => 'required|string|unique:departs,name',
             'comments' => 'nullable|string|min:6|max:255',
             'perm_list' => 'nullable|array',
