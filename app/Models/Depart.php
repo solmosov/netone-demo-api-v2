@@ -54,4 +54,9 @@ class Depart extends Model
     {
         return $this->hasMany(DepartTrans::class, 'to_depart_id');
     }
+
+    public function polka(): HasOne
+    {
+        return $this->hasOne(Polka::class, 'owner_id');
+    }
 }

@@ -23,8 +23,8 @@ class Polka extends Model
         return $this->hasMany(self::class, 'parent_id')->with('children');
     }
 
-    public function ownerUser(): BelongsTo
+    public function ownerDepart(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->belongsTo(Depart::class, 'owner_id');
     }
 }
