@@ -70,10 +70,28 @@ class DepartService
 
   public function update(array $data, int $id): array
   {
+    // Req Data
+    $userList = $data['user_list'] ?? [];
+    $polkaId = $data['polka_id'] ?? null;
 
-    $depart = Depart::with('user')->findOrFail($id);
-
+    $depart = Depart::with('users')->findOrFail($id);
     $depart->update($data);
+
+    // User
+    if (!empty($userList)) {
+      $depart->users()->detach();
+      $depart->users()->attach($userList);
+    }
+
+    // Polka
+    if ($polkaId) {
+      $polka = Polka::whereNull('owner_id')
+        ->whereNull('owner_id')
+        ->findOrFail($id);
+
+      $polka->owner_id = $depart->id;
+      $polka->save();
+    }
 
     return [
       'message' => "$depart->name yangilandi",
@@ -83,7 +101,7 @@ class DepartService
 
   public function delete(int $id): array
   {
-    $depart = Depart::with('user')->findOrFail($id);
+    $depart = Depart::with('users')->findOrFail($id);
 
     return [
       'message' => "$depart->name o'chirildi",

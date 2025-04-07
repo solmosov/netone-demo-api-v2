@@ -17,19 +17,11 @@ class UpdateDepartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|numeric|exists:users,id',
-            'stock_id' => [
-                'nullable',
-                'numeric',
-                'exists:product_stocks,id',
-                Rule::unique('departs', 'stock_id')->ignore($this->department)
-            ],
-            'name' => [
-                'nullable',
-                'string',
-                Rule::unique('departs', 'name')->ignore($this->department),
-            ],
-            'comments' => 'nullable|string|min:6|max:255',
+            'user_list' => 'nullable|array',
+            'user_list.*' => 'required|numeric|exists:users,id',
+            'polka_id' => 'nullable|numeric|exists:polkas,id',
+            'name' => 'nullable|string|unique:departs,name',
+            'comment' => 'nullable|string|min:6|max:255',
         ];
     }
 
