@@ -47,4 +47,14 @@ class Depart extends Model
     {
         return $this->hasOne(Polka::class, 'owner_id');
     }
+
+    public function fromDepartProcess():HasMany
+    {
+        return $this->hasMany(DepartTransProcess::class, 'from_depart_id');
+    }
+
+    public function toDepartProcess():HasMany
+    {
+        return $this->hasMany(DepartTransProcess::class, 'to_depart_id');
+    }
 }

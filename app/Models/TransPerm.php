@@ -25,8 +25,8 @@ class TransPerm extends Model
         );
     }
 
-    public function departTransfers(): HasMany
+    public function departTransProcesses(): HasMany
     {
-        return $this->hasMany(DepartTrans::class, 'trans_perm_id');
+        return $this->hasMany(DepartTransProcess::class, 'trans_perm_id');
     }
 }

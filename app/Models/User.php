@@ -82,8 +82,8 @@ class User extends Authenticatable
         return $this->belongsToMany(Depart::class, 'depart_user', 'user_id', 'depart_id');
     }
 
-    public function departTrans(): HasMany
+    public function departTransProcess(): HasMany
     {
-        return $this->hasMany(DepartTrans::class, 'user_id');
+        return $this->hasMany(DepartTransProcess::class, 'user_id');
     }
 }
