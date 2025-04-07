@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Department;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
+use App\Http\Resources\DepartResource;
 use App\Services\Department\DepartService;
 
 class DepartController extends Controller
@@ -18,7 +19,7 @@ class DepartController extends Controller
         $result = $this->departService->findAll();
 
         return response()->json([
-            'data' => $result['data'],
+            'data' => DepartResource::collection($result['data']),
         ]);
     }
 
@@ -38,7 +39,7 @@ class DepartController extends Controller
         $result = $this->departService->findOne((int) $id);
 
         return response()->json([
-            'data' => $result['data'],
+            'data' => DepartResource::make($result['data']),
         ]);
     }
 

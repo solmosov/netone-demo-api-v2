@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::table('polkas', function (Blueprint $table) {
             $table->unsignedBigInteger('owner_id')->nullable();
-            $table->foreign('owner_id', 'owner_user_foreign_key')
+            $table->foreign('owner_id', 'owner_depart_foreign_key')
                 ->references('id')
-                ->on('users')
+                ->on('departs')
                 ->nullOnDelete();
         });
     }

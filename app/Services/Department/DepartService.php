@@ -12,7 +12,7 @@ class DepartService
 {
   public function findAll(): array
   {
-    $data = Depart::with('user')->get();
+    $data = Depart::with(['users', 'polka'])->get();
 
     return [
       'data' => $data,
@@ -22,7 +22,7 @@ class DepartService
 
   public function findOne(int $id): array
   {
-    $data = Depart::with(['user', 'transPerms.departs', 'departStatuses'])->findOrFail($id);
+    $data = Depart::with(['users', 'polka'])->findOrFail($id);
 
     return [
       'data' => $data
@@ -54,10 +54,11 @@ class DepartService
       $newDepart->users()->attach($userList);
 
       // Polka
-      $polka->update(['owner_id', $newDepart->id]);
+      $polka->owner_id = $newDepart->id;
+      $polka->save();
 
       DB::commit();
-      
+
       return [
         'message' => "Yangi bo'lim qo'shildi",
       ];
