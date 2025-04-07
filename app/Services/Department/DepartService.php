@@ -35,7 +35,7 @@ class DepartService
     $userId = $data['user_id'];
     $name = $data['name'];
     $comment = $data['comment'] ?? null;
-    $permList = $data['perm_list'];
+    $permList = $data['perm_list'] ?? [];
 
     DB::beginTransaction();
 

@@ -18,7 +18,12 @@ class UpdateDepartRequest extends FormRequest
     {
         return [
             'user_id' => 'nullable|numeric|exists:users,id',
-            // 'name' => 'nullable|string|unique:departs,name',
+            'stock_id' => [
+                'nullable',
+                'numeric',
+                'exists:product_stocks,id',
+                Rule::unique('departs', 'stock_id')->ignore($this->department)
+            ],
             'name' => [
                 'nullable',
                 'string',
