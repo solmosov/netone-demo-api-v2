@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Department;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreDepartAssignPermRequest;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
 use App\Http\Resources\DepartResource;
@@ -41,6 +42,10 @@ class DepartController extends Controller
         ], 201);
     }
 
+    public function assignPerm(StoreDepartAssignPermRequest $request, string $id)
+    {
+        dd($id);
+    }
 
     public function show(string $id)
     {
