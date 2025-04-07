@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
 use App\Http\Resources\DepartResource;
+use App\Models\Depart;
 use App\Services\Department\DepartService;
+use Illuminate\Support\Facades\Gate;
 
 class DepartController extends Controller
 {
@@ -16,6 +18,9 @@ class DepartController extends Controller
 
     public function index()
     {
+        // Gate
+        Gate::authorize('viewAny', Depart::class);
+
         $result = $this->departService->findAll();
 
         return response()->json([
@@ -26,6 +31,9 @@ class DepartController extends Controller
 
     public function store(StoreDepartRequest $request)
     {
+        // Gate
+        Gate::authorize('create', Depart::class);
+
         $result = $this->departService->create($request->validated());
 
         return response()->json([
@@ -36,6 +44,9 @@ class DepartController extends Controller
 
     public function show(string $id)
     {
+        // Gate
+        Gate::authorize('view', Depart::class);
+
         $result = $this->departService->findOne((int) $id);
 
         return response()->json([
@@ -46,6 +57,9 @@ class DepartController extends Controller
 
     public function update(UpdateDepartRequest $request, string $id)
     {
+        // Gate
+        Gate::authorize('update', Depart::class);
+
         $result = $this->departService->update($request->validated(), (int) $id);
 
         return response()->json([
@@ -57,6 +71,9 @@ class DepartController extends Controller
 
     public function destroy(string $id)
     {
+        // Gate
+        Gate::authorize('delete', Depart::class);
+
         $result = $this->departService->delete((int) $id);
 
         return response()->json([
