@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DepartTransPermPropertyDetails extends Model
 {
     //
-    protected $table = "transfer_permission_details";
+    protected $table = "depart_perm_property_details";
 
     protected $fillable = [
         'property_id',

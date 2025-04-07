@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('transfer_permission_details', function (Blueprint $table) {
+        Schema::create('depart_perm_property_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('property_id')->constrained('depart_trans_perm_property')->cascadeOnDelete();
             $table->foreignId('depart_id')->constrained('departs');
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('transfer_permission_details');
+        Schema::dropIfExists('depart_perm_property_details');
     }
 };
