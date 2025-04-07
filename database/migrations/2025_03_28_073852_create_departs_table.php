@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::create('departs', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
-            $table->foreign('user_id', 'user_foreign_key')->references('id')->on('users');
             $table->string('name')->unique();
             $table->string('comment')->nullable();
             $table->timestamps();
