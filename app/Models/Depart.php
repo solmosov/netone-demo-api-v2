@@ -17,9 +17,9 @@ class Depart extends Model
         'comment'
     ];
 
-    public function user(): BelongsTo
+    public function users(): BelongsToMany
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsToMany(User::class, 'depart_user', 'depart_id', 'user_id');
     }
 
     public function departStock(): HasOne

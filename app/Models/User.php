@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class, 'user_id');
     }
 
+    public function departs(): BelongsToMany
+    {
+        return $this->belongsToMany(Depart::class, 'depart_user', 'user_id', 'depart_id');
+    }
+
     public function departTrans(): HasMany
     {
         return $this->hasMany(DepartTrans::class, 'user_id');
