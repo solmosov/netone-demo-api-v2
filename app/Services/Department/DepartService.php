@@ -5,6 +5,7 @@ namespace App\Services\Department;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\DepartTransPermProperty;
+use App\Models\Polka;
 use Illuminate\Support\Facades\DB;
 
 class DepartService
@@ -32,49 +33,33 @@ class DepartService
   public function create(array $data)
   {
     // Req Data
-    $userId = $data['user_id'];
+    $userList = $data['user_list'];
+    $polkaId = $data['polka_id'];
     $name = $data['name'];
     $comment = $data['comment'] ?? null;
-    $permList = $data['perm_list'] ?? [];
+
+    // Polka
+    $polka = Polka::where('id', $polkaId)
+      ->whereNull('owner_id')
+      ->firstOrFail();
 
     DB::beginTransaction();
-
     try {
-      // Create
       $newDepart = Depart::create([
-        'user_id' => $userId,
         'name' => $name,
-        'comment' => $comment
+        'comment' => $comment,
       ]);
 
+      // Attach User
+      $newDepart->users()->attach($userList);
 
-
-      foreach ($permList as $perm) {
-        $permId = $perm['perm_id'];
-        $departList = $perm['depart_list'];
-
-
-        $newDepartTransProperty  = DepartTransPermProperty::create([
-          'trans_perm_id' => $permId,
-          'depart_id' => $newDepart->id,
-        ]);
-
-
-        $detailsList = [];
-        foreach ($departList as $departId) {
-          $detailsList[] = [
-            'depart_id' => $departId,
-            'property_id' => $newDepartTransProperty->id,
-          ];
-        }
-
-        $newDepartTransProperty->details()->createMany($detailsList);
-      }
+      // Polka
+      $polka->update(['owner_id', $newDepart->id]);
 
       DB::commit();
+      
       return [
-        'message' => "Yangi $newDepart->name bo'lim muvaffaqiyatli yaratildi",
-        'data' => $newDepart
+        'message' => "Yangi bo'lim qo'shildi",
       ];
     } catch (\Exception $e) {
       DB::rollBack();

@@ -29,7 +29,6 @@ class DepartController extends Controller
 
         return response()->json([
             'message' => $result['message'],
-            'data' => $result['data'],
         ], 201);
     }
 

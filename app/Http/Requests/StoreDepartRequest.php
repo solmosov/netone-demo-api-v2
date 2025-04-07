@@ -41,8 +41,8 @@ class StoreDepartRequest extends FormRequest
         $validator->after(function ($validator) {
             $polka_id = $this->input('polka_id');
 
-            if (Polka::where('owner_id', $polka_id)->exists()) {
-                $validator->errors()->add('polka_id', "Bu polkani tanlash uchun ");
+            if (Polka::where('id', $polka_id)->whereNotNull('owner_id')->exists()) {
+                $validator->errors()->add('polka_id', "Bu polkani tanlash mumkin emas");
             }
         });
     }
