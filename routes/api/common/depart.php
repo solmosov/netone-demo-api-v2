@@ -5,4 +5,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::apiResource('departments', DepartController::class)->middleware('auth:sanctum');
 
-Route::post('departments/{department}/assign-permissions', [DepartController::class, 'assignPerm'])->middleware('auth:sanctum');
+Route::post('departments/assign-permissions', [DepartController::class, 'assignPerm'])->middleware('auth:sanctum');

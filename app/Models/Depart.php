@@ -43,16 +43,6 @@ class Depart extends Model
         );
     }
 
-    public function fromDepartTransfers(): HasMany
-    {
-        return $this->hasMany(DepartTrans::class, 'from_depart_id');
-    }
-
-    public function toDepartTransfers(): HasMany
-    {
-        return $this->hasMany(DepartTrans::class, 'to_depart_id');
-    }
-
     public function polka(): HasOne
     {
         return $this->hasOne(Polka::class, 'owner_id');

@@ -42,9 +42,13 @@ class DepartController extends Controller
         ], 201);
     }
 
-    public function assignPerm(StoreDepartAssignPermRequest $request, string $id)
+    public function assignPerm(StoreDepartAssignPermRequest $request)
     {
-        dd($id);
+        $result = $this->departService->assignPerm($request->validated());
+
+        return response()->json([
+            'message' => $result['message'],
+        ]);
     }
 
     public function show(string $id)

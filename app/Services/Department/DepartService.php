@@ -68,35 +68,44 @@ class DepartService
     }
   }
 
-  public function assignDepart(array $data)
+  public function assignPerm(array $data)
   {
     // Req Data
     $permId = $data['perm_id'];
     $ownerDepartId = $data['owner_depart_id'];
     $departList = $data['depart_list'];
-
+    
     // Owner Depart
     $ownerDepart = Depart::findOrFail($ownerDepartId);
-
-    // Create Property
-    $newProperty = DepartTransPermProperty::create([
-      'depart_id' => $ownerDepart->id,
-      'trans_perm_id' => $permId
-    ]);
-
-    // Create Property Details
-    $transPermDetailsList = [];
-    foreach ($departList as $item) {
-      $transPermDetailsList[] = [
-        'property_id' => $newProperty->id,
-        'depart_id' => $item->id,
-      ];
-    }
-    $newProperty->details()->createMany($transPermDetailsList);
-
-    // Finish
     
+    DB::beginTransaction();
+    try {
+      // Create Property
+      $newProperty = DepartTransPermProperty::create([
+        'depart_id' => $ownerDepart->id,
+        'trans_perm_id' => $permId
+      ]);
+      
+      // Create Property Details
+      $transPermDetailsList = [];
+      foreach ($departList as $departId) {
+        $transPermDetailsList[] = [
+          'property_id' => $newProperty->id,
+          'depart_id' => $departId,
+        ];
+      }
+      $newProperty->details()->createMany($transPermDetailsList);
+      
+      // Finish
+      DB::commit();
 
+      return [
+        'message' => "$ownerDepart->name bo'limga ruxsat qo'shildi",
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+    }
   }
 
   public function update(array $data, int $id): array
