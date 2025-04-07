@@ -2,10 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Polka;
 use App\Models\Role;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreDepartRequest extends FormRequest
 {
@@ -19,22 +21,11 @@ class StoreDepartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => 'nullable|numeric|exists:users,id',
-            // 'polka_id' => 'required|numeric|exists:polkas,id',
-            'polka_id' => [
-                'required',
-                'numeric',
-                'exists:polkas,id',
-                Rule::exists('polkas', 'id')->where(function ($query) {
-                    $query->whereNull('owner_id')->orWhere('owner_id', Auth::id());
-                }),
-            ],
+            'user_list' => 'required|array',
+            'user_list.*' => 'required|numeric|exists:users,id',
+            'polka_id' => 'required|numeric|exists:polkas,id',
             'name' => 'required|string|unique:departs,name',
             'comments' => 'nullable|string|min:6|max:255',
-            'perm_list' => 'nullable|array',
-            'perm_list.*.perm_id' => 'required|numeric|exists:trans_perms,id',
-            'perm_list.*.depart_list' => 'required|array',
-            'perm_list.*.depart_list.*' => 'required|numeric|exists:departs,id',
         ];
     }
 
@@ -42,7 +33,17 @@ class StoreDepartRequest extends FormRequest
     {
         return [
             'name.unique' => "Bu bo'lim allaqachon mavjud",
-            'perm_list.*.depart_list.*' => "Bo'lim noto'g'ri tanlandi"
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $polka_id = $this->input('polka_id');
+
+            if (Polka::where('owner_id', $polka_id)->exists()) {
+                $validator->errors()->add('polka_id', "Bu polkani tanlash uchun ");
+            }
+        });
     }
 }
