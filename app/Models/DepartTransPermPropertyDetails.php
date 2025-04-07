@@ -15,12 +15,12 @@ class DepartTransPermPropertyDetails extends Model
         'depart_id'
     ];
 
-    public function departTransPermProperty():BelongsTo
+    public function departTransPermProperty(): BelongsTo
     {
         return $this->belongsTo(DepartTransPermProperty::class, 'property_id');
     }
 
-    public function depart():BelongsTo
+    public function depart(): BelongsTo
     {
         return $this->belongsTo(Depart::class, 'depart_id');
     }
