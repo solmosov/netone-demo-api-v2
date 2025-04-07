@@ -68,35 +68,75 @@ class DepartService
     }
   }
 
+  public function assignDepart(array $data)
+  {
+    // Req Data
+    $permId = $data['perm_id'];
+    $ownerDepartId = $data['owner_depart_id'];
+    $departList = $data['depart_list'];
+
+    // Owner Depart
+    $ownerDepart = Depart::findOrFail($ownerDepartId);
+
+    // Create Property
+    $newProperty = DepartTransPermProperty::create([
+      'depart_id' => $ownerDepart->id,
+      'trans_perm_id' => $permId
+    ]);
+
+    // Create Property Details
+    $transPermDetailsList = [];
+    foreach ($departList as $item) {
+      $transPermDetailsList[] = [
+        'property_id' => $newProperty->id,
+        'depart_id' => $item->id,
+      ];
+    }
+    $newProperty->details()->createMany($transPermDetailsList);
+
+    // Finish
+    
+
+  }
+
   public function update(array $data, int $id): array
   {
     // Req Data
     $userList = $data['user_list'] ?? [];
     $polkaId = $data['polka_id'] ?? null;
 
-    $depart = Depart::with('users')->findOrFail($id);
-    $depart->update($data);
+    DB::beginTransaction();
 
-    // User
-    if (!empty($userList)) {
-      $depart->users()->detach();
-      $depart->users()->attach($userList);
+    try {
+      $depart = Depart::with('users')->findOrFail($id);
+      $depart->update($data);
+
+      // User
+      if (!empty($userList)) {
+        $depart->users()->detach();
+        $depart->users()->attach($userList);
+      }
+
+      // Polka
+      if ($polkaId) {
+        $polka = Polka::whereNull('owner_id')
+          ->whereNull('owner_id')
+          ->findOrFail($id);
+
+        $polka->owner_id = $depart->id;
+        $polka->save();
+      }
+
+      DB::commit();
+
+      return [
+        'message' => "$depart->name yangilandi",
+        'data' => $depart
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
-
-    // Polka
-    if ($polkaId) {
-      $polka = Polka::whereNull('owner_id')
-        ->whereNull('owner_id')
-        ->findOrFail($id);
-
-      $polka->owner_id = $depart->id;
-      $polka->save();
-    }
-
-    return [
-      'message' => "$depart->name yangilandi",
-      'data' => $depart
-    ];
   }
 
   public function delete(int $id): array
