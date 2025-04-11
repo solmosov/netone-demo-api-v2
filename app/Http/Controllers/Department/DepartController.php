@@ -7,6 +7,7 @@ use App\Http\Requests\StoreDepartAssignPermRequest;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
 use App\Http\Resources\DepartResource;
+use App\Http\Resources\DepartShowResource;
 use App\Models\Depart;
 use App\Services\Department\DepartService;
 use Illuminate\Support\Facades\Gate;
@@ -59,7 +60,7 @@ class DepartController extends Controller
         $result = $this->departService->findOne((int) $id);
 
         return response()->json([
-            'data' => DepartResource::make($result['data']),
+            'data' => DepartShowResource::make($result['data']),
         ]);
     }
 
