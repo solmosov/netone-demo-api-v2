@@ -12,7 +12,12 @@ class DepartService
 {
   public function findAll(): array
   {
-    $data = Depart::with(['users', 'polka'])->get();
+    $data = Depart::with([
+      'users',
+      'departStock.polka',
+      'departStock.product',
+      'polka'
+    ])->get();
 
     return [
       'data' => $data,
@@ -22,7 +27,14 @@ class DepartService
 
   public function findOne(int $id): array
   {
-    $data = Depart::with(['users', 'polka'])->findOrFail($id);
+    $data = Depart::with([
+      'users',
+      'departStock.polka',
+      'departStock.product',
+      'transPerms',
+      'departStatuses',
+      'polka',
+    ])->findOrFail($id);
 
     return [
       'data' => $data
@@ -34,12 +46,12 @@ class DepartService
   {
     // Req Data
     $userList = $data['user_list'];
-    $polkaId = $data['polka_id'];
+    $stockId = $data['stock_id'];
     $name = $data['name'];
     $comment = $data['comment'] ?? null;
 
     // Polka
-    $polka = Polka::where('id', $polkaId)
+    $polka = Polka::where('id', $stockId)
       ->whereNull('owner_id')
       ->firstOrFail();
 
@@ -74,10 +86,10 @@ class DepartService
     $permId = $data['perm_id'];
     $ownerDepartId = $data['owner_depart_id'];
     $departList = $data['depart_list'];
-    
+
     // Owner Depart
     $ownerDepart = Depart::findOrFail($ownerDepartId);
-    
+
     DB::beginTransaction();
     try {
       // Create Property
@@ -85,7 +97,7 @@ class DepartService
         'depart_id' => $ownerDepart->id,
         'trans_perm_id' => $permId
       ]);
-      
+
       // Create Property Details
       $transPermDetailsList = [];
       foreach ($departList as $departId) {
@@ -95,7 +107,7 @@ class DepartService
         ];
       }
       $newProperty->details()->createMany($transPermDetailsList);
-      
+
       // Finish
       DB::commit();
 
