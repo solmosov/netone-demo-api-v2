@@ -4,6 +4,7 @@ namespace App\Services\Department;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
+use App\Models\DepartStock;
 use App\Models\DepartTransPermProperty;
 use App\Models\Polka;
 use Illuminate\Support\Facades\DB;
@@ -46,12 +47,12 @@ class DepartService
   {
     // Req Data
     $userList = $data['user_list'];
-    $stockId = $data['stock_id'];
+    $polkaId = $data['polka_id'];
     $name = $data['name'];
     $comment = $data['comment'] ?? null;
 
     // Polka
-    $polka = Polka::where('id', $stockId)
+    $polka = Polka::where('id', $polkaId)
       ->whereNull('owner_id')
       ->firstOrFail();
 
