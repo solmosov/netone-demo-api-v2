@@ -129,7 +129,7 @@ class DepartService
     DB::beginTransaction();
 
     try {
-      $depart = Depart::with('users')->findOrFail($id);
+      $depart = Depart::with('users', 'departStock')->findOrFail($id);
       $depart->update($data);
 
       // User
@@ -140,6 +140,10 @@ class DepartService
 
       // Polka
       if ($polkaId) {
+        // Update Before Polka owner_id
+        Polka::where('id', $depart->polka_id)->update(['owner_id' => null]);
+
+        // Find New Polka
         $polka = Polka::whereNull('owner_id')
           ->whereNull('owner_id')
           ->findOrFail($id);
