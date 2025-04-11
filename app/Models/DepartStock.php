@@ -13,6 +13,7 @@ class DepartStock extends Model
         'depart_id',
         'polka_id',
         'amount_type_id',
+        'product_id',
         'amount'
     ];
 
@@ -29,5 +30,10 @@ class DepartStock extends Model
     public function amountType(): BelongsTo
     {
         return $this->belongsTo(AmountType::class, 'amount_type_id');
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'product_id');
     }
 }
