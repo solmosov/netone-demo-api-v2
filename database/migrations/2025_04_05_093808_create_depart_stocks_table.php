@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('polka_id')->constrained('polkas');
             $table->foreignId('amount_type_id')->constrained('amount_types');
             $table->foreignId('product_id')->constrained('products');
-            $table->decimal('amount', 15, 2)->nullable();
+            $table->decimal('amount', 15, 2)->default(0);
             $table->timestamps();
         });
     }
