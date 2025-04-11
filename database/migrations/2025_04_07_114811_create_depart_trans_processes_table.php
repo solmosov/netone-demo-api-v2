@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('trans_perm_id')->constrained('trans_perms');
             $table->foreignId('from_depart_id')->constrained('departs');
-            $table->foreignId('to_depart_id')->constrained('to_depart_id');
+            $table->foreignId('to_depart_id')->constrained('departs');
             $table->string('comment')->nullable();
             $table->timestamps();
         });
