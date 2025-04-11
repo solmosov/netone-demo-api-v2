@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             CurrencySeeder::class,
             ExchangeRateSeeder::class,
             TransPermSeeder::class,
+            StatusDepartTransferSeeder::class,
 
             // Optional
             // ProductSeeder::class,
