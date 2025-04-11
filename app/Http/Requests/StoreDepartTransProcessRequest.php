@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Depart;
 use App\Models\DepartTransPermProperty;
 use App\Models\DepartTransPermPropertyDetails;
 use Illuminate\Foundation\Http\FormRequest;
