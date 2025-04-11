@@ -11,8 +11,11 @@ class DepartTransProcess extends Model
     protected $fillable = [
         'user_id',
         'trans_perm_id',
-        'from_depart_id',
-        'to_depart_id',
+        'sender_depart_id',
+        'receiver_depart_id',
+        'sender_user_id',
+        'receiver_user_id',
+        'status_id',
         'comment',
     ];
 
@@ -21,18 +24,28 @@ class DepartTransProcess extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function transPerm(): BelongsTo
+    public function transferPermission(): BelongsTo
     {
         return $this->belongsTo(TransPerm::class, 'trans_perm_id');
     }
 
-    public function fromDepart(): BelongsTo
+    public function senderDepartment(): BelongsTo
     {
-        return $this->belongsTo(Depart::class, 'from_depart_id');
+        return $this->belongsTo(Depart::class, 'sender_depart_id');
     }
 
-    public function toDepart(): BelongsTo
+    public function receiverDepartment(): BelongsTo
     {
-        return $this->belongsTo(Depart::class, 'to_depart_id');
+        return $this->belongsTo(Depart::class, 'receiver_depart_id');
+    }
+
+    public function senderUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'sender_user_id');
+    }
+
+    public function receiverUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'receiver_user_id');
     }
 }

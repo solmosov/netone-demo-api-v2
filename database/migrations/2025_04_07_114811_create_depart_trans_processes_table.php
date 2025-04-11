@@ -15,8 +15,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('trans_perm_id')->constrained('trans_perms');
-            $table->foreignId('from_depart_id')->constrained('departs');
-            $table->foreignId('to_depart_id')->constrained('departs');
+
+            $table->foreignId('sender_depart_id')->constrained('departs');
+            $table->foreignId('receiver_depart_id')->constrained('departs');
+
+            $table->foreignId('sender_user_id')->constrained('users');
+            $table->unsignedBigInteger('receiver_user_id')->nullable();
+            $table->foreign('receiver_user_id')->references('id')->on('users');
+
+            $table->foreignId('status_id');
             $table->string('comment')->nullable();
             $table->timestamps();
         });
