@@ -22,8 +22,8 @@ class StoreDepartTransProcessRequest extends FormRequest
     {
         return [
             'trans_perm_id' => 'required|integer|exists:trans_perms,id',
-            'from_depart_id' => 'required|integer|exists:departs,id',
-            'to_depart_id' => 'required|integer|exists:departs,id',
+            'sender_depart_id' => 'required|integer|exists:departs,id',
+            'receiver_depart_id' => 'required|integer|exists:departs,id',
             "product_list"  => "required|array",
             "product_list.*.product_id" => "required|integer|exists:products,id",
             "product_list.*.polka_id" => "required|integer|exists:polkas,id",
@@ -36,22 +36,22 @@ class StoreDepartTransProcessRequest extends FormRequest
     public function withValidator(Validator $validator)
     {
         $transPermId = $this->input('trans_perm_id');
-        $fromDepartId = $this->input('from_depart_id');
-        $toDepartId = $this->input('to_depart_id');
+        $fromDepartId = $this->input('sender_depart_id');
+        $toDepartId = $this->input('receiver_depart_id');
 
         $departUser = DB::table('depart_user')
             ->where('user_id', Auth::id())
             ->where('depart_id', $fromDepartId)
             ->exists();
         if (!$departUser) {
-            $validator->errors()->add('from_depart_id', "O'zingizga tegishli bo'limni tanlang");
+            $validator->errors()->add('sender_depart_id', "O'zingizga tegishli bo'limni tanlang");
         } else {
             $departTransPermProperty = DepartTransPermProperty::where('trans_perm_id', $transPermId)
                 ->where('depart_id', $fromDepartId)
                 ->first();
 
             if (!$departTransPermProperty->exists()) {
-                $validator->errors()->add('from_depart_id', "Bo'lim ruxsat topilmadi");
+                $validator->errors()->add('sender_depart_id', "Bo'lim ruxsat topilmadi");
             } else {
 
                 $departPermPropertyDetail = DepartTransPermPropertyDetails::with('depart')->where('property_id', $departTransPermProperty->id)
@@ -59,7 +59,7 @@ class StoreDepartTransProcessRequest extends FormRequest
                     ->first();
 
                 if ($departPermPropertyDetail->exists()) {
-                    $validator->errors()->add('to_depart_id', "Bu {$departPermPropertyDetail->depart->name} bo'lim uchun sizda ruxsat mavjud emas!");
+                    $validator->errors()->add('receiver_depart_id', "Bu {$departPermPropertyDetail->depart->name} bo'lim uchun sizda ruxsat mavjud emas!");
                 }
             }
         }
