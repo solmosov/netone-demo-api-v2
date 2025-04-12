@@ -49,4 +49,9 @@ class DepartTransProcess extends Model
     {
         return $this->hasMany(DepartTransProcessDetail::class, 'depart_trans_process_id');
     }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
+    }
 }

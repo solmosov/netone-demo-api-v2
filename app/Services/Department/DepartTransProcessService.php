@@ -12,17 +12,22 @@ use Illuminate\Support\Facades\DB;
 
 class DepartTransProcessService
 {
-  public static function getSendProductStatus(): Status
+  public function findAll()
   {
-    return StatusService::findByCode('departSendProduct');
-  }
-  public static function getReceiveProductStatus(): Status
-  {
-    return StatusService::findByCode('departSendProduct');
-  }
-  public static function getCancelProductStatus(): Status
-  {
-    return StatusService::findByCode('departCancelProduct');
+    $data = DepartTransProcess::with([
+      'transferPermission',
+      'senderDepartment',
+      'receiverDepartment',
+      'senderUser',
+      'receiverUser',
+      'status'
+    ])
+      ->orderByDesc('created_at')
+      ->get();
+
+    return [
+      'data' => $data
+    ];
   }
 
   public function create(array $data)
@@ -49,7 +54,7 @@ class DepartTransProcessService
         'status_id' => DepartTransProcessService::getSendProductStatus()->id,
         'comment' => $comment,
       ]);
-      
+
       $insertDetailData = [];
       foreach ($productList as $item) {
         $insertDetailData[] = [
@@ -72,5 +77,18 @@ class DepartTransProcessService
       DB::rollBack();
       throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
+  }
+
+  public static function getSendProductStatus(): Status
+  {
+    return StatusService::findByCode('departSendProduct');
+  }
+  public static function getReceiveProductStatus(): Status
+  {
+    return StatusService::findByCode('departSendProduct');
+  }
+  public static function getCancelProductStatus(): Status
+  {
+    return StatusService::findByCode('departCancelProduct');
   }
 }

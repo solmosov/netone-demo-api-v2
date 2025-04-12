@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDepartTransProcessRequest;
-use App\Models\DepartTransProcess;
+use App\Http\Resources\DepartTransProcessResource;
 use App\Services\Department\DepartTransProcessService;
 
 class DepartTransProcessController extends Controller
@@ -15,7 +15,11 @@ class DepartTransProcessController extends Controller
 
     public function index()
     {
-        //
+        $result = $this->departTransProcessService->findAll();
+
+        return [
+            'data' => DepartTransProcessResource::collection($result['data'])
+        ];
     }
 
 
