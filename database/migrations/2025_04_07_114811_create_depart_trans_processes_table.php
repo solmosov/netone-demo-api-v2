@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('depart_trans_processes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
             $table->foreignId('trans_perm_id')->constrained('trans_perms');
 
             $table->foreignId('sender_depart_id')->constrained('departs');

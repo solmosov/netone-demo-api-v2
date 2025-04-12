@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class DepartTransProcess extends Model
 {
     protected $fillable = [
-        'user_id',
         'trans_perm_id',
         'sender_depart_id',
         'receiver_depart_id',
@@ -18,11 +17,6 @@ class DepartTransProcess extends Model
         'status_id',
         'comment',
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
 
     public function transferPermission(): BelongsTo
     {
