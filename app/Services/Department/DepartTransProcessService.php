@@ -79,6 +79,24 @@ class DepartTransProcessService
     }
   }
 
+  public function findOne(int $id)
+  {
+    $data = DepartTransProcess::with([
+      'transferPermission',
+      'senderDepartment',
+      'receiverDepartment',
+      'senderUser',
+      'receiverUser',
+      'status',
+      'details'
+    ])
+      ->findOrFail($id);
+
+    return [
+      'data' => $data
+    ];
+  }
+
   public static function getSendProductStatus(): Status
   {
     return StatusService::findByCode('departSendProduct');

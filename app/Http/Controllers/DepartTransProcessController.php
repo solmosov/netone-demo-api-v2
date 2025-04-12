@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDepartTransProcessRequest;
 use App\Http\Resources\DepartTransProcessResource;
+use App\Http\Resources\DepartTransProcessShowResource;
 use App\Services\Department\DepartTransProcessService;
 
 class DepartTransProcessController extends Controller
@@ -17,9 +18,9 @@ class DepartTransProcessController extends Controller
     {
         $result = $this->departTransProcessService->findAll();
 
-        return [
+        return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
-        ];
+        ]);
     }
 
 
@@ -35,6 +36,10 @@ class DepartTransProcessController extends Controller
 
     public function show(string $id)
     {
-        //
+        $result = $this->departTransProcessService->findOne($id);
+
+        return response()->json([
+            'data' => DepartTransProcessShowResource::make($result['data'])
+        ]);
     }
 }
