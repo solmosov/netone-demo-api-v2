@@ -14,6 +14,6 @@ class StatusDepartTransferSeeder extends Seeder
     {
         Status::create(['name' => "Yuk yuborildi", "code" => "departSendProduct"]);
         Status::create(['name' => "Bekor qilindi", "code" => "departCancelProduct"]);
-        Status::create(['name' => "Qabul qilindi", "code" => "departGetProduct"]);
+        Status::create(['name' => "Qabul qilindi", "code" => "departReceiveProduct"]);
     }
 }
