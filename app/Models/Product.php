@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Department\DepartTransProcessDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,5 +32,10 @@ class Product extends Model
     public function departTransDetails(): HasMany
     {
         return $this->hasMany(Product::class, 'product_id');
+    }
+
+    public function departTransProcessDetail(): HasMany
+    {
+        return $this->hasMany(DepartTransProcessDetail::class, 'product_id');
     }
 }
