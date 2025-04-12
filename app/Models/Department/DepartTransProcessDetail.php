@@ -15,6 +15,7 @@ class DepartTransProcessDetail extends Model
         'depart_trans_process_id',
         'product_id',
         'polka_id',
+        'received_polka_id',
         'amount_type_id',
         'amount',
     ];
@@ -32,6 +33,11 @@ class DepartTransProcessDetail extends Model
     public function polka(): BelongsTo
     {
         return $this->belongsTo(Polka::class, 'polka_id');
+    }
+
+    public function receivedPolka(): BelongsTo
+    {
+        return $this->belongsTo(Polka::class, 'received_polka_id');
     }
 
     public function amountType(): BelongsTo
