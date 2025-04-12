@@ -50,7 +50,7 @@ class StoreDepartTransProcessRequest extends FormRequest
                 ->where('depart_id', $fromDepartId)
                 ->first();
 
-            if (!$departTransPermProperty->exists()) {
+            if (!$departTransPermProperty) {
                 $validator->errors()->add('sender_depart_id', "Bo'lim ruxsat topilmadi");
             } else {
 
