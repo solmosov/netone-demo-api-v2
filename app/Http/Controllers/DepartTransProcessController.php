@@ -25,7 +25,7 @@ class DepartTransProcessController extends Controller
 
         return response()->json([
             'message' => $result['message']
-        ]);
+        ], 201);
     }
 
 

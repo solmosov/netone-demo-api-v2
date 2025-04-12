@@ -22,7 +22,7 @@ return new class extends Migration
             $table->unsignedBigInteger('receiver_user_id')->nullable();
             $table->foreign('receiver_user_id')->references('id')->on('users');
 
-            $table->foreignId('status_id');
+            $table->foreignId('status_id')->constrained('statuses');
             $table->string('comment')->nullable();
             $table->timestamps();
         });

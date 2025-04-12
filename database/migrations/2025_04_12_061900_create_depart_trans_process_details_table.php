@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('depart_trans_process_detail', function (Blueprint $table) {
+        Schema::create('depart_trans_process_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('depart_trans_process_id')->constrained('depart_trans_processes');
             $table->foreignId('product_id')->constrained('products');
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('depart_trans_process_detail');
+        Schema::dropIfExists('depart_trans_process_details');
     }
 };

@@ -46,10 +46,10 @@ class DepartTransProcessService
         'sender_depart_id' => $senderDepartId,
         'receiver_depart_id' => $receiverDepartId,
         'sender_user_id' => Auth::id(),
-        'status_id' => DepartTransProcessService::getSendProductStatus(),
+        'status_id' => DepartTransProcessService::getSendProductStatus()->id,
         'comment' => $comment,
       ]);
-
+      
       $insertDetailData = [];
       foreach ($productList as $item) {
         $insertDetailData[] = [
@@ -60,7 +60,6 @@ class DepartTransProcessService
           'amount_type_id' => $item['amount_type_id']
         ];
       }
-
       $newProcess->details()->createMany($insertDetailData);
 
       // Finish
