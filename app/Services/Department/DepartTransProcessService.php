@@ -152,12 +152,15 @@ class DepartTransProcessService
         $transProcessItem->save();
       }
 
+      // Set Receiver User
+      $transProcess->receiver_user_id = Auth::id();
+      
       // Change Trans Process Status
       $transProcess->status_id = $receivedStatus->id;
       $transProcess->save();
 
       // Finish
-      dd('render');
+      DB::commit();
 
       return [
         'message' => "Yuk muvaffaqiyatli qabul qilindi, zaxirani tekshiring"
