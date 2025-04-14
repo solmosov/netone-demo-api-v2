@@ -117,6 +117,7 @@ class DepartTransProcessService
       ->findOrFail($id);
 
     // Receiver Depart Id
+    $senderDepartId = $transProcess->sender_depart_id;
     $receiverDepartId = $transProcess->receiver_depart_id;
 
     $exists = DB::table('depart_user')
@@ -139,14 +140,24 @@ class DepartTransProcessService
         // Transfer Item
         $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $transProcess->id)
           ->findOrFail($reqItemId);
+        $senderPolkaId = $transProcessItem->polka_id;
+
+
+
+        //Receiver Depart Stock
+        $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
+          ->where('amount_type_id', $transProcessItem->amount_type_id)
+          ->where('polka_id', $reqPolkaId)
+          ->firstOrFail();
+
+        // Sender Depart Stock
+        $senderStockItem = DepartStock::where('depart_id', $senderDepartId)
+          ->where('polka_id', $senderPolkaId)
+          ->firstOrFail();
 
         // Change Stock
-        $stockItem = DepartStock::where('depart_id', $receiverDepartId)
-          ->where('amount_type_id', $transProcess->amount_type_id)
-          ->findOrFail($reqPolkaId);
-
-        // Product
-        $stockItem->decrement('amount', $transProcessItem->amount);
+        $receiverStockItem->increment('amount', $transProcessItem->amount);
+        $senderStockItem->decrement('amount', $transProcessItem->amount);
 
 
         // Set Received Polka
@@ -165,7 +176,8 @@ class DepartTransProcessService
       DB::commit();
 
       return [
-        'message' => "Yuk muvaffaqiyatli qabul qilindi, zaxirani tekshiring"
+        'message' => "Yuk muvaffaqiyatli qabul qilindi, zaxirani tekshiring",
+        'code' => 201,
       ];
     } catch (\Exception $e) {
       DB::rollBack();
@@ -183,7 +195,7 @@ class DepartTransProcessService
   }
   public static function getReceiveProductStatus(): Status
   {
-    return StatusService::findByCode('departSendProduct');
+    return StatusService::findByCode('departReceiveProduct');
   }
   public static function getCancelProductStatus(): Status
   {
