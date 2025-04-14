@@ -2,10 +2,13 @@
 
 namespace App\Services\Department;
 
+use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartTransProcess;
+use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
@@ -98,29 +101,71 @@ class DepartTransProcessService
     ];
   }
 
-  public function receiveProduct(array $data, int $id)
-  { 
-      // Req Data
-      $detailsList = $data['details_list'];
+  public function receive(array $data, int $id)
+  {
+    // Req Data
+    $reqDetailsList = $data['details_list'];
 
-      // Trans Process
-      $transProcess = DepartTransProcess::with('details')->findOrFail($id);
-      $pluckDetailsAmount = $transProcess->details()->pluck('amount', 'id');
-      $pluckDetailsAmountType = $transProcess->details()->pluck('amount_type_id', 'id');
-      dd($pluckDetailsAmountType);
+    // Send Status
+    $sendStatus = DepartTransProcessService::getSendProductStatus();
 
-      // Status
-      $status = DepartTransProcessService::getReceiveProductStatus();
-      
+    // Trans Process
+    $transProcess = DepartTransProcess::with('details')
+      ->where('status_id', $sendStatus->id)
+      ->findOrFail($id);
+
+    // Receiver Depart Id
+    $receiverDepartId = $transProcess->receiver_depart_id;
+
+    $exists = DB::table('depart_user')
+      ->where('depart_id', $receiverDepartId)
+      ->where('user_id', Auth::id());
+    if ($exists) {
+      throw new InvalidDataException("Bu amalni bajarib bo'lmadi", 403);
+    }
+
+    // Status
+    $receivedStatus = DepartTransProcessService::getReceiveProductStatus();
+
+    DB::beginTransaction();
+    try {
       // Increment Stock
-      foreach($detailsList as $item){
-        $itemId = $item['item_id'];
-        $polkaId = $item['polka_id'];
+      foreach ($reqDetailsList as $reqItem) {
+        $reqItemId = $reqItem['item_id'];
+        $reqPolkaId = $reqItem['polka_id'];
 
-        $transProcessItem = DepartTransProcessDetail::findOrFail($itemId);
-        
+        // Transfer Item
+        $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $receiverDepartId)
+          ->findOrFail($reqItemId);
 
+        // Change Stock
+        $stockItem = ProductStock::where('depart_id', $receiverDepartId)
+          ->where('amount_type_id', $transProcess->amount_type_id)
+          ->findOrFail($reqPolkaId);
+
+        // Product
+        $stockItem->decrement('amount', $transProcessItem->amount);
+
+
+        // Set Received Polka
+        $transProcessItem->received_polka_id = $reqPolkaId;
+        $transProcessItem->save();
       }
+
+      // Change Trans Process Status
+      $transProcess->status_id = $receivedStatus->id;
+      $transProcess->save();
+
+      // Finish
+      dd('render');
+
+      return [
+        'message' => "Yuk muvaffaqiyatli qabul qilindi, zaxirani tekshiring"
+      ];
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+    }
   }
 
   public static function getSendProductStatus(): Status

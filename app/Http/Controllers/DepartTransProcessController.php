@@ -46,6 +46,6 @@ class DepartTransProcessController extends Controller
 
     public function receive(StoreDepartTransProcessReceiveRequest $request, string $id)
     {
-
+        $this->departTransProcessService->receive($request->validated(), (int) $id);
     }
 }
