@@ -46,6 +46,10 @@ class DepartTransProcessController extends Controller
 
     public function receive(StoreDepartTransProcessReceiveRequest $request, string $id)
     {
-        $this->departTransProcessService->receive($request->validated(), (int) $id);
+        $result = $this->departTransProcessService->receive($request->validated(), (int) $id);
+
+        return response()->json([
+            'message' => $result['message']
+        ], $result['code']);
     }
 }

@@ -6,6 +6,7 @@ use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
+use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
 use App\Models\Product;
 use App\Models\ProductStock;
@@ -13,6 +14,7 @@ use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class DepartTransProcessService
 {
@@ -120,7 +122,7 @@ class DepartTransProcessService
     $exists = DB::table('depart_user')
       ->where('depart_id', $receiverDepartId)
       ->where('user_id', Auth::id());
-    if ($exists) {
+    if (!$exists) {
       throw new InvalidDataException("Bu amalni bajarib bo'lmadi", 403);
     }
 
@@ -135,11 +137,11 @@ class DepartTransProcessService
         $reqPolkaId = $reqItem['polka_id'];
 
         // Transfer Item
-        $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $receiverDepartId)
+        $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $transProcess->id)
           ->findOrFail($reqItemId);
 
         // Change Stock
-        $stockItem = ProductStock::where('depart_id', $receiverDepartId)
+        $stockItem = DepartStock::where('depart_id', $receiverDepartId)
           ->where('amount_type_id', $transProcess->amount_type_id)
           ->findOrFail($reqPolkaId);
 
@@ -154,7 +156,7 @@ class DepartTransProcessService
 
       // Set Receiver User
       $transProcess->receiver_user_id = Auth::id();
-      
+
       // Change Trans Process Status
       $transProcess->status_id = $receivedStatus->id;
       $transProcess->save();
@@ -167,7 +169,11 @@ class DepartTransProcessService
       ];
     } catch (\Exception $e) {
       DB::rollBack();
-      throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+
+      return [
+        'message' => $e->getMessage(),
+        'code' => $e->getCode() > 0 ? $e->getCode() : 404,
+      ];
     }
   }
 
