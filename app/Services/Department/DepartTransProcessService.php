@@ -4,6 +4,7 @@ namespace App\Services\Department;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
+use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartTransProcess;
 use App\Models\Status;
 use App\Services\Status\StatusService;
@@ -95,6 +96,31 @@ class DepartTransProcessService
     return [
       'data' => $data
     ];
+  }
+
+  public function receiveProduct(array $data, int $id)
+  { 
+      // Req Data
+      $detailsList = $data['details_list'];
+
+      // Trans Process
+      $transProcess = DepartTransProcess::with('details')->findOrFail($id);
+      $pluckDetailsAmount = $transProcess->details()->pluck('amount', 'id');
+      $pluckDetailsAmountType = $transProcess->details()->pluck('amount_type_id', 'id');
+      dd($pluckDetailsAmountType);
+
+      // Status
+      $status = DepartTransProcessService::getReceiveProductStatus();
+      
+      // Increment Stock
+      foreach($detailsList as $item){
+        $itemId = $item['item_id'];
+        $polkaId = $item['polka_id'];
+
+        $transProcessItem = DepartTransProcessDetail::findOrFail($itemId);
+        
+
+      }
   }
 
   public static function getSendProductStatus(): Status

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDepartTransProcessReceiveRequest;
 use App\Http\Requests\StoreDepartTransProcessRequest;
 use App\Http\Resources\DepartTransProcessResource;
 use App\Http\Resources\DepartTransProcessShowResource;
@@ -41,5 +42,10 @@ class DepartTransProcessController extends Controller
         return response()->json([
             'data' => DepartTransProcessShowResource::make($result['data'])
         ]);
+    }
+
+    public function receive(StoreDepartTransProcessReceiveRequest $request, string $id)
+    {
+
     }
 }
