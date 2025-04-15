@@ -54,8 +54,8 @@ class DepartTransProcessService
 
     // Check Polka Owner Validation
     $pluckPolka = array_column($productList, 'polka_id');
-    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id());
-    if(!$exists){
+    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
+    if($exists){
       throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
     }
 
