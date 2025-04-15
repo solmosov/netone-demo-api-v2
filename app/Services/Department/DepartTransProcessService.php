@@ -45,6 +45,12 @@ class DepartTransProcessService
     $productList = $data['product_list'];
     $comment = $data['comment'] ?? null;
 
+    // Validate
+    $exists = DB::table('depart_user')->where('user_id', Auth::id())->where('depart_id', $senderDepartId)->exists();
+    if(!$exists){
+      throw new InvalidDataException("Mahsulotlarini yuborish mumkin emas",403);
+    }
+
     // Receiver Depart
     $receiverDepart = Depart::findOrFail($receiverDepartId);
 
@@ -116,6 +122,10 @@ class DepartTransProcessService
       ->where('status_id', $sendStatus->id)
       ->findOrFail($id);
 
+    if ($transProcess->details()->count() === sizeof($reqDetailsList)) {
+      throw new InvalidDataException("O'tkazma mahsulotlari to'liq emas");
+    }
+
     // Receiver Depart Id
     $senderDepartId = $transProcess->sender_depart_id;
     $receiverDepartId = $transProcess->receiver_depart_id;
@@ -151,13 +161,18 @@ class DepartTransProcessService
           ->firstOrFail();
 
         // Sender Depart Stock
-        $senderStockItem = DepartStock::where('depart_id', $senderDepartId)
+        $senderStockItem = DepartStock::with('polka')
+          ->where('depart_id', $senderDepartId)
           ->where('polka_id', $senderPolkaId)
           ->firstOrFail();
 
         // Change Stock
-        $receiverStockItem->increment('amount', $transProcessItem->amount);
         $senderStockItem->decrement('amount', $transProcessItem->amount);
+        if ($senderStockItem->amount < $transProcessItem->amount) {
+          throw new InvalidDataException("Yuboruvchining {$senderStockItem->polka->name} polkasida zaxira yetarli emas!");
+        }
+
+        $receiverStockItem->increment('amount', $transProcessItem->amount);
 
 
         // Set Received Polka
