@@ -8,6 +8,7 @@ use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
+use App\Models\Polka;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Status;
@@ -49,6 +50,13 @@ class DepartTransProcessService
     $exists = DB::table('depart_user')->where('user_id', Auth::id())->where('depart_id', $senderDepartId)->exists();
     if(!$exists){
       throw new InvalidDataException("Mahsulotlarini yuborish mumkin emas",403);
+    }
+
+    // Check Polka Owner Validation
+    $pluckPolka = array_column($productList, 'polka_id');
+    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id());
+    if(!$exists){
+      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
     }
 
     // Receiver Depart
