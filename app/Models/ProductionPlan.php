@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductionPlan extends Model
 {
@@ -16,4 +16,19 @@ class ProductionPlan extends Model
         'comment',
         'finish_date',
     ];
+
+    public function recipe(): BelongsTo
+    {
+        return $this->belongsTo(ProductionRecipe::class, 'recipe_id');
+    }
+
+    public function amountType(): BelongsTo
+    {
+        return $this->belongsTo(AmountType::class, 'amount_type_id');
+    }
+
+    public function status(): BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
+    }
 }
