@@ -34,4 +34,9 @@ class ProductionRecipe extends Model
         return $this->hasMany(RecipeItems::class, 'production_recipe_id')
             ->with('product.stock.amountType');
     }
+
+    public function productionPlan(): BelongsTo
+    {
+        return $this->belongsTo(ProductionRecipe::class, 'recipe_id');
+    }
 }
