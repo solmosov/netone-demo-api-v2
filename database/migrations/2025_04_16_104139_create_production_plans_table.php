@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('amount', 15, 2);
             $table->string('comment')->nullable();
-            $table->timestamp('finish_date');
+            $table->timestamp('finish_date')->nullable();
             $table->timestamps();
         });
     }
