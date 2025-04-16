@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class StoreProductionProcessRequest extends FormRequest
 {
@@ -22,6 +24,11 @@ class StoreProductionProcessRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'depart_id' => [
+                'required',
+                'integer',
+                Rule::exists('depart_user', 'depart_id')->where('user_id', Auth::id()),
+            ],
             'production_recipe_id' => 'required|integer|exists:production_recipes,id',
             'items_list' => 'required|array',
             'items_list.*.product_id' => 'required|integer|exists:products,id',

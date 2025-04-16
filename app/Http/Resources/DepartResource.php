@@ -12,6 +12,7 @@ class DepartResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'depart' => DepartResource::make($this->depart),
             'user_list' => UserResource::collection($this->whenLoaded('users')),
             'depart_stock' => ProductStockResource::make($this->whenLoaded('departStock')),
             'polka' => $this->polka,

@@ -16,6 +16,7 @@ class ProductionProcessShowResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'depart' => DepartResource::make($this->depart),
             'production_recipe' => ProductionRecipeResource::make($this->productionRecipe),
             'process_items' => ProductionProcessItemResource::collection($this->processItems),
             'out_amount' => (float) $this->out_amount,

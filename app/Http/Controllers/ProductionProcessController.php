@@ -20,6 +20,7 @@ class ProductionProcessController extends Controller
     public function index(): JsonResponse
     {
         $data = ProductionProcess::with(
+            'depart',
             'productionRecipe',
             'processItems',
             'status'
@@ -71,6 +72,7 @@ class ProductionProcessController extends Controller
             $processStatus = Status::where('code', 'productionProcess')->firstOrFail();
 
             $newProcess = ProductionProcess::create([
+                'depart_id' => $request->validated('depart_id'),
                 'status_id' => $processStatus->id,
                 'production_recipe_id' => $request->validated('production_recipe_id'),
                 'out_amount' => 0,
@@ -105,6 +107,7 @@ class ProductionProcessController extends Controller
     public function show(string $id): JsonResponse
     {
         $data = ProductionProcess::with(
+            'depart',
             'productionRecipe.recipeItems',
             'processItems',
             'status'
