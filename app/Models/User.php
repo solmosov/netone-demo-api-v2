@@ -62,6 +62,16 @@ class User extends Authenticatable
         return $this->roles()->where('name', 'admin')->exists();
     }
 
+    public function isProducer(): bool
+    {
+        return $this->roles()->where('name', 'producer')->exists();
+    }
+    
+    public function isDepartUser(): bool
+    {
+        return $this->roles()->where('name', 'depart_user')->exists();
+    }
+
     public function wallets(): BelongsToMany
     {
         return $this->belongsToMany(Wallet::class, 'user_wallet')->withPivot('amount')->with('currency');
