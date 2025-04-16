@@ -183,7 +183,7 @@ class DepartTransProcessService
         // Change Stock
         $senderStockItem->decrement('amount', $transProcessItem->amount);
         if ($senderStockItem->amount < $transProcessItem->amount) {
-          throw new InvalidDataException("Yuboruvchining {$senderStockItem->polka->name} polkasida zaxira yetarli emas!");
+          throw new InvalidDataException("Yuboruvchining `{$senderStockItem->polka->name}` polkasida zaxira yetarli emas!");
         }
 
         $receiverStockItem->increment('amount', $transProcessItem->amount);
