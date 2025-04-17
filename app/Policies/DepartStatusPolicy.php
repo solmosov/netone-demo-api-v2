@@ -29,7 +29,7 @@ class DepartStatusPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isProducer();
     }
 
     /**
@@ -37,7 +37,7 @@ class DepartStatusPolicy
      */
     public function update(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isProducer();
     }
 
     /**
@@ -45,7 +45,7 @@ class DepartStatusPolicy
      */
     public function delete(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isProducer();
     }
 
     /**
