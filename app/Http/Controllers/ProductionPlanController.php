@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
 use App\Models\ProductionPlan;
 use App\Services\Production\ProductionPlanService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class ProductionPlanController extends Controller
@@ -24,7 +25,7 @@ class ProductionPlanController extends Controller
 
         return response()->json([
             'message' => $result['message']
-        ]);
+        ], 201);
     }
 
 
