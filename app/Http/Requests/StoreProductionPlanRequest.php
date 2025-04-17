@@ -21,6 +21,9 @@ class StoreProductionPlanRequest extends FormRequest
             'amount'  => 'required|min:0',
             'amount_type_id'  => 'required|integer|exists:amount_types,id',
             'comment'  => 'nullable|min:6|max:255',
+            'plan_item_list' => 'required|array',
+            'plan_item_list.*.recipe_item_id' => 'required|integer|exists:recipe_items,id',
+            'plan_item_list.*.depart_id' => 'required|integer|exists:departs,id',
         ];
     }
 }
