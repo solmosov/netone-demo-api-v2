@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductionPlan extends Model
 {
@@ -16,6 +17,11 @@ class ProductionPlan extends Model
         'comment',
         'finish_date',
     ];
+
+    public function planItems(): HasMany
+    {
+        return $this->hasMany(ProductionPlanItem::class, 'plan_id');
+    }
 
     public function recipe(): BelongsTo
     {

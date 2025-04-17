@@ -57,4 +57,9 @@ class Depart extends Model
     {
         return $this->hasMany(DepartTransProcess::class, 'to_depart_id');
     }
+
+    public function productionPlanItems(): HasMany
+    {
+        return $this->hasMany(ProductionPlanItem::class, 'depart_id');
+    }
 }
