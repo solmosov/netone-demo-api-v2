@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Department\DepartStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreDepartStatusRequest extends FormRequest
 {
@@ -26,5 +28,16 @@ class StoreDepartStatusRequest extends FormRequest
         return [
             'name.required' => "Bu bo'lim status allaqachon mavjud",
         ];
+    }
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function($validator){
+            $departId = $this->input('depart_id');
+            
+            if(DepartStatus::where('depart_id', $departId)->first()){
+                $validator->errors()->add('depart_id', "Bu bo'lim uchun allaqachon status mavjud");
+            }
+        });
     }
 }
