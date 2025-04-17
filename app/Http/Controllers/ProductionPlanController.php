@@ -33,7 +33,7 @@ class ProductionPlanController extends Controller
 
         return response()->json([
             'message' => $result['message']
-        ], 201);
+        ], $result['code']);
     }
 
 
