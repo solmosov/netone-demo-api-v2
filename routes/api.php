@@ -30,6 +30,7 @@ require __DIR__ . "/api/common/depart.php";
 require __DIR__ . "/api/production/recipe.php";
 require __DIR__ . "/api/production/process.php";
 require __DIR__ . "/api/production/checkStock.php";
+require __DIR__ . "/api/production/productionPlan.php";
 
 // Finance
 require __DIR__ . "/api/finance/currency.php";

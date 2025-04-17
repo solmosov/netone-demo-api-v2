@@ -19,7 +19,7 @@ class StoreProductionPlanRequest extends FormRequest
             'recipe_id' => 'required|integer|exists:production_recipes,id',
             'name'  => 'required|string',
             'amount'  => 'required|min:0',
-            'amount_type_id'  => 'required|integer|exists:amount_types',
+            'amount_type_id'  => 'required|integer|exists:amount_types,id',
             'comment'  => 'nullable|min:6|max:255',
         ];
     }
