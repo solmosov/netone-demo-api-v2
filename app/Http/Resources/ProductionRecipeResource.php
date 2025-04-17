@@ -19,8 +19,8 @@ class ProductionRecipeResource extends JsonResource
             'name' => $this->name,
             'out_amount' => (float) $this->out_amount,
             'out_amount_type' => $this->outAmountType,
-            'out_product' => ProductResource::make($this->outProduct),
-            'recipe_items' => ProductionRecipeItemResource::collection($this->recipeItems),
+            'out_product' => ProductResource::make($this->whenLoaded('outProduct')),
+            'recipe_items' => ProductionRecipeItemResource::collection($this->whenLoaded('recipeItems')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

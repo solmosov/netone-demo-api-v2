@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
+use App\Http\Resources\ProductionPlanResource;
 use App\Models\ProductionPlan;
 use App\Services\Production\ProductionPlanService;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,14 @@ class ProductionPlanController extends Controller
 {
     public function __construct(protected ProductionPlanService $productionPlanService) {}
 
-    public function index() {}
+    public function index()
+    {
+        $result = $this->productionPlanService->findAll();
+
+        return response()->json([
+            'data' => ProductionPlanResource::collection($result['data'])
+        ]);
+    }
 
 
     public function store(StoreProductionPlanRequest $request)

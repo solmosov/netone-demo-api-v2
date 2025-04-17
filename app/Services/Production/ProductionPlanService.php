@@ -8,6 +8,20 @@ use App\Services\Status\StatusService;
 class ProductionPlanService
 {
 
+  public function findAll()
+  {
+    $data = ProductionPlan::with([
+      'recipe.outAmountType',
+      'amountType',
+      'status'
+    ])
+      ->get();
+
+    return [
+      'data' => $data
+    ];
+  }
+
   public function create(array $data)
   {
     // Req Data
