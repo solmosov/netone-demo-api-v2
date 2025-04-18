@@ -6,7 +6,7 @@ use App\Models\Status;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class StatusProductionPlanDepartSeeder extends Seeder
+class StatusProductionPlanItemSeeder extends Seeder
 {
     /**
      * Run the database seeds.
