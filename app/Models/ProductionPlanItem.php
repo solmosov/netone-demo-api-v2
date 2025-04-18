@@ -14,7 +14,7 @@ class ProductionPlanItem extends Model
         'depart_id',
         'recipe_item_id',
         'depart_status_id',
-        'status',
+        'status_id',
         'product_id',
         'amount_type_id',
         'amount',

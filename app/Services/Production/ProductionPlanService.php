@@ -78,11 +78,12 @@ class ProductionPlanService
                     'depart_id' => $departId,
                     'recipe_item_id' => $recipeItemId,
                     'depart_status_id' => $departStatus->id,
-                    'status_id' => $planItemStatus->id,
+                    'status_id' => 26,
                     'product_id' => $productId,
                     'amount' => $calcAmount,
                     'amount_type_id' => $itemAmountTypeId,
                 ];
+
             }
 
             $newProductionPlan->planItems()->createMany($itemsList);
@@ -95,7 +96,6 @@ class ProductionPlanService
                 'code' => 201,
             ];
         } catch (\Exception $e) {
-
             DB::rollBack();
             return [
                 'message' => $e->getMessage(),
@@ -121,7 +121,7 @@ class ProductionPlanService
     public function receivePlanItem(int $planItemId): array
     {
         $statusReceived = self::getPlanItemReceivedStatus();
-        ProductionPlanItem::findOrFailt($planItemId)->update(['status_id' => $statusReceived->id]);
+        ProductionPlanItem::findOrFail($planItemId)->update(['status_id' => $statusReceived->id]);
 
         return [
             'message' => "Muvaffaqiyatli qabul qilindi",
