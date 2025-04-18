@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class ProductionPlanService
 {
 
-    public function findAll()
+    public function findAll(): array
     {
         $data = ProductionPlan::with([
             'recipe.outAmountType',
@@ -29,7 +29,7 @@ class ProductionPlanService
         ];
     }
 
-    public function create(array $data)
+    public function create(array $data): array
     {
         // Req Data
         $recipeId = $data['recipe_id'];
