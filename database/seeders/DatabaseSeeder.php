@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             TransPermSeeder::class,
             StatusDepartTransferSeeder::class,
             StatusProductionPlanSeeder::class,
+            StatusProductionPlanDepartSeeder::class,
 
             // Optional
             // ProductSeeder::class,

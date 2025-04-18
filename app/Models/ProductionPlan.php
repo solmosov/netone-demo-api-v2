@@ -25,6 +25,7 @@ class ProductionPlan extends Model
                 'depart',
                 'recipeItem',
                 'departStatus',
+                'status',
                 'product',
                 'amountType',
             ]);

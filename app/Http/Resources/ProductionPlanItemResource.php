@@ -15,6 +15,7 @@ class ProductionPlanItemResource extends JsonResource
             'depart' => DepartResource::make($this->depart),
             'recipe_item' => $this->recipeItem,
             'depart_status' => DepartStatusResource::make($this->departStatus),
+            'status'=> $this->status,
             'product' => ProductResource::make($this->product),
             'amount_type' => $this->amountType,
             'comment' => $this->comment,

@@ -14,6 +14,7 @@ class ProductionPlanItem extends Model
         'depart_id',
         'recipe_item_id',
         'depart_status_id',
+        'status',
         'product_id',
         'amount_type_id',
         'amount',
@@ -38,6 +39,11 @@ class ProductionPlanItem extends Model
     public function departStatus(): BelongsTo
     {
         return $this->belongsTo(DepartStatus::class, 'depart_status_id');
+    }
+
+    public function status():BelongsTo
+    {
+        return $this->belongsTo(Status::class, 'status_id');
     }
 
     public function product(): BelongsTo
