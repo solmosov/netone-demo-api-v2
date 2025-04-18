@@ -2,13 +2,10 @@
 
 namespace App\Services\Production;
 
-use App\Exceptions\ServerErrorException;
-use App\Models\Depart;
 use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
 use App\Models\ProductionRecipe;
-use App\Models\RecipeItems;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\DB;
 
@@ -121,6 +118,26 @@ class ProductionPlanService
         ];
     }
 
+    public function receivePlanItem(int $planItemId): array
+    {
+        $statusReceived = self::getPlanItemReceivedStatus();
+        ProductionPlanItem::findOrFailt($planItemId)->update(['status_id' => $statusReceived->id]);
+
+        return [
+            'message' => "Muvaffaqiyatli qabul qilindi",
+        ];
+    }
+
+    public function completedPlanItem(int $planItemId): array
+    {
+        $statusReceived = self::getPlanItemReceivedStatus();
+        ProductionPlanItem::findOrFailt($planItemId)->update(['status_id' => $statusReceived->id]);
+
+        return [
+            'message' => "Topshiriq muvaffaqiyatli bajarildi",
+        ];
+    }
+
     public static function getNewStatus()
     {
         return StatusService::findByCode('productionPlanNew');
@@ -130,6 +147,7 @@ class ProductionPlanService
     {
         return StatusService::findByCode('productionPlanDepartNew');
     }
+
     public static function getPlanItemReceivedStatus()
     {
         return StatusService::findByCode('productionPlanDepartReceived');

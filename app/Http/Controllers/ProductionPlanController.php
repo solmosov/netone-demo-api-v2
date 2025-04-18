@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductionPlanRequest;
+use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
 use App\Http\Resources\ProductionPlanResource;
 use App\Http\Resources\ProductionPlanShowResource;
@@ -57,6 +58,19 @@ class ProductionPlanController extends Controller
         //
     }
 
+    public function receivePlanItem(UpdateProductionPlanItemReceiveRequest $request, int $planItemId): JsonResponse
+    {
+        $result = $this->productionPlanService->receivePlanItem($planItemId);
+
+        return response()->json($result);
+    }
+
+    public function completedPlanItem(int $planItemId): JsonResponse
+    {
+        $result = $this->productionPlanService->completedPlanItem($planItemId);
+
+        return response()->json($result);
+    }
 
     public function destroy(ProductionPlan $productionPlan)
     {
