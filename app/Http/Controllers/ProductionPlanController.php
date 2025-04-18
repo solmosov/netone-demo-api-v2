@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
 use App\Http\Resources\ProductionPlanResource;
+use App\Http\Resources\ProductionPlanShowResource;
 use App\Models\ProductionPlan;
 use App\Services\Production\ProductionPlanService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
@@ -14,7 +16,7 @@ class ProductionPlanController extends Controller
 {
     public function __construct(protected ProductionPlanService $productionPlanService) {}
 
-    public function index()
+    public function index(): JsonResponse
     {
         $result = $this->productionPlanService->findAll();
 
@@ -24,7 +26,7 @@ class ProductionPlanController extends Controller
     }
 
 
-    public function store(StoreProductionPlanRequest $request)
+    public function store(StoreProductionPlanRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('create', ProductionPlan::class);
@@ -37,9 +39,16 @@ class ProductionPlanController extends Controller
     }
 
 
-    public function show(ProductionPlan $productionPlan)
+    public function show(string $id): JsonResponse
     {
-        //
+        // Gate
+        Gate::authorize('view', ProductionPlan::class);
+
+        $result = $this->productionPlanService->findOne($id);
+
+        return response()->json([
+            'data' => ProductionPlanShowResource::make($result['data']),
+        ]);
     }
 
 

@@ -20,7 +20,14 @@ class ProductionPlan extends Model
 
     public function planItems(): HasMany
     {
-        return $this->hasMany(ProductionPlanItem::class, 'plan_id');
+        return $this->hasMany(ProductionPlanItem::class, 'plan_id')
+            ->with([
+                'depart',
+                'recipeItem',
+                'departStatus',
+                'product',
+                'amountType',
+            ]);
     }
 
     public function recipe(): BelongsTo
