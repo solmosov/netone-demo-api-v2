@@ -6,6 +6,7 @@ use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
+use App\Models\ProductionPlanItem;
 use App\Models\ProductionRecipe;
 use App\Models\RecipeItems;
 use App\Services\Status\StatusService;
@@ -43,6 +44,9 @@ class ProductionPlanService
         $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient');
         $pluckRecipeItemProduct = $recipe->recipeItems->pluck('product', 'id');
 
+        // Plan item status
+        $planItemStatus = self::getPlanItemNewStatus();
+
         DB::beginTransaction();
         try {
             // New Production Plan
@@ -77,6 +81,7 @@ class ProductionPlanService
                     'depart_id' => $departId,
                     'recipe_item_id' => $recipeItemId,
                     'depart_status_id' => $departStatus->id,
+                    'status_id' => $planItemStatus->id,
                     'product_id' => $productId,
                     'amount' => $calcAmount,
                     'amount_type_id' => $itemAmountTypeId,
@@ -102,7 +107,7 @@ class ProductionPlanService
         }
     }
 
-    public function findOne(int $id)
+    public function findOne(int $id): array
     {
         $data = ProductionPlan::with([
             'planItems',
@@ -119,5 +124,19 @@ class ProductionPlanService
     public static function getNewStatus()
     {
         return StatusService::findByCode('productionPlanNew');
+    }
+
+    public static function getPlanItemNewStatus()
+    {
+        return StatusService::findByCode('productionPlanDepartNew');
+    }
+    public static function getPlanItemReceivedStatus()
+    {
+        return StatusService::findByCode('productionPlanDepartReceived');
+    }
+
+    public static function getPlanItemCompletedStatus()
+    {
+        return StatusService::findByCode('productionPlanDepartCompleted');
     }
 }
