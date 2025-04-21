@@ -10,8 +10,6 @@ use App\Http\Resources\ProductionProcessShowResource;
 use App\Models\Product;
 use App\Models\ProductionProcess;
 use App\Models\ProductStock;
-use App\Models\ReceiveProduct;
-use App\Models\ReceiveProductDetail;
 use App\Models\Status;
 use App\Services\Production\ProductionProcessService;
 use Illuminate\Http\JsonResponse;
