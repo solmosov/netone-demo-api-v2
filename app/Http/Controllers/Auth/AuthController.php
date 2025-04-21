@@ -38,7 +38,7 @@ class AuthController extends Controller
             "message" => "Xush kelibsiz!",
             "token" => $token,
             "data" => $user
-        ], 200);
+        ]);
     }
 
     public function logout(Request $request): JsonResponse
