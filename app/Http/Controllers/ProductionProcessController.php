@@ -27,12 +27,7 @@ class ProductionProcessController extends Controller
 
     public function index(): JsonResponse
     {
-        $data = ProductionProcess::with(
-            'depart',
-            'productionRecipe',
-            'processItems',
-            'status'
-        )->latest()->get();
+        $data = $this->productionProcessService->findAll();
 
         return response()->json([
             'data' => ProductionProcessResource::collection($data),

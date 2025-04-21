@@ -17,7 +17,7 @@ class ProductionProcess extends Model
         'cost_price'
     ];
 
-    public function departId(): BelongsTo
+    public function depart(): BelongsTo
     {
         return $this->belongsTo(Depart::class, 'depart_id');
     }

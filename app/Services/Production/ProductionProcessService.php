@@ -8,6 +8,7 @@ use App\Models\ProductionProcess;
 use App\Models\ProductStock;
 use App\Models\Status;
 use App\Services\Status\StatusService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ProductionProcessService
@@ -60,6 +61,17 @@ class ProductionProcessService
             DB::rollBack();
             throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
+    }
+
+    public function findAll(): Collection
+    {
+        return ProductionProcess::with([
+            'depart',
+            'productionRecipe',
+            'status',
+        ])
+            ->latest()
+            ->get();
     }
 
     public static function getStatusProcess(): Status
