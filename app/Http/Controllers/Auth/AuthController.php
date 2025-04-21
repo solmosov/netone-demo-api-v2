@@ -15,7 +15,7 @@ class AuthController extends Controller
     public function login(AuthLoginRequest $request): JsonResponse
     {
         // User
-        $user = User::with('roles')
+        $user = User::with(['roles','departs'])
             ->where('login', $request->validated('login'))
             ->where('is_active', true)
             ->first();
@@ -38,7 +38,7 @@ class AuthController extends Controller
             "message" => "Xush kelibsiz!",
             "token" => $token,
             "data" => $user
-        ], 200, ['token' => $token]);
+        ], 200);
     }
 
     public function logout(Request $request): JsonResponse
