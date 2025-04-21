@@ -8,5 +8,4 @@ Route::group(['prefix' => 'production-processes', 'middleware' => ['auth:sanctum
     Route::get('{id}', [ProductionProcessController::class,'show']);
     Route::post('/', [ProductionProcessController::class,'store']);
     Route::put('{id}/finish', [ProductionProcessController::class,'finish']);
-    Route::delete('{id}/cancel', [ProductionProcessController::class,'cancel']);
 });
