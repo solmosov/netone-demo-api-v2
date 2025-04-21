@@ -34,6 +34,7 @@ class StoreProductionProcessRequest extends FormRequest
             'production_recipe_id' => 'required|integer|exists:production_recipes,id',
             'items_list' => 'required|array',
             'items_list.*.product_id' => 'required|integer|exists:products,id',
+            'items_list.*.polka_id' => 'required|integer|exists:products,id',
             'items_list.*.amount_type_id' => 'required|integer|exists:amount_types,id',
             'items_list.*.amount' => 'required|numeric|min:0.01',
         ];

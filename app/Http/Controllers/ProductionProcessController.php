@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ServerErrorException;
 use App\Http\Requests\FinishProductionProcessRequest;
 use App\Http\Requests\StoreProductionProcessRequest;
 use App\Http\Resources\ProductionProcessResource;
@@ -12,11 +13,18 @@ use App\Models\ProductStock;
 use App\Models\ReceiveProduct;
 use App\Models\ReceiveProductDetail;
 use App\Models\Status;
+use App\Services\Production\ProductionProcessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class ProductionProcessController extends Controller
 {
+    public function __construct(
+        protected ProductionProcessService $productionProcessService,
+    )
+    {
+    }
+
     public function index(): JsonResponse
     {
         $data = ProductionProcess::with(
@@ -32,75 +40,16 @@ class ProductionProcessController extends Controller
     }
 
 
-    public function store(StoreProductionProcessRequest $request)
+    /**
+     * @throws ServerErrorException
+     */
+    public function store(StoreProductionProcessRequest $request): JsonResponse
     {
+        $result = $this->productionProcessService->create($request->validated());
 
-        // Validation Stock
-        $validateItems = $request->validated('items_list');
-        $validateItemsKeys = array_column($validateItems, 'product_id');
-
-        // Stock Items
-        $stockItems = ProductStock::whereIn('product_id', $validateItemsKeys)->get();
-        $pluckStockItems = $stockItems->pluck('amount', 'product_id');
-
-        // Products
-        $pluckProducts = Product::whereIn('id', $validateItemsKeys)->get()->pluck('name', 'id');
-
-        if ($pluckStockItems->isEmpty()) {
-            return $this->mainErrRes("Zaxira mavjud emas");
-        }
-
-        foreach ($validateItems as $item) {
-            $productName = $pluckProducts->get($item['product_id']);
-
-            if (!$pluckStockItems->has($item['product_id'])) {
-                return $this->mainErrRes("`$productName` mahsulotning zaxirasi mavjud emas!");
-            }
-
-            if ($pluckStockItems->get($item['product_id']) < $item['amount']) {
-                return $this->mainErrRes("`$productName` mahsulotning zaxirasi yetarli emas!");
-            }
-        }
-
-        // Pluck Request Items
-        //        $pluckReqProductsAmountType = collect($validateItems)->pluck('amount_type_id', 'product_id');
-        $pluckReqProducts = collect($validateItems)->pluck('amount', 'product_id');
-
-        DB::beginTransaction();
-
-        try {
-            $processStatus = Status::where('code', 'productionProcess')->firstOrFail();
-
-            $newProcess = ProductionProcess::create([
-                'depart_id' => $request->validated('depart_id'),
-                'status_id' => $processStatus->id,
-                'production_recipe_id' => $request->validated('production_recipe_id'),
-                'out_amount' => 0,
-                'cost_price' => 0,
-            ]);
-
-            $newProcess->processItems()->createMany($request->validated('items_list'));
-
-
-            // Decrement From Stock
-            foreach ($stockItems as $item) {
-                // Request Amount
-                $amount = $pluckReqProducts->get($item->product_id);
-
-                // Decrement
-                $item->decrement('amount', $amount);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'message' => "Yangi ishlab chiqarish jarayoni qo'shildi",
-                'data' => $newProcess,
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->serverError($e);
-        }
+        return response()->json([
+            'message' => $result['message'],
+        ], 201);
     }
 
 
