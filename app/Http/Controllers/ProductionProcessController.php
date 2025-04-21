@@ -48,12 +48,7 @@ class ProductionProcessController extends Controller
 
     public function show(string $id): JsonResponse
     {
-        $data = ProductionProcess::with(
-            'depart',
-            'productionRecipe.recipeItems',
-            'processItems',
-            'status'
-        )->findOrFail($id);
+        $data = $this->productionProcessService->findOne((int)$id);
 
         return response()->json([
             'data' => ProductionProcessShowResource::make($data)

@@ -74,6 +74,16 @@ class ProductionProcessService
             ->get();
     }
 
+    public function findOne(int $id): ProductionProcess
+    {
+        return ProductionProcess::with(
+            'depart',
+            'productionRecipe.recipeItems',
+            'processItems',
+            'status'
+        )->findOrFail($id);
+    }
+
     public static function getStatusProcess(): Status
     {
         return StatusService::findByCode('productionProcess');
