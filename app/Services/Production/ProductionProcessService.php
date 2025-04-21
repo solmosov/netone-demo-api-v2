@@ -85,7 +85,8 @@ class ProductionProcessService
         )->findOrFail($id);
     }
 
-    public function finish(array $data, int $id){
+    public function finish(array $data, int $id): array
+    {
         // Req Data
         $reqPolkaId = $data['polka_id'];
         $reqTotalAmount = $data['total_amount'];
