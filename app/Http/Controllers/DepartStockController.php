@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDepartStockRequest;
 use App\Services\Department\DepartStockService;
+use Illuminate\Http\JsonResponse;
 
 class DepartStockController extends Controller
 {
@@ -11,7 +12,7 @@ class DepartStockController extends Controller
         protected DepartStockService $departStockService
     ) {}
 
-    public function store(StoreDepartStockRequest $request)
+    public function store(StoreDepartStockRequest $request): JsonResponse
     {
         $result = $this->departStockService->create($request->validated());
 

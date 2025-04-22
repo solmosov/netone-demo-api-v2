@@ -7,7 +7,7 @@ use App\Models\Product;
 
 class DepartStockService
 {
-  public function create(array $data)
+  public function create(array $data): array
   {
     // Req Data
     $departId = $data['depart_id'];
