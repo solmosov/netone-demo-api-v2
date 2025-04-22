@@ -22,6 +22,7 @@ class StoreDepartRequest extends FormRequest
             'user_list.*' => 'required|numeric|exists:users,id',
             'polka_id' => 'required|numeric|exists:polkas,id',
             'name' => 'required|string|unique:departs,name',
+            'status_name' => 'required|string|max:255|unique:statuses,name',
             'comment' => 'nullable|string|min:6|max:255',
         ];
     }
