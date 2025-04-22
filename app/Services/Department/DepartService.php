@@ -18,6 +18,7 @@ class DepartService
             'users',
             'departStock.polka',
             'departStock.product',
+            'departStatus',
             'polka'
         ])->get();
 
@@ -33,8 +34,8 @@ class DepartService
             'users',
             'departStock.polka',
             'departStock.product',
-            'transPerms',
             'departStatus',
+            'transPerms',
             'polka',
         ])->findOrFail($id);
 
