@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class DepartStockService
 {
-    public function create(array $data): array
+    public function create(array $data)
     {
         // Req Data
         $departId = $data['depart_id'];
@@ -28,10 +28,7 @@ class DepartStockService
             'amount_type_id' => $amountTypeId,
         ]);
 
-        return [
-            'message' => "Yangi bo'lim zaxira qo'shildi",
-            'data' => $newDepartStock
-        ];
+        return $newDepartStock;
     }
 
     public function findAll(): Collection

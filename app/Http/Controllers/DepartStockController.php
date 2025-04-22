@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDepartStockRequest;
+use App\Http\Resources\DepartStockResource;
 use App\Services\Department\DepartStockService;
 use Illuminate\Http\JsonResponse;
 
@@ -19,7 +20,8 @@ class DepartStockController extends Controller
         $result = $this->departStockService->create($request->validated());
 
         return response()->json([
-            'message' => $result['message']
+            'message' => "Yangi bo'lim zaxira qo'shildi",
+            'data' => DepartStockResource::make($result)
         ], 201);
     }
 
@@ -28,7 +30,7 @@ class DepartStockController extends Controller
         $data = $this->departStockService->findAll();
 
         return response()->json([
-            'data' => $data
+            'data' => DepartStockResource::collection($data),
         ]);
     }
 
@@ -37,7 +39,7 @@ class DepartStockController extends Controller
         $data = $this->departStockService->findOne((int) $id);
 
         return response()->json([
-           'data' => $data
+           'data' => DepartStockResource::make($data),
         ]);
     }
 
@@ -47,7 +49,7 @@ class DepartStockController extends Controller
 
         return response()->json([
             'message' => "Bo'lim zaxira polkasi o'chirildi",
-            'data' => $data,
+            'data' => DepartStockResource::make($data),
         ]);
     }
 }
