@@ -40,4 +40,14 @@ class DepartStockController extends Controller
            'data' => $data
         ]);
     }
+
+    public function destroy(string $id): JsonResponse
+    {
+        $data = $this->departStockService->delete((int) $id);
+
+        return response()->json([
+            'message' => "Bo'lim zaxira polkasi o'chirildi",
+            'data' => $data,
+        ]);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Department;
 
+use App\Exceptions\ServerErrorException;
 use App\Models\DepartStock;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
@@ -42,5 +43,18 @@ class DepartStockService
     public function findOne(int $id): DepartStock
     {
         return DepartStock::with(['depart','polka','amountType','product'])->findOrfail($id);
+    }
+
+    public function delete(int $id): DepartStock
+    {
+        $departStock  = $this->findOne($id);
+
+        try{
+            $departStock->delete();
+
+            return $departStock;
+        }catch (\Exception $e){
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+        }
     }
 }
