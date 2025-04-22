@@ -10,6 +10,7 @@ use App\Http\Resources\DepartResource;
 use App\Http\Resources\DepartShowResource;
 use App\Models\Depart;
 use App\Services\Department\DepartService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
 class DepartController extends Controller
@@ -18,7 +19,7 @@ class DepartController extends Controller
         protected DepartService $departService
     ) {}
 
-    public function index()
+    public function index(): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', Depart::class);
@@ -31,7 +32,7 @@ class DepartController extends Controller
     }
 
 
-    public function store(StoreDepartRequest $request)
+    public function store(StoreDepartRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('create', Depart::class);
@@ -43,7 +44,7 @@ class DepartController extends Controller
         ], 201);
     }
 
-    public function assignPerm(StoreDepartAssignPermRequest $request)
+    public function assignPerm(StoreDepartAssignPermRequest $request): JsonResponse
     {
         $result = $this->departService->assignPerm($request->validated());
 
@@ -52,7 +53,7 @@ class DepartController extends Controller
         ]);
     }
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('view', Depart::class);
