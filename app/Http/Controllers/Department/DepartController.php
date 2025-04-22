@@ -46,6 +46,9 @@ class DepartController extends Controller
 
     public function assignPerm(StoreDepartAssignPermRequest $request): JsonResponse
     {
+        // Gate
+        Gate::authorize('assignPerm', Depart::class);
+
         $result = $this->departService->assignPerm($request->validated());
 
         return response()->json([
@@ -66,7 +69,7 @@ class DepartController extends Controller
     }
 
 
-    public function update(UpdateDepartRequest $request, string $id)
+    public function update(UpdateDepartRequest $request, string $id): JsonResponse
     {
         // Gate
         Gate::authorize('update', Depart::class);
@@ -80,7 +83,7 @@ class DepartController extends Controller
     }
 
 
-    public function destroy(string $id)
+    public function destroy(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('delete', Depart::class);

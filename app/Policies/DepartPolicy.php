@@ -32,6 +32,11 @@ class DepartPolicy
         return $user->isAdmin();
     }
 
+    public function assignPerm(User $user):bool
+    {
+        return $user->isAdmin();
+    }
+
     /**
      * Determine whether the user can update the model.
      */
