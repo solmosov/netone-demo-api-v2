@@ -7,13 +7,8 @@ use App\Http\Requests\FinishProductionProcessRequest;
 use App\Http\Requests\StoreProductionProcessRequest;
 use App\Http\Resources\ProductionProcessResource;
 use App\Http\Resources\ProductionProcessShowResource;
-use App\Models\Product;
-use App\Models\ProductionProcess;
-use App\Models\ProductStock;
-use App\Models\Status;
 use App\Services\Production\ProductionProcessService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class ProductionProcessController extends Controller
 {
