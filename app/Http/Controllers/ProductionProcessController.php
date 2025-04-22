@@ -9,6 +9,7 @@ use App\Http\Resources\ProductionProcessResource;
 use App\Http\Resources\ProductionProcessShowResource;
 use App\Services\Production\ProductionProcessService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class ProductionProcessController extends Controller
 {
@@ -18,9 +19,13 @@ class ProductionProcessController extends Controller
     {
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $data = $this->productionProcessService->findAll();
+        $validated = $request->validate([
+            'depart_id' => 'required|exists:departs,id',
+        ]);
+
+        $data = $this->productionProcessService->findAll((int) $validated['depart_id']);
 
         return response()->json([
             'data' => ProductionProcessResource::collection($data),
