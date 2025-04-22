@@ -19,7 +19,7 @@ class DepartStock extends Model
 
     public function depart(): BelongsTo
     {
-        return $this->belongsTo(Depart::class, 'depart');
+        return $this->belongsTo(Depart::class, 'depart_id');
     }
 
     public function polka(): BelongsTo
