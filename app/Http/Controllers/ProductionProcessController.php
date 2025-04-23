@@ -22,10 +22,10 @@ class ProductionProcessController extends Controller
     public function index(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'depart_id' => 'required|exists:departs,id',
+            'depart_id' => 'nullable|integer|exists:departs,id',
         ]);
 
-        $data = $this->productionProcessService->findAll((int) $validated['depart_id']);
+        $data = $this->productionProcessService->findAll($validated['depart_id'] ?? null);
 
         return response()->json([
             'data' => ProductionProcessResource::collection($data),

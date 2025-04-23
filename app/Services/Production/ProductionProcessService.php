@@ -64,16 +64,19 @@ class ProductionProcessService
         }
     }
 
-    public function findAll(int $departId): Collection
+    public function findAll(int|null $departId): Collection
     {
-        return ProductionProcess::with([
+        $query = ProductionProcess::with([
             'depart',
             'productionRecipe',
             'status',
-        ])
-            ->where('depart_id', $departId)
-            ->latest()
-            ->get();
+        ]);
+
+        if ($departId) {
+            $query->where('depart_id', $departId);
+        }
+
+        return $query->latest()->get();
     }
 
     public function findOne(int $id): ProductionProcess
