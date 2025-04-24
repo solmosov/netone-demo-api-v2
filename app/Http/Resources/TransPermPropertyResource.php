@@ -12,7 +12,7 @@ class TransPermPropertyResource extends JsonResource
         return [
             'id' => $this->id,
             'trans_perm' => TransPermResource::make($this->transPerm),
-            'details' => DepartResource::collection($this->details),
+            'details' => TransPermPropertyDetailsResource::collection($this->details),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
