@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DepartTransPermProperty extends Model
@@ -13,6 +14,17 @@ class DepartTransPermProperty extends Model
         'trans_perm_id',
         'depart_id',
     ];
+
+
+    public function transPerm(): BelongsTo
+    {
+        return $this->belongsTo(TransPerm::class, 'trans_perm_id');
+    }
+
+    public function depart(): BelongsTo
+    {
+        return $this->belongsTo(Depart::class, 'depart_id');
+    }
 
     public function details(): HasMany
     {

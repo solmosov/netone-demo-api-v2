@@ -62,4 +62,10 @@ class Depart extends Model
     {
         return $this->hasMany(ProductionPlanItem::class, 'depart_id');
     }
+
+    public function transPermProperty(): HasMany
+    {
+        return $this->hasMany(DepartTransPermProperty::class, 'depart_id')
+            ->with(['transPerm','details']);
+    }
 }

@@ -15,6 +15,11 @@ class TransPerm extends Model
         'code'
     ];
 
+    public function transPermProperty(): HasMany
+    {
+        return $this->hasMany(DepartTransPermProperty::class,'trans_perm_id');
+    }
+
     public function departs(): BelongsToMany
     {
         return $this->belongsToMany(

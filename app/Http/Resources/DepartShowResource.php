@@ -15,7 +15,7 @@ class DepartShowResource extends JsonResource
             'name' => $this->name,
             'user_list' => UserResource::collection($this->whenLoaded('users')),
             'polka' => $this->polka,
-            'trans_perms' => TransPermResource::collection($this->transPerms),
+            'trans_perm_property' => TransPermPropertyResource::collection($this->transPermProperty),
             'depart_status' => DepartStatusResource::make($this->departStatus),
             'depart_stock' => ProductStockResource::make($this->departStock),
             'comment' => $this->comment,

@@ -35,7 +35,7 @@ class DepartService
             'departStock.polka',
             'departStock.product',
             'departStatus',
-            'transPerms',
+            'transPermProperty',
             'polka',
         ])->findOrFail($id);
 
