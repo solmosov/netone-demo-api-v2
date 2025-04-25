@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\DepartTransPermProperty;
+use App\Models\DepartTransPermPropertyDetails;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -30,12 +31,20 @@ class StoreDepartAssignPermRequest extends FormRequest
         $validator->after(function ($validator) {
             $permId = $this->input('perm_id');
             $ownerDepartId = $this->input('owner_depart_id');
+            $departList = $this->input('depart_list');
 
-            $exist = DepartTransPermProperty::where('trans_perm_id', $permId)
+            $property = DepartTransPermProperty::where('trans_perm_id', $permId)
                 ->where('depart_id', $ownerDepartId)
-                ->exists();
-            if ($exist) {
-                $validator->errors()->add('perm_id', "Bu bo'lim ruxsati allaqachon mavjud");
+                ->first();
+            if ($property) {
+                foreach ($departList as $departId) {
+                    $exist = DepartTransPermPropertyDetails::where('property_id', $property->id)
+                        ->where('depart_id', $departId)
+                        ->exists();
+                    if ($exist) {
+                        $validator->errors()->add('depart_list', "Bu bo'lim ruxsati allaqachon mavjud");
+                    }
+                }
             }
         });
     }

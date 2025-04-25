@@ -102,23 +102,29 @@ class DepartService
         // Owner Depart
         $ownerDepart = Depart::findOrFail($ownerDepartId);
 
+        $property = DepartTransPermProperty::where('trans_perm_id', $permId)->where('depart_id', $ownerDepartId)->first();
+
         DB::beginTransaction();
         try {
-            // Create Property
-            $newProperty = DepartTransPermProperty::create([
-                'depart_id' => $ownerDepart->id,
-                'trans_perm_id' => $permId
-            ]);
+
+
+            if (!$property) {
+                // Create Property
+                $property = DepartTransPermProperty::create([
+                    'depart_id' => $ownerDepart->id,
+                    'trans_perm_id' => $permId
+                ]);
+            }
 
             // Create Property Details
             $transPermDetailsList = [];
             foreach ($departList as $departId) {
                 $transPermDetailsList[] = [
-                    'property_id' => $newProperty->id,
+                    'property_id' => $property->id,
                     'depart_id' => $departId,
                 ];
             }
-            $newProperty->details()->createMany($transPermDetailsList);
+            $property->details()->createMany($transPermDetailsList);
 
             // Finish
             DB::commit();
