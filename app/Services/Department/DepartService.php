@@ -4,6 +4,7 @@ namespace App\Services\Department;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
+use App\Models\Department\DepartStatus;
 use App\Models\DepartStock;
 use App\Models\DepartTransPermProperty;
 use App\Models\Polka;
@@ -74,8 +75,8 @@ class DepartService
             $polka->owner_id = $newDepart->id;
             $polka->save();
 
-            // Status
-            Status::create([
+            // Department Status
+            DepartStatus::create([
                 'depart_id' => $newDepart->id,
                 'name' => $statusName,
             ]);
