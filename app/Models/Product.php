@@ -24,9 +24,9 @@ class Product extends Model
         return $this->belongsTo(AmountType::class, 'price_amount_type_id');
     }
 
-    public function stock(): HasOne
+    public function stocks(): HasMany
     {
-        return $this->hasOne(ProductStock::class, 'product_id');
+        return $this->hasMany(ProductStock::class, 'product_id');
     }
 
     public function departTransDetails(): HasMany
