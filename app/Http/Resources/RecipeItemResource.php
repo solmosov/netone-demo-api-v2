@@ -16,6 +16,7 @@ class RecipeItemResource extends JsonResource
             'coefficient' => (float) $this->coefficient,
             'is_change' => (bool) $this->is_change,
             'product' => ProductResource::make($this->product),
+            'product_stocks' => ProductStockResource::collection($this->product->stocks),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];
