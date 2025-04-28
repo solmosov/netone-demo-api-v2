@@ -13,6 +13,7 @@ class RecipeResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'out_product' => ProductResource::make($this->outProduct),
+            'out_amount_type' => $this->outAmountType,
             'out_amount' => (float) $this->out_amount,
             'recipe_items' => RecipeItemResource::collection($this->recipeItems),
             'created_at' => $this->created_at,

@@ -22,6 +22,7 @@ class ProductionRecipeController extends Controller
     {
         $data = ProductionRecipe::with(
             'outProduct',
+            'outAmountType',
             'recipeItems.product'
         )->get();
 
@@ -76,6 +77,7 @@ class ProductionRecipeController extends Controller
     {
         $productionRecipe = ProductionRecipe::with(
             'outProduct',
+            'outAmountType',
             'recipeItems.product'
         )->findOrFail($id);
 
