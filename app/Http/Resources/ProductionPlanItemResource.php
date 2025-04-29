@@ -13,7 +13,7 @@ class ProductionPlanItemResource extends JsonResource
             'id' => $this->id,
             'amount' => (float) $this->amount,
             'depart' => DepartResource::make($this->depart),
-            'recipe_item' => $this->recipeItem,
+            'recipe_item' => RecipeItemResource::make($this->recipeItem),
             'depart_status' => DepartStatusResource::make($this->departStatus),
             'status'=> $this->status,
             'product' => ProductResource::make($this->product),

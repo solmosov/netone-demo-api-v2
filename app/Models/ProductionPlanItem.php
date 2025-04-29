@@ -33,7 +33,11 @@ class ProductionPlanItem extends Model
 
     public function recipeItem(): BelongsTo
     {
-        return $this->belongsTo(RecipeItems::class, 'recipe_item_id');
+        return $this->belongsTo(RecipeItems::class, 'recipe_item_id')
+            ->with([
+                'product',
+                'amountType'
+            ]);
     }
 
     public function departStatus(): BelongsTo
@@ -41,7 +45,7 @@ class ProductionPlanItem extends Model
         return $this->belongsTo(DepartStatus::class, 'depart_status_id');
     }
 
-    public function status():BelongsTo
+    public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class, 'status_id');
     }

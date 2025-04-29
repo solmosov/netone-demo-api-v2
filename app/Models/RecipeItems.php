@@ -25,7 +25,7 @@ class RecipeItems extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(Product::class, 'product_id')->with(['priceAmountType','stocks.polka']);
+        return $this->belongsTo(Product::class, 'product_id')->with(['priceAmountType', 'stocks', 'stocks.polka']);
     }
 
     public function amountType(): BelongsTo

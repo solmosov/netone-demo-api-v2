@@ -16,7 +16,7 @@ class ProductionPlanShowResource extends JsonResource
             'amount_type' => $this->amountType,
             'finish_date' => $this->finish_date,
             'comment' => $this->comment,
-            'recipe' => ProductionRecipeResource::make($this->recipe),
+            'recipe' => RecipeResource::make($this->recipe),
             'status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
