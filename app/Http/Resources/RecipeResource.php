@@ -12,10 +12,10 @@ class RecipeResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'out_product' => ProductResource::make($this->outProduct),
+            'out_product' => ProductResource::make($this->whenLoaded('outProduct')),
             'out_amount_type' => $this->outAmountType,
             'out_amount' => (float) $this->out_amount,
-            'recipe_items' => RecipeItemResource::collection($this->recipeItems),
+            'recipe_items' => RecipeItemResource::collection($this->whenLoaded('recipeItems')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
