@@ -120,6 +120,11 @@ class ProductionPlanService
         ];
     }
 
+    public function findPlanItemsByDepart(int $departId)
+    {
+        return ProductionPlanItem::where('depart_id', $departId)->get();
+    }
+
     public function receivePlanItem(int $planItemId): array
     {
         $statusReceived = self::getPlanItemReceivedStatus();

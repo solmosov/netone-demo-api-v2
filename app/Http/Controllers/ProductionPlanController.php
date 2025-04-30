@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetPlanItemsByDepartRequest;
 use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanItemCompleteRequst;
 use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
@@ -11,12 +12,13 @@ use App\Http\Resources\ProductionPlanShowResource;
 use App\Models\ProductionPlan;
 use App\Services\Production\ProductionPlanService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class ProductionPlanController extends Controller
 {
-    public function __construct(protected ProductionPlanService $productionPlanService) {}
+    public function __construct(protected ProductionPlanService $productionPlanService)
+    {
+    }
 
     public function index(): JsonResponse
     {
@@ -50,6 +52,15 @@ class ProductionPlanController extends Controller
 
         return response()->json([
             'data' => ProductionPlanShowResource::make($result['data']),
+        ]);
+    }
+
+    public function showPlanItemsByDepart(GetPlanItemsByDepartRequest $request)
+    {
+        $data = $this->productionPlanService->findPlanItemsByDepart($request->validated('depart_id'));
+
+        return response()->json([
+            'data' => $data
         ]);
     }
 
