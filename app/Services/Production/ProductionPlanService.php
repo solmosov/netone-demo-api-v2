@@ -41,6 +41,9 @@ class ProductionPlanService
         $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient');
         $pluckRecipeItemProduct = $recipe->recipeItems->pluck('product', 'id');
 
+        // Plan item status
+        $planItemStatus = self::getPlanItemNewStatus();
+
         DB::beginTransaction();
         try {
             // New Production Plan
@@ -75,7 +78,7 @@ class ProductionPlanService
                     'depart_id' => $departId,
                     'recipe_item_id' => $recipeItemId,
                     'depart_status_id' => $departStatus->id,
-                    'status_id' => 26,
+                    'status_id' => $planItemStatus->id,
                     'product_id' => $productId,
                     'amount' => $calcAmount,
                     'amount_type_id' => $itemAmountTypeId,
