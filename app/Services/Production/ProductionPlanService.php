@@ -38,7 +38,7 @@ class ProductionPlanService
 
         // Recipe
         $recipe = ProductionRecipe::with('recipeItems')->findOrFail($recipeId);
-        $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient');
+        $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient', 'id');
         $pluckRecipeItemProduct = $recipe->recipeItems->pluck('product', 'id');
 
         // Plan item status
@@ -63,8 +63,10 @@ class ProductionPlanService
             foreach ($planItemList as $item) {
                 $departId = $item['depart_id'];
                 $recipeItemId = $item['recipe_item_id'];
+
                 $productId = $pluckRecipeItemProduct[$recipeItemId]->id;
                 $itemAmountTypeId = $pluckRecipeItemProduct[$recipeItemId]->price_amount_type_id;
+
 
                 // Recipe
                 $coefficient = $pluckRecipeItemCoefficient[$recipeItemId];
