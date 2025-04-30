@@ -12,11 +12,13 @@ class RecipeItemResource extends JsonResource
         return [
             'id' => $this->id,
             'amount_type' => $this->amountType,
-            'amount' => (float) $this->amount,
-            'coefficient' => (float) $this->coefficient,
-            'is_change' => (bool) $this->is_change,
-            'product' => ProductResource::make($this->product),
-            'product_stocks' => ProductStockResource::collection($this->product->stocks),
+            'amount' => (float)$this->amount,
+            'coefficient' => (float)$this->coefficient,
+            'is_change' => (bool)$this->is_change,
+            'product' => ProductResource::make($this->whenLoaded('product')),
+            'product_stocks' => $this->whenLoaded('product', function () {
+                return ProductStockResource::collection($this->product->stocks);
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

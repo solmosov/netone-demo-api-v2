@@ -7,6 +7,7 @@ use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanItemCompleteRequst;
 use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
+use App\Http\Resources\PlanItemByDepartResource;
 use App\Http\Resources\ProductionPlanResource;
 use App\Http\Resources\ProductionPlanShowResource;
 use App\Models\ProductionPlan;
@@ -60,7 +61,7 @@ class ProductionPlanController extends Controller
         $data = $this->productionPlanService->findPlanItemsByDepart($request->validated('depart_id'));
 
         return response()->json([
-            'data' => $data
+            'data' => PlanItemByDepartResource::collection($data),
         ]);
     }
 

@@ -7,6 +7,7 @@ use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
 use App\Models\ProductionRecipe;
 use App\Services\Status\StatusService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ProductionPlanService
@@ -120,9 +121,18 @@ class ProductionPlanService
         ];
     }
 
-    public function findPlanItemsByDepart(int $departId)
+    public function findPlanItemsByDepart(int $departId): Collection
     {
-        return ProductionPlanItem::where('depart_id', $departId)->get();
+        return ProductionPlanItem::with([
+            'plan',
+            'depart',
+            'recipeItem',
+            'departStatus',
+            'status',
+            'product',
+            'amountType'
+        ])
+            ->where('depart_id', $departId)->get();
     }
 
     public function receivePlanItem(int $planItemId): array
