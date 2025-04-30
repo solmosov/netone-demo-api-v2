@@ -55,7 +55,7 @@ class ProductionPlanController extends Controller
         ]);
     }
 
-    public function showPlanItemsByDepart(GetPlanItemsByDepartRequest $request)
+    public function showPlanItemsByDepart(GetPlanItemsByDepartRequest $request): JsonResponse
     {
         $data = $this->productionPlanService->findPlanItemsByDepart($request->validated('depart_id'));
 
