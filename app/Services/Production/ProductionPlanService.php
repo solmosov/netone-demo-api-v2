@@ -132,7 +132,9 @@ class ProductionPlanService
             'product',
             'amountType'
         ])
-            ->where('depart_id', $departId)->get();
+            ->where('depart_id', $departId)
+            ->latest()
+            ->get();
     }
 
     public function receivePlanItem(int $planItemId): array
