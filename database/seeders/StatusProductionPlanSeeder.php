@@ -13,7 +13,8 @@ class StatusProductionPlanSeeder extends Seeder
     public function run(): void
     {
         Status::create(["name" => "Yangi", "code" => "productionPlanNew"]);
-        Status::create(["name" => "Jarayonda", "code" => "productionPlanProcessProcess"]);
-        Status::create(["name" => "Bekor qilindi", "code" => "productionPlanProcessCancel"]);
+        Status::create(["name" => "Jarayonda", "code" => "productionPlanProcess"]);
+        Status::create(["name" => "Bekor qilindi", "code" => "productionPlanCancel"]);
+        Status::create(["name" => "Tayyor", "code" => "productionPlanCompleted"]);
     }
 }

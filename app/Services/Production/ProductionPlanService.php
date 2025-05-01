@@ -159,9 +159,30 @@ class ProductionPlanService
         ];
     }
 
+    public function finish(int $planId)
+    {
+//        $statusC
+        return ProductionPlan::where('id', $planId)->firstOrFail();
+    }
+
     public static function getNewStatus()
     {
         return StatusService::findByCode('productionPlanNew');
+    }
+
+    public static function getProcessStatus()
+    {
+        return StatusService::findByCode('productionPlanProcess');
+    }
+
+    public static function getCancelStatus()
+    {
+        return StatusService::findByCode('productionPlanCancel');
+    }
+
+    public static function getCompletedStatus()
+    {
+        return StatusService::findByCode('productionPlanCompleted');
     }
 
     public static function getPlanItemNewStatus()
