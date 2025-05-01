@@ -163,9 +163,12 @@ class ProductionPlanService
     {
         $statusCompleted = self::getCompletedStatus();
         ProductionPlan::where('id', $planId)
-            ->where('status_id','!=', $statusCompleted->id)
+            ->where('status_id', '!=', $statusCompleted->id)
             ->firstOrFail()
-            ->update(['status_id' => $statusCompleted->id]);
+            ->update([
+                'status_id' => $statusCompleted->id,
+                'finish_date' => now()
+            ]);
 
         return [
             'message' => "Topshiriq yakunlandi",
