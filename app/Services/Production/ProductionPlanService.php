@@ -147,7 +147,7 @@ class ProductionPlanService
         ];
     }
 
-    public function completedPlanItem(int $planItemId)
+    public function completedPlanItem(int $planItemId): array
     {
         $statusReceived = self::getPlanItemCompletedStatus();
         ProductionPlanItem::where('id', $planItemId)
