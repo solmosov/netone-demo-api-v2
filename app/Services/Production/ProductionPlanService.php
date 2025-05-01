@@ -147,10 +147,12 @@ class ProductionPlanService
         ];
     }
 
-    public function completedPlanItem(int $planItemId): array
+    public function completedPlanItem(int $planItemId)
     {
-        $statusReceived = self::getPlanItemReceivedStatus();
-        ProductionPlanItem::findOrFailt($planItemId)->update(['status_id' => $statusReceived->id]);
+        $statusReceived = self::getPlanItemCompletedStatus();
+        ProductionPlanItem::where('id', $planItemId)
+            ->firstOrFail()
+            ->update(['status_id' => $statusReceived->id]);
 
         return [
             'message' => "Topshiriq muvaffaqiyatli bajarildi",
