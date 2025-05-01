@@ -21,6 +21,19 @@ class ProductionPlanShowResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'plan_items' => ProductionPlanItemResource::collection($this->planItems),
+            'plan_items_by_status' => $this->transformPlanItemsByStatuses($this->plan_items_by_statuses)
         ];
+    }
+
+    private function transformPlanItemsByStatuses($statuses)
+    {
+        return $statuses->map(function ($status) {
+            return [
+                "id" => $status['id'],
+                "name" => $status['name'],
+                "code" => $status['code'],
+                "items" => ProductionPlanItemResource::collection($status['items']),
+            ];
+        });
     }
 }

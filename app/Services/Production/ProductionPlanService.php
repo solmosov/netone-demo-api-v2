@@ -6,6 +6,7 @@ use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
 use App\Models\ProductionRecipe;
+use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -115,6 +116,24 @@ class ProductionPlanService
             'amountType',
             'status'
         ])->findOrFail($id);
+
+        $statuses = Status::whereIn('code', [
+            'productionPlanDepartNew',
+            'productionPlanDepartReceived',
+            'productionPlanDepartCompleted',
+        ])->get();
+
+        $groupedPlanItems = $data->planItems->groupBy(fn($item) => $item->status->code ?? 'unknown');
+        $result = $statuses->map(function ($status) use ($groupedPlanItems) {
+            return [
+                "id" => $status->id,
+                "name" => $status->name,
+                "code" => $status->code,
+                "items" => $groupedPlanItems[$status->code] ?? [], // Attach items or empty array
+            ];
+        });
+
+        $data->plan_items_by_statuses = $result;
 
         return [
             'data' => $data
