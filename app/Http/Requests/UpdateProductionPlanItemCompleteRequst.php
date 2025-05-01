@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
+use App\Services\Production\ProductionPlanService;
+use App\Services\Status\StatusService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -35,12 +38,21 @@ class UpdateProductionPlanItemCompleteRequst extends FormRequest
                 $validator->errors()->add('depart_id', "O'zingizga tegishli bo'lmagan bo'limni tanlamoqdasiz");
             }
 
-            $exists = ProductionPlanItem::where('id', $planItemId)
+            $planItem = ProductionPlanItem::where('id', $planItemId)
                 ->where('depart_id', $departId)
-                ->exists();
-            if (!$exists) {
+                ->first();
+            if (!$planItem) {
                 $validator->errors()->add('depart_id', "Bo'lim noto'g'ri tanlandi");
+            } else {
+                $exists = ProductionPlan::where('id', $planItem->plan_id)
+                    ->where('status_id', ProductionPlanService::getNewStatus()->id)
+                    ->where('status_id', ProductionPlanService::getCompletedStatus()->id)
+                    ->exists();
+                if(!$exists){
+                    $validator->errors()->add('depart_id', "Bu topshiriq allaqachon yakunlangan");
+                }
             }
+
         });
     }
 }
