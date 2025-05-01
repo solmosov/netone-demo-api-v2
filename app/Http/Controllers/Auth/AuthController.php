@@ -15,7 +15,10 @@ class AuthController extends Controller
     public function login(AuthLoginRequest $request): JsonResponse
     {
         // User
-        $user = User::with('roles')->where('login', $request->validated('login'))->where('is_active', true)->first();
+        $user = User::with(['roles','departs'])
+            ->where('login', $request->validated('login'))
+            ->where('is_active', true)
+            ->first();
 
         // Check Is Active
         if (!$user)  abort(401, 'Login yoki parol xato!');
@@ -35,7 +38,7 @@ class AuthController extends Controller
             "message" => "Xush kelibsiz!",
             "token" => $token,
             "data" => $user
-        ], 200, ['token' => $token]);
+        ]);
     }
 
     public function logout(Request $request): JsonResponse

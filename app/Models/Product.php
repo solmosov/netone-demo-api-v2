@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Department\DepartTransProcessDetail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Product extends Model
@@ -22,8 +24,18 @@ class Product extends Model
         return $this->belongsTo(AmountType::class, 'price_amount_type_id');
     }
 
-    public function stock(): HasOne
+        public function stocks(): HasMany
     {
-        return $this->hasOne(ProductStock::class, 'product_id');
+        return $this->hasMany(ProductStock::class, 'product_id');
+    }
+
+    public function departTransDetails(): HasMany
+    {
+        return $this->hasMany(Product::class, 'product_id');
+    }
+
+    public function departTransProcessDetail(): HasMany
+    {
+        return $this->hasMany(DepartTransProcessDetail::class, 'product_id');
     }
 }

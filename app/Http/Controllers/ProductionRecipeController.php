@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductionRecipeRequest;
 use App\Http\Requests\UpdateProductionRecipeRequest;
-use App\Http\Resources\ProductionRecipeResource;
+use App\Http\Resources\RecipeResource;
 use App\Models\ProductionRecipe;
 use App\Services\AmountConverterService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
 class ProductionRecipeController extends Controller
@@ -17,15 +18,16 @@ class ProductionRecipeController extends Controller
     {
     }
 
-    public function index()
+    public function index(): JsonResponse
     {
         $data = ProductionRecipe::with(
             'outProduct',
+            'outAmountType',
             'recipeItems.product'
         )->get();
 
         return response()->json([
-            'data' => ProductionRecipeResource::collection($data)
+            'data' => RecipeResource::collection($data)
         ]);
     }
 
@@ -71,15 +73,16 @@ class ProductionRecipeController extends Controller
     }
 
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         $productionRecipe = ProductionRecipe::with(
             'outProduct',
-            'recipeItems'
+            'outAmountType',
+            'recipeItems.product'
         )->findOrFail($id);
 
         return response()->json([
-            'data' => ProductionRecipeResource::make($productionRecipe)
+            'data' => RecipeResource::make($productionRecipe)
         ]);
     }
 

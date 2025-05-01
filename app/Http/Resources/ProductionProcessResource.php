@@ -16,6 +16,7 @@ class ProductionProcessResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'depart' => DepartResource::make($this->depart),
             'production_recipe' => [
                 'id' => $this->productionRecipe->id,
                 'name' => $this->productionRecipe->name,
@@ -25,7 +26,6 @@ class ProductionProcessResource extends JsonResource
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ],
-            'process_items' => ProductionProcessItemResource::collection($this->processItems),
             'out_amount' => (float) $this->out_amount,
             'cost_price' => (float) $this->cost_price,
             'status' => $this->status,
