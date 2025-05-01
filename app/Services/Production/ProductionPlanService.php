@@ -159,10 +159,17 @@ class ProductionPlanService
         ];
     }
 
-    public function finish(int $planId)
+    public function finish(int $planId): array
     {
-//        $statusC
-        return ProductionPlan::where('id', $planId)->firstOrFail();
+        $statusCompleted = self::getCompletedStatus();
+        ProductionPlan::where('id', $planId)
+            ->where('status_id','!=', $statusCompleted->id)
+            ->firstOrFail()
+            ->update(['status_id' => $statusCompleted->id]);
+
+        return [
+            'message' => "Topshiriq yakunlandi",
+        ];
     }
 
     public static function getNewStatus()

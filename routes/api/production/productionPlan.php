@@ -9,3 +9,4 @@ Route::group(['prefix' => '/production-plan/items', 'middleware' => ['auth:sanct
     Route::put('/{plan_item_id}/completed', [ProductionPlanController::class, 'completedPlanItem']);
 });
 Route::apiResource('/production-plan', ProductionPlanController::class)->middleware(['auth:sanctum']);
+Route::put('/production-plan/{id}/finish', [ProductionPlanController::class, 'finish']);

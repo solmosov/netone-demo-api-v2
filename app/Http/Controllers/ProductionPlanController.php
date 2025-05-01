@@ -89,4 +89,13 @@ class ProductionPlanController extends Controller
     {
         //
     }
+
+    public function finish(string $id): JsonResponse
+    {
+        $result = $this->productionPlanService->finish((int)$id);
+
+        return response()->json([
+            'message' => $result['message']
+        ]);
+    }
 }
