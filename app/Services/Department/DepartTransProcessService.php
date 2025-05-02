@@ -19,7 +19,7 @@ use InvalidArgumentException;
 
 class DepartTransProcessService
 {
-  public function findAll()
+  public function findAll(): array
   {
     $data = DepartTransProcess::with([
       'transferPermission',
@@ -37,7 +37,7 @@ class DepartTransProcessService
     ];
   }
 
-  public function create(array $data)
+  public function create(array $data): array
   {
     // Req Data
     $transPermId = $data['trans_perm_id'];
@@ -99,7 +99,7 @@ class DepartTransProcessService
     }
   }
 
-  public function findOne(int $id)
+  public function findOne(int $id): array
   {
     $data = DepartTransProcess::with([
       'transferPermission',
@@ -117,7 +117,7 @@ class DepartTransProcessService
     ];
   }
 
-  public function receive(array $data, int $id)
+  public function receive(array $data, int $id): array
   {
     // Req Data
     $reqDetailsList = $data['details_list'];
@@ -145,7 +145,7 @@ class DepartTransProcessService
     if (!$exists) {
       throw new InvalidDataException("Bu amalni bajarib bo'lmadi", 403);
     }
-    
+
     // Check Polka Owner Validation
     $pluckPolka = array_column($reqDetailsList, 'polka_id');
     $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
