@@ -37,24 +37,18 @@ class DepartTransProcessService
     ];
   }
 
-  public function create(array $data): array
+  public function create(array $data)
   {
-    // Req Data
+    $authId = Auth::id();
+    // Request Data
     $transPermId = $data['trans_perm_id'];
     $senderDepartId = $data['sender_depart_id'];
     $receiverDepartId = $data['receiver_depart_id'];
     $productList = $data['product_list'];
     $comment = $data['comment'] ?? null;
 
-    // Check Polka Owner Validation
-    $pluckPolka = array_column($productList, 'polka_id');
-    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if ($exists) {
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang", 403);
-    }
-
-    // Receiver Depart
-    $receiverDepart = Depart::findOrFail($receiverDepartId);
+    // Status Process 
+    $statusProcess = self::getSendProductStatus();
 
     DB::beginTransaction();
 
@@ -64,37 +58,34 @@ class DepartTransProcessService
         'trans_perm_id' => $transPermId,
         'sender_depart_id' => $senderDepartId,
         'receiver_depart_id' => $receiverDepartId,
-        'sender_user_id' => Auth::id(),
-        'status_id' => DepartTransProcessService::getSendProductStatus()->id,
+        'sender_user_id' => $authId,
+        'status_id' => $statusProcess->id,
         'comment' => $comment,
       ]);
 
-      $insertDetailData = [];
+      // New Process Details
+      $creatableDetails = [];
+
       foreach ($productList as $item) {
+        // Values
         $departStockId = $item['depart_stock_id'];
-        $amount  = $item['amount'];
+        $amount = $item['amount'];
 
-        
-        $departStock = DepartStock::find($departStockId);
+        // Depart Stock
+        $departStock = DepartStock::where('id', $departStockId);
 
-        if($departStock->amount < $amount){
-          throw new InvalidDataException("Zaxira yetarli emas");
-        }
-        
-        $insertDetailData[] = [
+        $creatableDetails[] = [
           'depart_trans_process_id' => $newProcess->id,
-          'sender_depart_stock_id' => $departStock->id,
-          'amount_type_id' => $item['amount_type_id'],
-          'amount' => $item['amount'],
+          'sender_depart_stock_id' => $senderDepartId,
+          'amount_type_id' => $departStock->amount_type_id,
+          'amount'  => $amount,
         ];
       }
-      $newProcess->details()->createMany($insertDetailData);
 
-      // Finish
-      DB::commit();
+      $newProcess->details()->createMany($creatableDetails);
 
       return [
-        'message' => "{$receiverDepart->name} bo'limga mahsulotlar yuborildi, qabul qilinishi kutilmoqda"
+        'message' => "Yuk muvaffaqiyatli yuborildi",
       ];
     } catch (\Exception $e) {
       DB::rollBack();
