@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('depart_trans_process_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('depart_trans_process_id')->constrained('depart_trans_processes');
-            $table->foreignId('product_id')->constrained('products');
-            $table->foreignId('polka_id')->constrained('polkas');
-            $table->unsignedBigInteger('received_polka_id')->nullable();
-            $table->foreign('received_polka_id')->references('id')->on('polkas');
             $table->foreignId('amount_type_id')->constrained('amount_types');
+            $table->foreignId('depart_trans_process_id')->constrained('depart_trans_processes');
+            $table->foreignId('sender_depart_stock_id')->constrained('depart_stocks');
+            $table->unsignedBigInteger('receive_depart_stock_id')->nullable();
+            $table->foreign('receive_depart_stock_id')->references('id')->on('depart_stocks');
             $table->decimal('amount', 15, 4);
             $table->timestamps();
         });

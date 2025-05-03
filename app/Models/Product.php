@@ -33,9 +33,4 @@ class Product extends Model
     {
         return $this->hasMany(Product::class, 'product_id');
     }
-
-    public function departTransProcessDetail(): HasMany
-    {
-        return $this->hasMany(DepartTransProcessDetail::class, 'product_id');
-    }
 }

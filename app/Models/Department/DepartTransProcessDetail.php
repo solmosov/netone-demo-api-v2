@@ -3,9 +3,8 @@
 namespace App\Models\Department;
 
 use App\Models\AmountType;
+use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
-use App\Models\Polka;
-use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,9 +12,8 @@ class DepartTransProcessDetail extends Model
 {
     protected $fillable = [
         'depart_trans_process_id',
-        'product_id',
-        'polka_id',
-        'received_polka_id',
+        'sender_depart_stock_id',
+        'receive_depart_stock_id',
         'amount_type_id',
         'amount',
     ];
@@ -25,23 +23,17 @@ class DepartTransProcessDetail extends Model
         return $this->belongsTo(DepartTransProcess::class, 'depart_trans_process_id');
     }
 
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class, 'product_id');
-    }
-
-    public function polka(): BelongsTo
-    {
-        return $this->belongsTo(Polka::class, 'polka_id');
-    }
-
-    public function receivedPolka(): BelongsTo
-    {
-        return $this->belongsTo(Polka::class, 'received_polka_id');
-    }
-
-    public function amountType(): BelongsTo
+    public function amountType():BelongsTo
     {
         return $this->belongsTo(AmountType::class, 'amount_type_id');
+    }
+    
+    public function senderDepartStock():BelongsTo
+    {
+        return $this->belongsTo(DepartStock::class, 'sender_depart_stock_id');
+    }
+    public function receiverDepartStock():BelongsTo
+    {
+        return $this->belongsTo(DepartStock::class, 'receiver_depart_stock_id');
     }
 }

@@ -46,17 +46,11 @@ class DepartTransProcessService
     $productList = $data['product_list'];
     $comment = $data['comment'] ?? null;
 
-    // Validate
-    $exists = DB::table('depart_user')->where('user_id', Auth::id())->where('depart_id', $senderDepartId)->exists();
-    if(!$exists){
-      throw new InvalidDataException("Mahsulotlarini yuborish mumkin emas",403);
-    }
-
     // Check Polka Owner Validation
     $pluckPolka = array_column($productList, 'polka_id');
     $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if($exists){
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
+    if ($exists) {
+      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang", 403);
     }
 
     // Receiver Depart
@@ -77,12 +71,21 @@ class DepartTransProcessService
 
       $insertDetailData = [];
       foreach ($productList as $item) {
+        $departStockId = $item['depart_stock_id'];
+        $amount  = $item['amount'];
+
+        
+        $departStock = DepartStock::find($departStockId);
+
+        if($departStock->amount < $amount){
+          throw new InvalidDataException("Zaxira yetarli emas");
+        }
+        
         $insertDetailData[] = [
           'depart_trans_process_id' => $newProcess->id,
-          'product_id' => $item['product_id'],
-          'polka_id' => $item['polka_id'],
+          'sender_depart_stock_id' => $departStock->id,
+          'amount_type_id' => $item['amount_type_id'],
           'amount' => $item['amount'],
-          'amount_type_id' => $item['amount_type_id']
         ];
       }
       $newProcess->details()->createMany($insertDetailData);
@@ -149,8 +152,8 @@ class DepartTransProcessService
     // Check Polka Owner Validation
     $pluckPolka = array_column($reqDetailsList, 'polka_id');
     $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if($exists){
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
+    if ($exists) {
+      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang", 403);
     }
 
     // Status

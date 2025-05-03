@@ -28,9 +28,4 @@ class Polka extends Model
     {
         return $this->belongsTo(Depart::class, 'owner_id');
     }
-
-    public function departTransProcessDetail(): HasMany
-    {
-        return $this->hasMany(DepartTransProcessDetail::class, 'polka_id');
-    }
 }
