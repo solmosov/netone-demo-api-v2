@@ -41,21 +41,21 @@ class StoreDepartTransProcessRequest extends FormRequest
                 ->where('depart_id', $senderDepartId)
                 ->where('user_id', $authId)
                 ->exists();
-            if(!$exists){
+            if (!$exists) {
                 $validator->errors()->add('sender_depart_id', "Sizga tegishli bo'lgan bo'limni tanlang");
             }
 
-            foreach($productList as $key => $item){
+            foreach ($productList as $key => $item) {
                 $departStockId = $item['depart_stock_id'];
                 $amount = $item['amount'];
-                
-                $departStock = DepartStock::find($departStockId);
 
-                if(!$departStock->amount < $amount){
+                $departStock = DepartStock::where('depart_id', $senderDepartId)
+                    ->findOrFail($departStockId);
+
+                if ($departStock->amount < $amount) {
                     $validator->errors()->add("product_list.$key.depart_stock_id", "Zaxira yetarli emas");
                 }
             }
-
         });
     }
 }
