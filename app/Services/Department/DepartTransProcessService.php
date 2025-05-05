@@ -4,19 +4,14 @@ namespace App\Services\Department;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
-use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
 use App\Models\Polka;
-use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
-
 class DepartTransProcessService
 {
   public function findAll(): array
@@ -76,13 +71,15 @@ class DepartTransProcessService
 
         $creatableDetails[] = [
           'depart_trans_process_id' => $newProcess->id,
-          'sender_depart_stock_id' => $senderDepartId,
+          'sender_depart_stock_id' => $departStock->id,
           'amount_type_id' => $departStock->amount_type_id,
           'amount'  => $amount,
         ];
       }
 
       $newProcess->details()->createMany($creatableDetails);
+
+      DB::commit();
 
       return [
         'message' => "Yuk muvaffaqiyatli yuborildi",
