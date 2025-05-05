@@ -20,7 +20,7 @@ class DepartStockController extends Controller
         $result = $this->departStockService->create($request->validated());
 
         return response()->json([
-            'message' => "Yangi bo'lim zaxira qo'shildi",
+            'message' => "Yangi bo'lim zaxirasi qo'shildi",
             'data' => DepartStockResource::make($result)
         ], 201);
     }
