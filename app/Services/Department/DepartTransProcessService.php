@@ -35,6 +35,7 @@ class DepartTransProcessService
   public function create(array $data)
   {
     $authId = Auth::id();
+
     // Request Data
     $transPermId = $data['trans_perm_id'];
     $senderDepartId = $data['sender_depart_id'];
@@ -44,7 +45,7 @@ class DepartTransProcessService
 
     // Status Process 
     $statusProcess = self::getSendProductStatus();
-
+    
     DB::beginTransaction();
 
     try {
@@ -57,7 +58,7 @@ class DepartTransProcessService
         'status_id' => $statusProcess->id,
         'comment' => $comment,
       ]);
-
+      
       // New Process Details
       $creatableDetails = [];
 
@@ -67,8 +68,9 @@ class DepartTransProcessService
         $amount = $item['amount'];
 
         // Depart Stock
-        $departStock = DepartStock::where('id', $departStockId);
+        $departStock = DepartStock::where('id', $departStockId)->firstOrFail();
 
+        
         $creatableDetails[] = [
           'depart_trans_process_id' => $newProcess->id,
           'sender_depart_stock_id' => $departStock->id,
