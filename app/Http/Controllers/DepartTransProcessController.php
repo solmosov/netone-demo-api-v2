@@ -27,7 +27,7 @@ class DepartTransProcessController extends Controller
 
     public function store(StoreDepartTransProcessRequest $request)
     {
-        
+
         $result = $this->departTransProcessService->create($request->validated());
 
         return response()->json([

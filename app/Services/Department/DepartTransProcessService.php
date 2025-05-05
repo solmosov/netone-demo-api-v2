@@ -164,7 +164,7 @@ class DepartTransProcessService
 
 
         // Set Received Polka
-        $transProcessItem->received_depart_stock_id = $departStockId;
+        $transProcessItem->receive_depart_stock_id = $departStockId;
         $transProcessItem->save();
       }
 
@@ -185,10 +185,7 @@ class DepartTransProcessService
     } catch (\Exception $e) {
       DB::rollBack();
 
-      return [
-        'message' => $e->getMessage(),
-        'code' => $e->getCode() > 0 ? $e->getCode() : 404,
-      ];
+      throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
   }
 
