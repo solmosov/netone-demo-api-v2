@@ -58,7 +58,7 @@ class DepartStockService
 
     public function findOne(int $id): DepartStock
     {
-        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])->findOrfail($id);
+        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])->findOrFail($id);
     }
 
     public function delete(int $id): DepartStock
