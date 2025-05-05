@@ -22,6 +22,10 @@ class DepartStockService
         $product = Product::findOrFail($productId);
         $amountTypeId = $product->price_amount_type_id;
 
+        // Polka
+        $polka = Polka::where('id', $polkaId)
+                ->firstOrFail();
+        
         DB::beginTransaction();
 
         try {
@@ -34,10 +38,8 @@ class DepartStockService
             ]);
 
             // Change of Polka Owner
-            Polka::where('id', $polkaId)
-                ->where('polka_id', $polkaId)
-                ->firstOrFail()
-                ->update('owner_id', $newDepartStock->id);
+            $polka->owner_id = $departId;
+            $polka->save();
 
             DB::commit();
 
