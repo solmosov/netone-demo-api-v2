@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\DepartStock;
+use App\Models\DepartTransPermProperty;
+use App\Models\DepartTransPermPropertyDetails;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -34,7 +36,9 @@ class StoreDepartTransProcessRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $authId = Auth::id();
+            $transPermId = $this->input('trans_perm_id');
             $senderDepartId = $this->input('sender_depart_id');
+            $receiverDepartId = $this->input('receiver_depart_id');
             $productList = $this->input('product_list');
 
             $exists = DB::table('depart_user')
@@ -45,17 +49,27 @@ class StoreDepartTransProcessRequest extends FormRequest
             if (!$exists) {
                 $validator->errors()->add('sender_depart_id', "Sizga tegishli bo'lgan bo'limni tanlang");
             } else {
-                foreach ($productList as $key => $item) {
-                    $departStockId = $item['depart_stock_id'];
-                    $amount = $item['amount'];
+                // Check Access
+                $departTransPerm = DepartTransPermProperty::where('trans_perm_id', $transPermId)
+                    ->where('depart_id', $senderDepartId);
+                $exists = DepartTransPermPropertyDetails::where('property_id', $departTransPerm->id)
+                    ->where('depart_id', $receiverDepartId)
+                    ->exists();
+                if ($exists) {
+                    $validator->errors()->add('receiver_depart_id', "Bu bo'limga mahsulot o'tkazish uchun sizda ruxsat mavjud emas!");
+                } else {
+                    foreach ($productList as $key => $item) {
+                        $departStockId = $item['depart_stock_id'];
+                        $amount = $item['amount'];
 
-                    $departStock = DepartStock::where('depart_id', $senderDepartId)
-                        ->find($departStockId);
+                        $departStock = DepartStock::where('depart_id', $senderDepartId)
+                            ->find($departStockId);
 
-                    if (!$departStock) {
-                        $validator->errors()->add("product_list.$key.depart_stock_id", "Bo'lim zaxira topilmadi");
-                    } else if ($departStock->amount < $amount) {
-                        $validator->errors()->add("product_list.$key.depart_stock_id", "Bo'lim zaxira miqdori yetarli emas");
+                        if (!$departStock) {
+                            $validator->errors()->add("product_list.$key.depart_stock_id", "Bo'lim zaxira topilmadi");
+                        } else if ($departStock->amount < $amount) {
+                            $validator->errors()->add("product_list.$key.depart_stock_id", "Bo'lim zaxira miqdori yetarli emas");
+                        }
                     }
                 }
             }
