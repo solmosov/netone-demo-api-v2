@@ -12,6 +12,7 @@ use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
 class DepartTransProcessService
 {
   public function findAll(): array
@@ -45,7 +46,7 @@ class DepartTransProcessService
 
     // Status Process 
     $statusProcess = self::getSendProductStatus();
-    
+
     DB::beginTransaction();
 
     try {
@@ -58,7 +59,7 @@ class DepartTransProcessService
         'status_id' => $statusProcess->id,
         'comment' => $comment,
       ]);
-      
+
       // New Process Details
       $creatableDetails = [];
 
@@ -70,7 +71,7 @@ class DepartTransProcessService
         // Depart Stock
         $departStock = DepartStock::where('id', $departStockId)->firstOrFail();
 
-        
+
         $creatableDetails[] = [
           'depart_trans_process_id' => $newProcess->id,
           'sender_depart_stock_id' => $departStock->id,
@@ -112,7 +113,6 @@ class DepartTransProcessService
 
   public function receive(array $data, int $id): array
   {
-    dd('render');
     // Req Data
     $reqDetailsList = $data['details_list'];
 
@@ -124,28 +124,8 @@ class DepartTransProcessService
       ->where('status_id', $sendStatus->id)
       ->findOrFail($id);
 
-    $count  = array_column($reqDetailsList, 'item_id');
-    if ($transProcess->details()->count() !== sizeof($count)) {
-      throw new InvalidDataException("O'tkazma mahsulotlari to'liq emas");
-    }
-
-    // Receiver Depart Id
     $senderDepartId = $transProcess->sender_depart_id;
     $receiverDepartId = $transProcess->receiver_depart_id;
-
-    $exists = DB::table('depart_user')
-      ->where('depart_id', $receiverDepartId)
-      ->where('user_id', Auth::id());
-    if (!$exists) {
-      throw new InvalidDataException("Bu amalni bajarib bo'lmadi", 403);
-    }
-
-    // Check Polka Owner Validation
-    $pluckPolka = array_column($reqDetailsList, 'polka_id');
-    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if ($exists) {
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang", 403);
-    }
 
     // Status
     $receivedStatus = DepartTransProcessService::getReceiveProductStatus();
@@ -154,27 +134,27 @@ class DepartTransProcessService
     try {
       // Increment Stock
       foreach ($reqDetailsList as $reqItem) {
+        // Values
         $reqItemId = $reqItem['item_id'];
-        $reqPolkaId = $reqItem['polka_id'];
+        $departStockId = $reqItem['depart_stock_id'];
 
         // Transfer Item
         $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $transProcess->id)
           ->findOrFail($reqItemId);
-        $senderPolkaId = $transProcessItem->polka_id;
+        // Transfer Item Values
+        $amountTypeId = $transProcessItem->amount_type_id;
+        $senderDepartStockId = $transProcessItem->sender_depart_stock_id;
 
         //Receiver Depart Stock
         $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
-          ->where('amount_type_id', $transProcessItem->amount_type_id)
-          ->where('polka_id', $reqPolkaId)
-          ->firstOrFail();
+          ->where('amount_type_id', $amountTypeId)
+          ->findOrFail($departStockId);
 
         // Sender Depart Stock
-        $senderStockItem = DepartStock::with('polka')
-          ->where('depart_id', $senderDepartId)
-          ->where('polka_id', $senderPolkaId)
-          ->firstOrFail();
+        $senderStockItem = DepartStock::where('depart_id', $senderDepartId)
+          ->findOrFail($senderDepartStockId);
 
-        // Change Stock
+        // Change of Sender Department Stock
         $senderStockItem->decrement('amount', $transProcessItem->amount);
         if ($senderStockItem->amount < $transProcessItem->amount) {
           throw new InvalidDataException("Yuboruvchining `{$senderStockItem->polka->name}` polkasida zaxira yetarli emas!");
@@ -184,7 +164,7 @@ class DepartTransProcessService
 
 
         // Set Received Polka
-        $transProcessItem->received_polka_id = $reqPolkaId;
+        $transProcessItem->received_depart_stock_id = $departStockId;
         $transProcessItem->save();
       }
 
