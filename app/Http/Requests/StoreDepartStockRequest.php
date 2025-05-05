@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\NotFoundException;
 use App\Models\Depart;
 use App\Models\DepartStock;
 use App\Models\Polka;
@@ -34,17 +35,24 @@ class StoreDepartStockRequest extends FormRequest
             $polkaId = $this->input('polka_id');
             $productId = $this->input('product_id');
 
-            $exists = DepartStock::where('depart_id', $departId)
-                ->where('polka_id', $polkaId)
-                ->where('product_id', $productId)
-                ->exists();
+            $polka = Polka::find($polkaId);
+            if (!$polka) {
+                throw new NotFoundException("Zaxira polka topilmadi");
+            } else if ($polka->owner_id !== null && $polka->owner_id !== $departId) {
+                $validator->errors()->add("polka_id", "Bu polkani tanlash mumkin emas!");
+            } else {
+                $exists = DepartStock::where('depart_id', $departId)
+                    ->where('polka_id', $polkaId)
+                    ->where('product_id', $productId)
+                    ->exists();
 
-            if ($exists) {
-                $depart = Depart::findOrFail($departId);
-                $polka = Polka::findOrFail($polkaId);
-                $product = Product::findOrFail($productId);
+                if ($exists) {
+                    $depart = Depart::findOrFail($departId);
+                    $polka = Polka::findOrFail($polkaId);
+                    $product = Product::findOrFail($productId);
 
-                $validator->errors()->add('depart_id', "{$depart->name} bo'lim uchun {$polka->name} va {$product->name} allaqachon zaxira sifatida yaratilgan");
+                    $validator->errors()->add('depart_id', "{$depart->name} bo'lim uchun {$polka->name} va {$product->name} allaqachon zaxira sifatida yaratilgan");
+                }
             }
         });
     }
