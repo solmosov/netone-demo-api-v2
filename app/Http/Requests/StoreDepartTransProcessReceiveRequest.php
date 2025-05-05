@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
-use App\Models\Polka;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +23,7 @@ class StoreDepartTransProcessReceiveRequest extends FormRequest
         return [
             'details_list' => 'required|array',
             'details_list.*.item_id' => 'required|integer|exists:depart_trans_process_details,id',
-            'details_list.*.polka_id' => 'required|integer|exists:polkas,id'
+            'details_list.*.depart_stock_id' => 'required|integer|exists:depart_stocks,id'
         ];
     }
 
@@ -37,21 +35,28 @@ class StoreDepartTransProcessReceiveRequest extends FormRequest
             $detailsList = $this->input('details_list');
 
             // Trans Process
-            $transProcess = DepartTransProcess::findOrFail($transId);
+            $transProcess = DepartTransProcess::with('details')->findOrFail($transId);
 
             $exists = DB::table('depart_user')
                 ->where('depart_id', $transProcess->receiver_depart_id)
                 ->where('user_id', $authId)
                 ->exists();
+                
             if (!$exists) {
                 $validator->errors()->add("trans_process_id", "O'tkazma noto'g'ri tanlandi");
             } else {
-                foreach ($detailsList as $key => $item) {
-                    $departStockId = $item['depart_stock_id'];
+                if (count($detailsList) < $transProcess->details->count()) {
+                    $validator->errors()->add("details_list", "Yuborilgan mahsulotlar to'liq emas!");
+                } else {
+                    foreach ($detailsList as $key => $item) {
+                        $departStockId = $item['depart_stock_id'];
 
-                    $polka = DepartStock::where('id', $departStockId)->first();
-                    if (!$polka) {
-                        $validator->errors()->add("details_list_{$key}_depart_stock_id", "Bo'lim zaxira polkasini to'g'ri tanlang");
+                        $polka = DepartStock::where('id', $departStockId)
+                            ->where('depart_id', $transProcess->receiver_depart_id)
+                            ->first();
+                        if (!$polka) {
+                            $validator->errors()->add("details_list_{$key}_depart_stock_id", "Bo'lim zaxira polkasini to'g'ri tanlang");
+                        }
                     }
                 }
             }

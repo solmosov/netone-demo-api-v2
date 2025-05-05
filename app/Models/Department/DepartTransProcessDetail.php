@@ -23,16 +23,16 @@ class DepartTransProcessDetail extends Model
         return $this->belongsTo(DepartTransProcess::class, 'depart_trans_process_id');
     }
 
-    public function amountType():BelongsTo
+    public function amountType(): BelongsTo
     {
         return $this->belongsTo(AmountType::class, 'amount_type_id');
     }
-    
-    public function senderDepartStock():BelongsTo
+
+    public function senderDepartStock(): BelongsTo
     {
         return $this->belongsTo(DepartStock::class, 'sender_depart_stock_id');
     }
-    public function receiverDepartStock():BelongsTo
+    public function receiverDepartStock(): BelongsTo
     {
         return $this->belongsTo(DepartStock::class, 'receiver_depart_stock_id');
     }

@@ -112,6 +112,7 @@ class DepartTransProcessService
 
   public function receive(array $data, int $id): array
   {
+    dd('render');
     // Req Data
     $reqDetailsList = $data['details_list'];
 

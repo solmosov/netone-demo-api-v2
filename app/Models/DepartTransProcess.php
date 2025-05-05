@@ -47,7 +47,7 @@ class DepartTransProcess extends Model
     public function details(): HasMany
     {
         return $this->hasMany(DepartTransProcessDetail::class, 'depart_trans_process_id')
-        ->with(['product', 'polka.ownerDepart', 'amountType']);
+            ->with(['amountType']);
     }
 
     public function status(): BelongsTo
