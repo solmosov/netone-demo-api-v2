@@ -20,7 +20,8 @@ class StoreDepartRequest extends FormRequest
         return [
             'user_list' => 'required|array',
             'user_list.*' => 'required|numeric|exists:users,id',
-            'polka_id' => 'required|numeric|exists:polkas,id',
+            'polka_list' => 'required|array',
+            'polka_list.*' => 'required|numeric|exists:polkas,id',
             'name' => 'required|string|unique:departs,name',
             'status_name' => 'required|string|max:255|unique:statuses,name',
             'comment' => 'nullable|string|min:6|max:255',
@@ -37,10 +38,15 @@ class StoreDepartRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function ($validator) {
-            $polka_id = $this->input('polka_id');
+            $polkaList = $this->input('polka_list');
 
-            if (Polka::where('id', $polka_id)->whereNotNull('owner_id')->exists()) {
-                $validator->errors()->add('polka_id', "Bu polkani tanlash mumkin emas");
+            foreach ($polkaList as $polkaId) {
+
+                $polka = Polka::where('id', $polkaId)->whereNull('owner_id')->first();
+
+                if (!$polka) {
+                    $validator->errors()->add('polka_id', "Bu polkani tanlash mumkin emas");
+                }
             }
         });
     }

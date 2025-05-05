@@ -50,15 +50,10 @@ class DepartService
     {
         // Req Data
         $userList = $data['user_list'];
-        $polkaId = $data['polka_id'];
+        $polkaList = $data['polka_list'];
         $name = $data['name'];
         $comment = $data['comment'] ?? null;
         $statusName = $data['status_name'];
-
-        // Polka
-        $polka = Polka::where('id', $polkaId)
-            ->whereNull('owner_id')
-            ->firstOrFail();
 
         DB::beginTransaction();
         try {
@@ -71,9 +66,12 @@ class DepartService
             // Attach User
             $newDepart->users()->attach($userList);
 
-            // Polka
-            $polka->owner_id = $newDepart->id;
-            $polka->save();
+            // Change owner of polka
+            foreach($polkaList as $polkaId){
+                $polka = Polka::findOrFail($polkaId);
+                $polka->owner_id = $newDepart->id;
+                $polka->save();
+            }
 
             // Department Status
             DepartStatus::create([
