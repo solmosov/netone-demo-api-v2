@@ -6,6 +6,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\DepartStock;
 use App\Models\DepartTransPermProperty;
 use App\Models\DepartTransPermPropertyDetails;
+use App\Services\Department\DepartTransPermService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,6 @@ class StoreDepartTransProcessRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $authId = Auth::id();
-            $transPermId = $this->input('trans_perm_id');
             $senderDepartId = $this->input('sender_depart_id');
             $receiverDepartId = $this->input('receiver_depart_id');
             $productList = $this->input('product_list');
@@ -50,8 +50,11 @@ class StoreDepartTransProcessRequest extends FormRequest
             if (!$exists) {
                 $validator->errors()->add('sender_depart_id', "O'zingizga tegishli bo'lgan bo'limni tanlang");
             } else {
+                // Receive Trans Perm
+                $sendTransPerm = DepartTransPermService::getSendProduct();
+                
                 // Check Access
-                $departTransPerm = DepartTransPermProperty::where('trans_perm_id', $transPermId)
+                $departTransPerm = DepartTransPermProperty::where('trans_perm_id', $sendTransPerm->id)
                     ->where('depart_id', $senderDepartId)
                     ->first();
                 if(!$departTransPerm){

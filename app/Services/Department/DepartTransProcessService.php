@@ -38,12 +38,14 @@ class DepartTransProcessService
     $authId = Auth::id();
 
     // Request Data
-    $transPermId = $data['trans_perm_id'];
     $senderDepartId = $data['sender_depart_id'];
     $receiverDepartId = $data['receiver_depart_id'];
     $productList = $data['product_list'];
     $comment = $data['comment'] ?? null;
 
+    // Trans Perm
+    $sendTransPerm = DepartTransPermService::getSendProduct();
+    
     // Status Process 
     $statusProcess = self::getSendProductStatus();
 
@@ -52,7 +54,7 @@ class DepartTransProcessService
     try {
       // New Process
       $newProcess = DepartTransProcess::create([
-        'trans_perm_id' => $transPermId,
+        'trans_perm_id' => $sendTransPerm->id,
         'sender_depart_id' => $senderDepartId,
         'receiver_depart_id' => $receiverDepartId,
         'sender_user_id' => $authId,
