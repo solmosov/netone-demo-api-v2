@@ -8,6 +8,7 @@ use App\Models\DepartStock;
 use App\Models\Polka;
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
 
 class StoreDepartStockRequest extends FormRequest
@@ -15,7 +16,8 @@ class StoreDepartStockRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        $user = Auth::user();
+        return $user->isAdmin() || $user->isProducer();
     }
 
 
