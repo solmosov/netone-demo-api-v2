@@ -45,7 +45,7 @@ class DepartTransProcessService
 
     // Trans Perm
     $sendTransPerm = DepartTransPermService::getSendProduct();
-    
+
     // Status Process 
     $statusProcess = self::getSendProductStatus();
 
@@ -147,21 +147,24 @@ class DepartTransProcessService
         $amountTypeId = $transProcessItem->amount_type_id;
         $senderDepartStockId = $transProcessItem->sender_depart_stock_id;
 
-        //Receiver Depart Stock
-        $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
-          ->where('amount_type_id', $amountTypeId)
-          ->findOrFail($departStockId);
+
 
         // Sender Depart Stock
         $senderStockItem = DepartStock::where('depart_id', $senderDepartId)
           ->findOrFail($senderDepartStockId);
 
         // Change of Sender Department Stock
-        $senderStockItem->decrement('amount', $transProcessItem->amount);
+
         if ($senderStockItem->amount < $transProcessItem->amount) {
           throw new InvalidDataException("Yuboruvchining `{$senderStockItem->polka->name}` polkasida zaxira yetarli emas!");
         }
 
+        $senderStockItem->decrement('amount', $transProcessItem->amount);
+
+        //Receiver Depart Stock
+        $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
+          ->where('amount_type_id', $amountTypeId)
+          ->findOrFail($departStockId);
         $receiverStockItem->increment('amount', $transProcessItem->amount);
 
 
