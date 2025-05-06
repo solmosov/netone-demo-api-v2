@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\NotFoundException;
 use App\Models\DepartStock;
 use App\Models\DepartTransPermProperty;
 use App\Models\DepartTransPermPropertyDetails;
@@ -47,15 +48,20 @@ class StoreDepartTransProcessRequest extends FormRequest
                 ->exists();
 
             if (!$exists) {
-                $validator->errors()->add('sender_depart_id', "Sizga tegishli bo'lgan bo'limni tanlang");
+                $validator->errors()->add('sender_depart_id', "O'zingizga tegishli bo'lgan bo'limni tanlang");
             } else {
                 // Check Access
                 $departTransPerm = DepartTransPermProperty::where('trans_perm_id', $transPermId)
-                    ->where('depart_id', $senderDepartId);
+                    ->where('depart_id', $senderDepartId)
+                    ->first();
+                if(!$departTransPerm){
+                    throw new NotFoundException("Sizda bu bo'limga mahsulot yuborish uchun ruxsat mavjud emas!");
+                }
+
                 $exists = DepartTransPermPropertyDetails::where('property_id', $departTransPerm->id)
                     ->where('depart_id', $receiverDepartId)
                     ->exists();
-                if ($exists) {
+                if (!$exists) {
                     $validator->errors()->add('receiver_depart_id', "Bu bo'limga mahsulot o'tkazish uchun sizda ruxsat mavjud emas!");
                 } else {
                     foreach ($productList as $key => $item) {
