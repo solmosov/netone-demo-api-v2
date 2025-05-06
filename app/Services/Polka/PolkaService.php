@@ -6,14 +6,20 @@ use App\Models\Polka;
 
 class PolkaService
 {
-  public function findAll(bool $isTree)
+  public function findAll(array $params)
   {
+    $isTree = $params['is_tree'] ?? false;
+    $ownerId = $params['owner_id'] ?? null;
 
     $query = Polka::query();
 
     if ($isTree) {
       $query->with('children')
         ->where('parent_id', null);
+    }
+
+    if ($ownerId) {
+      $query->where('owner_id', $ownerId);
     }
 
     $data = $query->get();

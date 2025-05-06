@@ -24,9 +24,10 @@ class PolkaController extends Controller
         // Validation
         $validated = $request->validate([
             'is_tree' => 'nullable|boolean',
+            'owner_id' => 'nullable|integer|exists:departs,id',
         ]);
 
-        $result = $this->polkaService->findAll($validated['is_tree'] ?? false);
+        $result = $this->polkaService->findAll($validated);
 
         return response()->json([
             'data' => PolkaResource::collection($result['data']),
