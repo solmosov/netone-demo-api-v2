@@ -22,7 +22,7 @@ class PolkaService
       $query->where('owner_id', $ownerId);
     }
 
-    $data = $query->get();
+    $data = $query->with('parentPolka')->get();
 
     return [
       'data' => $data
@@ -33,11 +33,10 @@ class PolkaService
     $query = Polka::query();
 
     if ($isTree) {
-      $query->with('children')
-        ->where('parent_id', null);
+      $query->with('children');
     }
 
-    $data = $query->findOrFail($id);
+    $data = $query->with('parentPolka')->findOrFail($id);
 
     return [
       'data' => $data

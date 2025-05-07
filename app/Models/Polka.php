@@ -19,6 +19,11 @@ class Polka extends Model
         'owner_id'
     ];
 
+    public function parentPolka(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+    
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->with('children');

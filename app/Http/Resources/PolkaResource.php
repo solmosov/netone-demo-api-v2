@@ -13,6 +13,7 @@ class PolkaResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'owner' => UserResource::make($this->whenLoaded('ownerUser')),
+            'parent' => $this->whenLoaded('parentPolka'),
             'children' => self::collection($this->whenLoaded('children')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
