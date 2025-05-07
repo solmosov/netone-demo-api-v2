@@ -22,7 +22,9 @@ class PolkaService
       $query->where('owner_id', $ownerId);
     }
 
-    $data = $query->with('parentPolka')->get();
+    $data = $query
+      ->with(['parentPolka', 'ownerDepart'])
+      ->get();
 
     return [
       'data' => $data
@@ -36,7 +38,9 @@ class PolkaService
       $query->with('children');
     }
 
-    $data = $query->with('parentPolka')->findOrFail($id);
+    $data = $query
+      ->with(['parentPolka', 'ownerDepart'])
+      ->findOrFail($id);
 
     return [
       'data' => $data
