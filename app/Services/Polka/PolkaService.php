@@ -10,6 +10,7 @@ class PolkaService
   {
     $isTree = $params['is_tree'] ?? false;
     $ownerId = $params['owner_id'] ?? null;
+    $isPublic = $params['is_public'] ?? null;
 
     $query = Polka::query();
 
@@ -20,6 +21,8 @@ class PolkaService
 
     if ($ownerId) {
       $query->where('owner_id', $ownerId);
+    } else if ($isPublic) {
+      $query->whereNull('owner_id');
     }
 
     $data = $query
