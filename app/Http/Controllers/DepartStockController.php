@@ -7,6 +7,7 @@ use App\Http\Resources\DepartStockResource;
 use App\Models\DepartStock;
 use App\Services\Department\DepartStockService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class DepartStockController extends Controller
@@ -15,12 +16,16 @@ class DepartStockController extends Controller
         protected DepartStockService $departStockService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', DepartStock::class);
 
-        $data = $this->departStockService->findAll();
+        $validated = $request->validate([
+            'depart_id' => 'nullable|integer|exists:departs,id',
+        ]);
+
+        $data = $this->departStockService->findAll($validated);
 
         return response()->json([
             'data' => DepartStockResource::collection($data),

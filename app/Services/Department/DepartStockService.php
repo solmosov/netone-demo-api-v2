@@ -24,8 +24,8 @@ class DepartStockService
 
         // Polka
         $polka = Polka::where('id', $polkaId)
-                ->firstOrFail();
-        
+            ->firstOrFail();
+
         DB::beginTransaction();
 
         try {
@@ -50,10 +50,18 @@ class DepartStockService
         }
     }
 
-    public function findAll(): Collection
+    public function findAll(array $queryParams): Collection
     {
+        // Query Params
+        $departId = $queryParams['depart_id'] ?? null;
 
-        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])->get();
+        $query = DepartStock::with(['depart', 'polka', 'amountType', 'product']);
+
+        if ($departId) {
+            $query->where('depart_id', $departId);
+        }
+
+        return $query->get();
     }
 
     public function findOne(int $id): DepartStock
