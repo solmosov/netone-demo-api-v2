@@ -13,6 +13,7 @@ class DepartStockResource extends JsonResource
             'id' => $this->id,
             'depart' => DepartResource::make($this->depart),
             'polka' => PolkaResource::make($this->polka),
+            'product' => ProductResource::make($this->product),
             'amount' => (float)$this->amount,
             'amount_type' => $this->amountType,
             'created_at' => $this->created_at,
