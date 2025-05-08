@@ -14,6 +14,6 @@ class TransPermSeeder extends Seeder
     public function run(): void
     {
         TransPerm::create(['name' => "Yukni bo'limlardan qabul qilish", "code" => "getProduct"]);
-        TransPerm::create(['name' => "Yukni bo'limlarga yuborish", "code" => "setProduct"]);
+        TransPerm::create(['name' => "Yukni bo'limlarga yuborish", "code" => "sendProduct"]);
     }
 }
