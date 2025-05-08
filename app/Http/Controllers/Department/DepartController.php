@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Department;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetDepartByTransPermRequest;
 use App\Http\Requests\StoreDepartAssignPermRequest;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
@@ -28,6 +29,18 @@ class DepartController extends Controller
 
         return response()->json([
             'data' => DepartResource::collection($result['data']),
+        ]);
+    }
+
+    public function indexByTransPerm(GetDepartByTransPermRequest $request): JsonResponse
+    {
+        // Gate
+        Gate::authorize('viewAny', Depart::class);
+        
+        $result = $this->departService->findAllByTransPerm($request->validated());
+
+        return response()->json([
+            'data' => DepartResource::collection($result),
         ]);
     }
 
