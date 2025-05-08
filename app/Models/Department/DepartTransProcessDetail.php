@@ -30,10 +30,12 @@ class DepartTransProcessDetail extends Model
 
     public function senderDepartStock(): BelongsTo
     {
-        return $this->belongsTo(DepartStock::class, 'sender_depart_stock_id');
+        return $this->belongsTo(DepartStock::class, 'sender_depart_stock_id')
+            ->with(['polka', 'amountType', 'product']);
     }
     public function receiverDepartStock(): BelongsTo
     {
-        return $this->belongsTo(DepartStock::class, 'receiver_depart_stock_id');
+        return $this->belongsTo(DepartStock::class, 'receiver_depart_stock_id')
+            ->with(['polka', 'amountType', 'product']);
     }
 }

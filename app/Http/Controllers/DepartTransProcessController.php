@@ -20,6 +20,7 @@ class DepartTransProcessController extends Controller
     {
         $validated = $request->validate([
             'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
+            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
             'sender_depart_id' => 'nullable|integer|exists:departments,id',
             'receiver_depart_id' => 'nullable|integer|exists:departments,id',
             'sender_user_id' => 'nullable|integer|exists:users,id',

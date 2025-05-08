@@ -11,11 +11,11 @@ class DepartStockResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'depart' => DepartResource::make($this->depart),
-            'polka' => PolkaResource::make($this->polka),
-            'product' => ProductResource::make($this->product),
+            'depart' => DepartResource::make($this->whenLoaded('depart')),
+            'polka' => PolkaResource::make($this->whenLoaded('polka')),
+            'product' => ProductResource::make($this->whenLoaded('product')),
             'amount' => (float)$this->amount,
-            'amount_type' => $this->amountType,
+            'amount_type' => $this->whenLoaded('amountType'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

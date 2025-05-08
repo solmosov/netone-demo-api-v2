@@ -8,6 +8,7 @@ use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
 use App\Models\Status;
+use App\Models\TransPerm;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,10 @@ class DepartTransProcessService
     ]);
 
     foreach ($queryParams as $key => $value) {
-      if (!is_null($value)) {
+      if($key == 'trans_perm_code'){
+        $transPerm = TransPerm::where('code', $value)->firstOrFail();
+        $query->where('trans_perm_id', $transPerm->id);
+      }else if (!is_null($value)) {
         $query->where($key, $value);
       }
     }

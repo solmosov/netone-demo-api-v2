@@ -47,7 +47,7 @@ class DepartTransProcess extends Model
     public function details(): HasMany
     {
         return $this->hasMany(DepartTransProcessDetail::class, 'depart_trans_process_id')
-            ->with(['amountType']);
+            ->with(['amountType','senderDepartStock','receiverDepartStock']);
     }
 
     public function status(): BelongsTo
