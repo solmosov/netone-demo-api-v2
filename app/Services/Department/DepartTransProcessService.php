@@ -14,17 +14,27 @@ use Illuminate\Support\Facades\DB;
 
 class DepartTransProcessService
 {
-  public function findAll(): array
+  public function findAll(array $queryParams): array
   {
-    $data = DepartTransProcess::with([
+
+    $query = DepartTransProcess::with([
       'transferPermission',
       'senderDepartment',
       'receiverDepartment',
       'senderUser',
       'receiverUser',
       'status'
-    ])
+    ]);
+
+    foreach ($queryParams as $key => $value) {
+      if (!is_null($value)) {
+        $query->where($key, $value);
+      }
+    }
+
+    $data = $query
       ->orderByDesc('created_at')
+      ->limit(100)
       ->get();
 
     return [

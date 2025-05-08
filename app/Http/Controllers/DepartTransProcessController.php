@@ -7,6 +7,7 @@ use App\Http\Requests\StoreDepartTransProcessRequest;
 use App\Http\Resources\DepartTransProcessResource;
 use App\Http\Resources\DepartTransProcessShowResource;
 use App\Services\Department\DepartTransProcessService;
+use Illuminate\Http\Request;
 
 class DepartTransProcessController extends Controller
 {
@@ -15,9 +16,18 @@ class DepartTransProcessController extends Controller
         protected DepartTransProcessService $departTransProcessService
     ) {}
 
-    public function index()
+    public function index(Request $request)
     {
-        $result = $this->departTransProcessService->findAll();
+        $validated = $request->validate([
+            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
+            'sender_depart_id' => 'nullable|integer|exists:departments,id',
+            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
+            'sender_user_id' => 'nullable|integer|exists:users,id',
+            'receiver_user_id' => 'nullable|integer|exists:users,id',
+            'status_id' => 'nullable|integer|exists:statuses,id',
+        ]);
+        
+        $result = $this->departTransProcessService->findAll($validated);
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
