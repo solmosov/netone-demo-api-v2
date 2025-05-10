@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetDepartTransProcessRequest;
 use App\Http\Requests\StoreDepartTransProcessReceiveRequest;
 use App\Http\Requests\StoreDepartTransProcessRequest;
 use App\Http\Resources\DepartTransProcessResource;
@@ -16,60 +17,27 @@ class DepartTransProcessController extends Controller
         protected DepartTransProcessService $departTransProcessService
     ) {}
 
-    public function index(Request $request)
+    public function index(GetDepartTransProcessRequest $request)
     {
-        $validated = $request->validate([
-            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
-            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
-            'sender_depart_id' => 'nullable|integer|exists:departments,id',
-            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
-            'sender_user_id' => 'nullable|integer|exists:users,id',
-            'receiver_user_id' => 'nullable|integer|exists:users,id',
-            'status_id' => 'nullable|integer|exists:statuses,id',
-            'status_code' => 'nullable|string|exists:statuses,code',
-        ]);
-
-        $result = $this->departTransProcessService->findAll($validated);
+        $result = $this->departTransProcessService->findAll($request->validated());
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
         ]);
     }
 
-    public function indexBySend(Request $request)
+    public function indexBySend(GetDepartTransProcessRequest $request)
     {
-        $validated = $request->validate([
-            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
-            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
-            'sender_depart_id' => 'nullable|integer|exists:departments,id',
-            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
-            'sender_user_id' => 'nullable|integer|exists:users,id',
-            'receiver_user_id' => 'nullable|integer|exists:users,id',
-            'status_id' => 'nullable|integer|exists:statuses,id',
-            'status_code' => 'nullable|string|exists:statuses,code',
-        ]);
-
-        $result = $this->departTransProcessService->findAllBySend($validated);
+        $result = $this->departTransProcessService->findAllBySend($request->validated());
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
         ]);
     }
 
-    public function indexByReceive(Request $request)
+    public function indexByReceive(GetDepartTransProcessRequest $request)
     {
-        $validated = $request->validate([
-            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
-            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
-            'sender_depart_id' => 'nullable|integer|exists:departments,id',
-            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
-            'sender_user_id' => 'nullable|integer|exists:users,id',
-            'receiver_user_id' => 'nullable|integer|exists:users,id',
-            'status_id' => 'nullable|integer|exists:statuses,id',
-            'status_code' => 'nullable|string|exists:statuses,code',
-        ]);
-
-        $result = $this->departTransProcessService->findAllByReceive($validated);
+        $result = $this->departTransProcessService->findAllByReceive($request->validated());
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
