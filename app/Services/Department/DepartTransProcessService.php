@@ -66,11 +66,18 @@ class DepartTransProcessService
     // Auth User
     $authUser = Auth::user();
 
+    $receiverDepartId = $queryParams['receiver_depart_id'] ?? null;
+
     // Query
     $query = $query = $this->createQuery($queryParams);
 
-    if (!$authUser->isAdmin()) {
-      $query->where('receiver_user_id', $authUser->id);
+    if ($receiverDepartId) {
+      $userDepart = DB::table('depart_user')
+        ->where('user_id', $authUser->id)
+        ->where('depart_id', $receiverDepartId)
+        ->firstOrFail();
+
+      $query->where('receiver_depart_id', $userDepart->id);
     }
 
     $data = $query
