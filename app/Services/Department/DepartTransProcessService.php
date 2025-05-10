@@ -53,6 +53,82 @@ class DepartTransProcessService
     ];
   }
 
+  public function findAllBySend(array $queryParams): array
+  {
+    // Auth User
+    $authUser = Auth::user();
+    
+    // Query
+    $query = DepartTransProcess::with([
+      'transferPermission',
+      'senderDepartment',
+      'receiverDepartment',
+      'senderUser',
+      'receiverUser',
+      'status'
+    ]);
+
+    foreach ($queryParams as $key => $value) {
+      if($key == 'trans_perm_code'){
+        $transPerm = TransPerm::where('code', $value)->firstOrFail();
+        $query->where('trans_perm_id', $transPerm->id);
+      }else if (!is_null($value)) {
+        $query->where($key, $value);
+      }
+    }
+
+    if(!$authUser->isAdmin()){
+      $query->where('sender_user_id', $authUser->id);
+    }
+
+    $data = $query
+      ->orderByDesc('created_at')
+      ->limit(100)
+      ->get();
+
+    return [
+      'data' => $data
+    ];
+  }
+
+  public function findAllByReceive(array $queryParams): array
+  {
+    // Auth User
+    $authUser = Auth::user();
+    
+    // Query
+    $query = DepartTransProcess::with([
+      'transferPermission',
+      'senderDepartment',
+      'receiverDepartment',
+      'senderUser',
+      'receiverUser',
+      'status'
+    ]);
+
+    foreach ($queryParams as $key => $value) {
+      if($key == 'trans_perm_code'){
+        $transPerm = TransPerm::where('code', $value)->firstOrFail();
+        $query->where('trans_perm_id', $transPerm->id);
+      }else if (!is_null($value)) {
+        $query->where($key, $value);
+      }
+    }
+
+    if(!$authUser->isAdmin()){
+      $query->where('receiver_user_id', $authUser->id);
+    }
+
+    $data = $query
+      ->orderByDesc('created_at')
+      ->limit(100)
+      ->get();
+
+    return [
+      'data' => $data
+    ];
+  }
+
   public function create(array $data)
   {
     $authId = Auth::id();

@@ -28,7 +28,47 @@ class DepartTransProcessController extends Controller
             'status_id' => 'nullable|integer|exists:statuses,id',
             'status_code' => 'nullable|string|exists:statuses,code',
         ]);
-        
+
+        $result = $this->departTransProcessService->findAll($validated);
+
+        return response()->json([
+            'data' => DepartTransProcessResource::collection($result['data'])
+        ]);
+    }
+
+    public function indexBySend(Request $request)
+    {
+        $validated = $request->validate([
+            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
+            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
+            'sender_depart_id' => 'nullable|integer|exists:departments,id',
+            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
+            'sender_user_id' => 'nullable|integer|exists:users,id',
+            'receiver_user_id' => 'nullable|integer|exists:users,id',
+            'status_id' => 'nullable|integer|exists:statuses,id',
+            'status_code' => 'nullable|string|exists:statuses,code',
+        ]);
+
+        $result = $this->departTransProcessService->findAll($validated);
+
+        return response()->json([
+            'data' => DepartTransProcessResource::collection($result['data'])
+        ]);
+    }
+
+    public function indexByReceive(Request $request)
+    {
+        $validated = $request->validate([
+            'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
+            'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
+            'sender_depart_id' => 'nullable|integer|exists:departments,id',
+            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
+            'sender_user_id' => 'nullable|integer|exists:users,id',
+            'receiver_user_id' => 'nullable|integer|exists:users,id',
+            'status_id' => 'nullable|integer|exists:statuses,id',
+            'status_code' => 'nullable|string|exists:statuses,code',
+        ]);
+
         $result = $this->departTransProcessService->findAll($validated);
 
         return response()->json([
