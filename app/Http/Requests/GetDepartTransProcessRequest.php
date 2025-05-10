@@ -18,8 +18,8 @@ class GetDepartTransProcessRequest extends FormRequest
         return [
             'trans_perm_id' => 'nullable|integer|exists:trans_perms,id',
             'trans_perm_code' => 'nullable|string|exists:trans_perms,code',
-            'sender_depart_id' => 'nullable|integer|exists:departments,id',
-            'receiver_depart_id' => 'nullable|integer|exists:departments,id',
+            'sender_depart_id' => 'nullable|integer|exists:departs,id',
+            'receiver_depart_id' => 'nullable|integer|exists:departs,id',
             'sender_user_id' => 'nullable|integer|exists:users,id',
             'receiver_user_id' => 'nullable|integer|exists:users,id',
             'status_id' => 'nullable|integer|exists:statuses,id',
