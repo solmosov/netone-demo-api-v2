@@ -49,7 +49,7 @@ class DepartTransProcessController extends Controller
             'status_code' => 'nullable|string|exists:statuses,code',
         ]);
 
-        $result = $this->departTransProcessService->findAll($validated);
+        $result = $this->departTransProcessService->findAllBySend($validated);
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
@@ -69,7 +69,7 @@ class DepartTransProcessController extends Controller
             'status_code' => 'nullable|string|exists:statuses,code',
         ]);
 
-        $result = $this->departTransProcessService->findAll($validated);
+        $result = $this->departTransProcessService->findAllByReceive($validated);
 
         return response()->json([
             'data' => DepartTransProcessResource::collection($result['data'])
