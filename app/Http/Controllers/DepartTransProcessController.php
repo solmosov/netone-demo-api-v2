@@ -26,6 +26,7 @@ class DepartTransProcessController extends Controller
             'sender_user_id' => 'nullable|integer|exists:users,id',
             'receiver_user_id' => 'nullable|integer|exists:users,id',
             'status_id' => 'nullable|integer|exists:statuses,id',
+            'status_code' => 'nullable|string|exists:statuses,code',
         ]);
         
         $result = $this->departTransProcessService->findAll($validated);

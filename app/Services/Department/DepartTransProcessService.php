@@ -17,7 +17,10 @@ class DepartTransProcessService
 {
   public function findAll(array $queryParams): array
   {
-
+    // Auth User
+    $authUser = Auth::user();
+    
+    // Query
     $query = DepartTransProcess::with([
       'transferPermission',
       'senderDepartment',
@@ -34,6 +37,10 @@ class DepartTransProcessService
       }else if (!is_null($value)) {
         $query->where($key, $value);
       }
+    }
+
+    if(!$authUser->isAdmin()){
+      $query->where('sender_user_id', $authUser->id);
     }
 
     $data = $query
