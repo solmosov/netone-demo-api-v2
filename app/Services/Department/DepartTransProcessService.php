@@ -3,6 +3,7 @@
 namespace App\Services\Department;
 
 use App\Exceptions\InvalidDataException;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\ServerErrorException;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
@@ -68,10 +69,14 @@ class DepartTransProcessService
 
     $receiverDepartId = $queryParams['receiver_depart_id'] ?? null;
 
+    if (!$authUser->isAdmin() && !$receiverDepartId) {
+      throw new InvalidDataException("Qabul qiluvchi bo'lim noto'g'ri yuborilmoqda");
+    }
+
     // Query
     $query = $query = $this->createQuery($queryParams);
 
-    if ($receiverDepartId) {
+    if (!$authUser->isAdmin() && $receiverDepartId) {
       $userDepart = DB::table('depart_user')
         ->where('user_id', $authUser->id)
         ->where('depart_id', $receiverDepartId)
