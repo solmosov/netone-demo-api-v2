@@ -67,11 +67,12 @@ class FinishProductionProcessRequest extends FormRequest
 
             // Depart Stock
             $departStock = DepartStock::findOrFail($departStockId);
-
+            
             // Depart User
             $exists = DB::table('depart_user')
                 ->where('user_id', $authUser->id)
-                ->where('depart_id', $departStock->depart_id);
+                ->where('depart_id', $departStock->depart_id)
+                ->exists();
             if (!$exists) {
                 throw new NotFoundException("Zaxira polka mavjud emas");
             } else if ($departStock->product_id != $outProductId) {
