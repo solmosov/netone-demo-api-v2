@@ -64,7 +64,7 @@ class StoreProductionProcessRequest extends FormRequest
                 $departStock = DepartStock::findOrFail($departStockId);
                 $exists = DB::table('depart_user')
                     ->where('user_id', $authUser->id)
-                    ->where('depart_id', $departStockId)
+                    ->where('depart_id', $departStock->depart_id)
                     ->exists();
                 if (!$exists) {
                     $validator->errors()->add("items_list.*.depart_stock_id", "Zaxira polka noto'g'ri tanlandi");
