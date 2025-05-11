@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\InvalidDataException;
 use App\Models\DepartStock;
-use App\Models\ProductStock;
+use App\Models\ProductionRecipe;
 use App\Models\RecipeItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -36,11 +37,7 @@ class StoreProductionProcessRequest extends FormRequest
             ],
             'production_recipe_id' => 'required|integer|exists:production_recipes,id',
             'items_list' => 'required|array',
-            'items_list.*.recipe_item_id' => [
-                'required',
-                'integer',
-                Rule::exists('recipe_items', 'id')->where('production_recipe_id')
-            ],
+            'items_list.*.recipe_item_id' => 'required|integer|exists:recipe_items,id',
             'items_list.*.depart_stock_id' => 'required|integer|exists:depart_stocks,id',
             'items_list.*.amount' => 'required|numeric|min:0.01',
         ];
@@ -52,6 +49,14 @@ class StoreProductionProcessRequest extends FormRequest
             $authUser = Auth::user();
             $productionRecipeId = $this->input('production_recipe_id');
             $itemsList = $this->input('items_list');
+
+            // Production Recipe
+            $productionRecipe = ProductionRecipe::with('recipeItems')->findOrFail($productionRecipeId);
+            if ($productionRecipe->recipeItems->count() != count($itemsList)) {
+                throw new InvalidDataException("Retsept bo'yicha mahsulotlarni hammasini kiriting");
+            }
+
+            // Validate Count
 
             foreach ($itemsList as $key => $item) {
                 $recipeItemId = $item['recipe_item_id'];
@@ -67,11 +72,13 @@ class StoreProductionProcessRequest extends FormRequest
                     ->where('depart_id', $departStock->depart_id)
                     ->exists();
                 if (!$exists) {
-                    $validator->errors()->add("items_list.*.depart_stock_id", "Zaxira polka noto'g'ri tanlandi");
+                    $validator->errors()->add("items_list.$key.depart_stock_id", "Zaxira polka noto'g'ri tanlandi");
+                } else if ($recipeItem->product_id != $departStock->product_id) {
+                    $validator->errors()->add("item_list.$key.depart_stock_id", "Zaxira polka mahsuloti bilan retsept bo'yicha qo'shilayotgan mahsulot bir-biriga mos emas!");
                 } else if ($departStock->amount_type_id !== $recipeItem->amount_type_id) {
-                    $validator->errors()->add('items_list.*.amount', "Rersept o'chov birligi bilan zaxira mahsulot o'lchov birligi mos emas");
+                    $validator->errors()->add('items_list.$key.amount', "Rersept o'chov birligi bilan zaxira mahsulot o'lchov birligi mos emas");
                 } else if ($departStock->amount < $amount) {
-                    $validator->errors()->add('items_list.*.amount', "Zaxira miqdor yetarli emas");
+                    $validator->errors()->add('items_list.$key.amount', "Zaxira miqdor yetarli emas");
                 }
             }
         });

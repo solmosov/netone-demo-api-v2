@@ -46,10 +46,10 @@ class ProductionProcessService
                 $amount = $reqItem['amount'];
 
                 // Recipe Item
-                $recipeItem = RecipeItems::firstOrFail($recipeItemId);
+                $recipeItem = RecipeItems::findOrFail($recipeItemId);
 
                 // Department Stock
-                $departStockItem = DepartStock::where('product_id', $reqItem->product_id)
+                $departStockItem = DepartStock::where('product_id', $recipeItem->product_id)
                     ->where('amount_type_id', $recipeItem->amount_type_id)
                     ->findOrFail($departStockId);
 
@@ -64,6 +64,7 @@ class ProductionProcessService
                 // Department Stock
                 $departStockItem->decrement('amount', $amount);
             }
+
 
             // New Process Items
             $newProcess->processItems()->createMany($attachItems);
