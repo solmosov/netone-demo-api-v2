@@ -42,7 +42,7 @@ class StoreDepartStockRequest extends FormRequest
             // Exist Product Stock
             $exists = ProductStock::where('polka_id', $polkaId)
                 ->exists();
-            if (!$exists) {
+            if ($exists) {
                 throw new InvalidDataException("Bu zaxira polkani tanlash mumkin emas. Boshqa zaxira polkani tanlang");
             }
 
