@@ -23,7 +23,7 @@ class Polka extends Model
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
-    
+
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id')->with('children');
@@ -32,5 +32,10 @@ class Polka extends Model
     public function ownerDepart(): BelongsTo
     {
         return $this->belongsTo(Depart::class, 'owner_id');
+    }
+
+    public function productStocks(): HasMany
+    {
+        return $this->hasMany(ProductStock::class, 'polka_id');
     }
 }
