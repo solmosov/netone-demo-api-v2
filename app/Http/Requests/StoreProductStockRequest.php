@@ -41,7 +41,7 @@ class StoreProductStockRequest extends FormRequest
             $exists = Polka::whereNull('owner_id')->find($polka_id);
 
             if ($exists) {
-                $validator->errors()->add('polka_id', "Bu `$exists->name` polka bo'limgan tegishli");
+                $validator->errors()->add('polka_id', "Bu `$exists->name` polka bo'limga tegishli");
             }
             if (ProductStock::where('product_id', $product_id)
                 ->where('polka_id', $polka_id)
