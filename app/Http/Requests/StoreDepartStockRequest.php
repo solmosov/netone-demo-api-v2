@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\InvalidDataException;
 use App\Exceptions\NotFoundException;
 use App\Models\Depart;
 use App\Models\DepartStock;
 use App\Models\Polka;
 use App\Models\Product;
+use App\Models\ProductStock;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
@@ -37,11 +39,16 @@ class StoreDepartStockRequest extends FormRequest
             $polkaId = $this->input('polka_id');
             $productId = $this->input('product_id');
 
-            $polka = Polka::find($polkaId);
-            if (!$polka) {
-                throw new NotFoundException("Zaxira polka topilmadi");
-            } else if ($polka->owner_id !== null && $polka->owner_id !== $departId) {
-                $validator->errors()->add("polka_id", "Bu polkani tanlash mumkin emas!");
+            // Exist Product Stock
+            $exists = ProductStock::where('polka_id', $polkaId)
+                ->exists();
+            if (!$exists) {
+                throw new InvalidDataException("Bu zaxira polkani tanlash mumkin emas. Boshqa zaxira polkani tanlang");
+            }
+
+            $polka = Polka::findOrFail($polkaId);
+            if ($polka->owner_id !== null && $polka->owner_id !== $departId) {
+                $validator->errors()->add("polka_id", "Bu polkani tanlash mumkin emas! Boshqa zaxira polkani tanlang");
             } else {
                 $exists = DepartStock::where('depart_id', $departId)
                     ->where('polka_id', $polkaId)
