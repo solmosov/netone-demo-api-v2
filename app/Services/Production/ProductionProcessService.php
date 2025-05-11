@@ -107,8 +107,8 @@ class ProductionProcessService
     public function finish(array $data, int $id): array
     {
         // Req Data
-        $reqPolkaId = $data['polka_id'];
-        $reqTotalAmount = $data['total_amount'];
+        $reqDepartStockId = $data['depart_stock_id'];
+        $reqOutAmount = $data['out_amount'];
 
         // Process
         $productionProcess = ProductionProcess::with([
@@ -116,57 +116,42 @@ class ProductionProcessService
             'processItems'
         ])
             ->findOrFail($id);
+        $outProductId = $productionProcess->productionRecipe->out_product_id;
 
-        // Status completed
-        $statusCurrent = StatusService::findById($productionProcess->status_id);
 
-        if ($statusCurrent->code !== 'productionProcess') {
-            if ($statusCurrent->code === 'productionCancel') {
-                throw new InvalidDataException('Bu ishlab chiqarish jarayoni allaqachon bekor qilingan');
-            } else if ($statusCurrent->code === 'productionStopped') {
-                throw new InvalidDataException("Bu ishlab chiqarish jarayoni allaqachon to'xtatilgan");
-            } else if ($statusCurrent->code === 'productionCompleted') {
-                throw new InvalidDataException("Bu ishlab chiqarish jarayoni allaqachon tayyorlangan");
-            }
+        // Status Completed
+        $statusCompleted = self::getStatusCompleted();
 
-            throw new InvalidDataException("Bu ishlab chiqarish jarayonini tugallab bo'lmaydi");
-        }
-
-        // Status productionCompleted
-        $statusProductionCompleted = self::getStatusCompleted();
-
-        // Stock
-        $stock = ProductStock::where('product_id', $productionProcess->productionRecipe->out_product_id)->firstOrFail();
+        // Depart Stock
+        $departStock = ProductStock::where('product_id', $outProductId)
+            ->findOrFail($reqDepartStockId);
 
         // Out Product
-        $outProduct = Product::findOrFail($productionProcess->productionRecipe->out_product_id);
+        $outProduct = Product::findOrFail($outProductId);
 
         DB::beginTransaction();
 
         try {
-            $productionProcess->status_id = $statusProductionCompleted->id;
-            $productionProcess->out_amount = $reqTotalAmount;
+            // Change Process Status And Out Amount
+            $productionProcess->status_id = $statusCompleted->id;
+            $productionProcess->out_amount = $reqOutAmount;
 
-            // Change stock
-            $stock->increment('amount', $productionProcess->out_amount);
+            // Change Depart Stock Amount
+            $departStock->increment('amount', $productionProcess->out_amount);
 
             $productionProcess->save();
 
             // Cost Price
-            $outProductCostPrice = 0;
+            $totalOutPrice = 0;
 
             foreach ($productionProcess->processItems as $item) {
-                // Get Last Receive Product
-                // $lastReceive = ReceiveProductDetail::where('product_id', $item->product_id)->latest()->first();
-                // if ($lastReceive) {
-                //     $costPrice += $lastReceive->price * $item->amount;
-                // }
-
                 $product = Product::findOrFail($item->product_id);
-                $outProductCostPrice += $product->cost_price * $item->amount;
+
+                $totalOutPrice += $product->cost_price * $item->amount;
             }
 
-            $outProductCostPrice = $outProductCostPrice / $reqTotalAmount;
+            // Calc Cost Price
+            $outProductCostPrice = $totalOutPrice / $reqOutAmount;
 
             // Set Cost Price
             $productionProcess->cost_price = $outProductCostPrice;
