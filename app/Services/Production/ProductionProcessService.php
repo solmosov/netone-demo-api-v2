@@ -4,9 +4,11 @@ namespace App\Services\Production;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
+use App\Models\DepartStock;
 use App\Models\Product;
 use App\Models\ProductionProcess;
 use App\Models\ProductStock;
+use App\Models\RecipeItems;
 use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
@@ -34,24 +36,37 @@ class ProductionProcessService
                 'out_amount' => 0,
                 'cost_price' => 0,
             ]);
-            // New Process Items
-            $newProcess->processItems()->createMany($reqItemsList);
+
+            $attachItems = [];
 
             // Decrement from stock
             foreach ($reqItemsList as $reqItem) {
-                $productId = $reqItem['product_id'];
-                $polkaId = $reqItem['polka_id'];
-                $amountTypeId = $reqItem['amount_type_id'];
+                $recipeItemId = $reqItem['recipe_item_id'];
+                $departStockId = $reqItem['depart_stock_id'];
                 $amount = $reqItem['amount'];
-                $stockItem = ProductStock::where('product_id', $productId)
-                    ->where('polka_id', $polkaId)
-                    ->firstOrFail();
-                if ($stockItem->amount_type_id != $amountTypeId) {
-                    throw new InvalidDataException("Zaxira polka o'lchov birligi bilan siz tanlagan o'lchov birligi mos emas!");
-                }
 
-                $stockItem->decrement('amount', $amount);
+                // Recipe Item
+                $recipeItem = RecipeItems::firstOrFail($recipeItemId);
+
+                // Department Stock
+                $departStockItem = DepartStock::where('product_id', $reqItem->product_id)
+                    ->where('amount_type_id', $recipeItem->amount_type_id)
+                    ->findOrFail($departStockId);
+
+
+                $attachItems[] = [
+                    'production_process_id' => $reqProductionRecipeId,
+                    'product_id' => $recipeItem->product_id,
+                    'amount_type_id' => $recipeItem->amount_type_id,
+                    'amount' => $amount,
+                ];
+
+                // Department Stock
+                $departStockItem->decrement('amount', $amount);
             }
+
+            // New Process Items
+            $newProcess->processItems()->createMany($attachItems);
 
             DB::commit();
 

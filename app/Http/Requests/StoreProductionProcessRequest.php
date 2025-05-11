@@ -2,9 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\DepartStock;
 use App\Models\ProductStock;
+use App\Models\RecipeItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -33,9 +36,12 @@ class StoreProductionProcessRequest extends FormRequest
             ],
             'production_recipe_id' => 'required|integer|exists:production_recipes,id',
             'items_list' => 'required|array',
-            'items_list.*.product_id' => 'required|integer|exists:products,id',
-            'items_list.*.polka_id' => 'required|integer|exists:products,id',
-            'items_list.*.amount_type_id' => 'required|integer|exists:amount_types,id',
+            'items_list.*.recipe_item_id' => [
+                'required',
+                'integer',
+                Rule::exists('recipe_items', 'id')->where('production_recipe_id')
+            ],
+            'items_list.*.depart_stock_id' => 'required|integer|exists:depart_stocks,id',
             'items_list.*.amount' => 'required|numeric|min:0.01',
         ];
     }
@@ -43,26 +49,29 @@ class StoreProductionProcessRequest extends FormRequest
     public function withValidator(Validator $validator)
     {
         $validator->after(function ($validator) {
+            $authUser = Auth::user();
+            $productionRecipeId = $this->input('production_recipe_id');
             $itemsList = $this->input('items_list');
 
             foreach ($itemsList as $key => $item) {
-                $productId = $item['product_id'];
-                $polkaId = $item['polka_id'];
-                $amountTypeId = $item['amount_type_id'];
+                $recipeItemId = $item['recipe_item_id'];
+                $departStockId = $item['depart_stock_id'];
                 $amount = $item['amount'];
 
-                $stock = ProductStock::where('product_id', $productId)
-                    ->where('polka_id', $polkaId)->first();
-                if (!$stock) {
-                    return $validator->errors()->add("items_list.$key.polka_id", "Zaxira polkasi topilmadi");
-                }
+                // Recipe Item
+                $recipeItem = RecipeItems::where('product_recipe_id', $productionRecipeId)->firstOrFail('recipe_item_id');
 
-                if ($stock->amount_type_id != $amountTypeId) {
-                    return $validator->errors()->add("items_list.$key.amount_type_id", "O'lchov birligi mos emas");
-                }
-
-                if ($stock->amount < $amount) {
-                    return $validator->errors()->add("items_list.$key.amount", "Zaxira yetarli emas");
+                $departStock = DepartStock::findOrFail($departStockId);
+                $exists = DB::table('depart_user')
+                    ->where('user_id', $authUser->id)
+                    ->where('depart_id', $departStockId)
+                    ->exists();
+                if (!$exists) {
+                    $validator->errors()->add("items_list.*.depart_stock_id", "Zaxira polka noto'g'ri tanlandi");
+                } else if ($departStock->amount_type_id !== $recipeItem->amount_type_id) {
+                    $validator->errors()->add('items_list.*.amount', "Rersept o'chov birligi bilan zaxira mahsulot o'lchov birligi mos emas");
+                } else if ($departStock->amount < $amount) {
+                    $validator->errors()->add('items_list.*.amount', "Zaxira miqdor yetarli emas");
                 }
             }
         });
