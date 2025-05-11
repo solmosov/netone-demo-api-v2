@@ -59,7 +59,7 @@ class StoreProductionProcessRequest extends FormRequest
                 $amount = $item['amount'];
 
                 // Recipe Item
-                $recipeItem = RecipeItems::where('product_recipe_id', $productionRecipeId)->firstOrFail('recipe_item_id');
+                $recipeItem = RecipeItems::where('production_recipe_id', $productionRecipeId)->findOrFail($recipeItemId);
 
                 $departStock = DepartStock::findOrFail($departStockId);
                 $exists = DB::table('depart_user')
