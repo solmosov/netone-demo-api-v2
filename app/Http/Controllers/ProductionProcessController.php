@@ -15,9 +15,7 @@ class ProductionProcessController extends Controller
 {
     public function __construct(
         protected ProductionProcessService $productionProcessService,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
