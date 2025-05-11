@@ -124,8 +124,8 @@ class ProductionProcessService
         $statusCompleted = self::getStatusCompleted();
 
         // Depart Stock
-        $departStock = ProductStock::where('product_id', $outProductId)
-            ->findOrFail($reqDepartStockId);
+        $departStock = DepartStock::where('product_id', $outProductId)
+            ->findOrFail(id: $reqDepartStockId);
 
         // Out Product
         $outProduct = Product::findOrFail($outProductId);
