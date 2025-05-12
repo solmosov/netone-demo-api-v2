@@ -16,10 +16,10 @@ return new class extends Migration
             $table->foreignId('trans_id')->constrained('producer_product_trans');
 
             $table->unsignedBigInteger('product_stock_id')->nullable();
-            $table->foreignId('product_stock_id')->constrained('product_stocks');
+            $table->foreign('product_stock_id')->references('id')->on('product_stocks');
 
             $table->unsignedBigInteger('depart_stock_id')->nullable();
-            $table->foreignId('depart_stock_id')->constrained('depart_stocks');
+            $table->foreign('depart_stock_id')->references('id')->on('depart_stocks');
 
             $table->foreignId('amount_type_id');
             $table->unsignedBigInteger('amount');

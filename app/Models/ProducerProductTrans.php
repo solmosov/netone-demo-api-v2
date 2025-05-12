@@ -12,9 +12,9 @@ class ProducerProductTrans extends Model
     protected $fillable = [
         'producer_id',
         'depart_id',
-        'depart_user_id',
+        'depart_user_id', // nullable
         'status_id',
-        'is_sending',
+        'is_sending_depart',
         'comment',
     ];
 

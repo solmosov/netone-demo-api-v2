@@ -24,21 +24,15 @@ class ProducerProductTransPolicy
         return true;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function sendProductToDepart(User $user): bool
     {
-        return $user->isProducer() || $user->isDepartUser();
+        return $user->isProducer();
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user): bool
-    {
-        return $user->isProducer() || $user->isDepartUser();
-    }
+
 
     /**
      * Determine whether the user can delete the model.

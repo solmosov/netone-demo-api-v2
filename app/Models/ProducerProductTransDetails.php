@@ -9,8 +9,8 @@ class ProducerProductTransDetails extends Model
 {
     protected $fillable = [
         'trans_id',
-        'product_stock_id',
-        'depart_stock_id',
+        'product_stock_id', // not required
+        'depart_stock_id', // not required
         'amount_type_id',
         'amount'
     ];

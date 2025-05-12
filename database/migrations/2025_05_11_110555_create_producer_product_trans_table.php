@@ -15,10 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('producer_id')->constrained('users');
             $table->foreignId('depart_id')->constrained('departs');
+
             $table->unsignedBigInteger('depart_user_id')->nullable();
-            $table->foreignId('depart_user_id')->constrained('depart_user_id');
+            $table->foreign('depart_user_id')->references('id')->on('users');
+
             $table->foreignId('status_id')->constrained('statuses');
-            $table->boolean('is_sending');
+            $table->boolean('is_sending_depart');
             $table->string('comment');
             $table->timestamps();
         });

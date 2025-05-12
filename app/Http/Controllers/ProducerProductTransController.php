@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProducerProductTrans;
-use App\Http\Requests\StoreProducerProductTransRequest;
+use App\Http\Requests\StoreProducerSendProductToDepartTransRequest;
 use App\Http\Requests\UpdateProducerProductTransRequest;
+use App\Http\Resources\ProducerProductTransResource;
+use App\Policies\ProducerProductTransPolicy;
 use App\Services\ProductTransfer\ProducerProductTransService;
+use Illuminate\Support\Facades\Gate;
 
 class ProducerProductTransController extends Controller
 {
@@ -19,9 +22,17 @@ class ProducerProductTransController extends Controller
     }
 
 
-    public function store(StoreProducerProductTransRequest $request)
+    public function sendProductToDepart(StoreProducerSendProductToDepartTransRequest $request)
     {
-        $this->producerProductTransService->create($request->validated());
+        // Gate
+        Gate::authorize('sendProductToDepart', ProducerProductTrans::class);
+
+        $data = $this->producerProductTransService->create($request->validated());
+
+        return response()->json([
+            'message' => '',
+            'data' => ProducerProductTransResource::make($data)
+        ]);
     }
 
 
