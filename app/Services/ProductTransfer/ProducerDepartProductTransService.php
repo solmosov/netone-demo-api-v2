@@ -8,13 +8,19 @@ use App\Models\ProducerProductTrans;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-use function PHPUnit\Framework\assertContainsNotOnlyObject;
-
 class ProducerDepartProductTransService
 {
   public function findAll()
   {
-    $data = ProducerProductTrans::where('is_sending_depart', false)->latest()->get();
+    $data = ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])
+      ->where('is_sending_depart', false)
+      ->latest()
+      ->get();
 
     return $data;
   }
