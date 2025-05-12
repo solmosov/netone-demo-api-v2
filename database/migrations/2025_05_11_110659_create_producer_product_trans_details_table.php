@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreign('depart_stock_id')->references('id')->on('depart_stocks');
 
             $table->foreignId('amount_type_id');
-            $table->unsignedBigInteger('amount');
+            $table->decimal('amount', 15, 4);
             $table->timestamps();
         });
     }

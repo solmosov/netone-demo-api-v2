@@ -11,22 +11,36 @@ class ProducerProductTransPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(User $user): bool
+    public function viewAnyProducer(User $user): bool
     {
-        return true;
+        return $user->isProducer();
+    }
+
+    public function viewAnyDepart(User $user): bool
+    {
+        return $user->isDepartUser();
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, ProducerProductTrans $producerProductTrans): bool
+    public function viewProducer(User $user): bool
     {
-        return true;
+        return $user->isProducer();
+    }
+
+    public function viewDepart(User $user): bool
+    {
+        return $user->isDepartUser();
     }
 
     public function sendProductToDepart(User $user): bool
     {
         return $user->isProducer();
+    }
+    public function sendProductToProducer(User $user): bool
+    {
+        return $user->isDepartUser();
     }
 
     /**
