@@ -9,6 +9,14 @@ class ProducerProductTransResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'producer' => UserResource::make($this->whenLoaded('producer')),
+            'depart' => DepartResource::make($this->whenLoaded('depart')),
+            'depart_user' => UserResource::make($this->whenLoaded('departUser')),
+            'status' => $this->whenLoaded('status'),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+        ];
     }
 }

@@ -11,7 +11,17 @@ use Illuminate\Support\Facades\DB;
 
 class ProducerProductTransService
 {
-  public function findAll() {}
+  public function findAll()
+  {
+    return ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])->where('is_sending_depart', true)
+      ->latest()
+      ->get();
+  }
   public function findOne() {}
   public function sendProductToDepart(array $data)
   {
@@ -63,13 +73,6 @@ class ProducerProductTransService
     }
   }
 
-  public function receiveProductFromProducer(array $data)
-  { 
-    // Data
-    $reqDepartId = $data['depart_id'];
-    $reqItemsList = $data['items_list'];
-  }
-  
   public static function getStatusSend()
   {
     return StatusService::findByCode('producerSendProduct');

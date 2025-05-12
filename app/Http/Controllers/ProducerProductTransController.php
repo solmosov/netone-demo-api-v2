@@ -18,7 +18,11 @@ class ProducerProductTransController extends Controller
 
     public function index()
     {
-        //
+        $data = $this->producerProductTransService->findAll();
+
+        return response()->json([
+            'data' => ProducerProductTransResource::collection($data)
+        ]);
     }
 
 
