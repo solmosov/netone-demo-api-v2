@@ -3,7 +3,9 @@
 namespace App\Services\ProductTransfer;
 
 use App\Exceptions\InvalidDataException;
+use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
+use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
@@ -71,6 +73,50 @@ class ProducerProductTransService
       DB::rollBack();
       throw new InvalidDataException($e->getMessage(), (int) $e->getCode(), $e);
     }
+  }
+
+  public function receiveProductFromDepart(int $id, array $data)
+  {
+    // Req Data
+    $reqItemsList = $data['items_list'];
+
+    // Status Send
+    $statusSend = self::getStatusSend();
+
+    // Transfer
+    $transfer = ProducerProductTrans::where('status_id', $statusSend->id)->findOrFail($id);
+
+    // Status Received
+    $statusReceived = self::getStatusReceive();
+
+    // Product Stock
+    foreach ($reqItemsList as $item) {
+      $itemId = $item['item_id'];
+      $productStockId = $item['product_stock_id'];
+
+      // Transfer Item
+      $transferItem = ProducerProductTransDetails::findOrFail($itemId);
+      $transAmount = $transferItem->amount;
+      $transAmountTypeId = $transferItem->amount_type_id;
+      $transDepartStockId = $transferItem->depart_stock_id;
+
+      // Product Stock
+      $productStock = ProductStock::where('amount_type_id', $transAmountTypeId)
+        ->findOrFail($productStockId);
+
+      // Depart Stock
+      $departStock = DepartStock::findOrFail($transDepartStockId);
+
+      // Decrement From Depart Stock
+      $departStock->decrement('amount', $transAmount);
+
+      // Increment to Product Stock
+      $productStock->increment('amount', $transAmount);
+    }
+
+    // Change Status
+    $transfer->status_id = $statusReceived->id;
+    $transfer->save();
   }
 
   public static function getStatusSend()

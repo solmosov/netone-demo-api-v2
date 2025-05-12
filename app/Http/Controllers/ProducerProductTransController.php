@@ -37,6 +37,8 @@ class ProducerProductTransController extends Controller
         ]);
     }
 
+    public function receiveProductFromDepart()
+
 
     public function show(string $id)
     {
