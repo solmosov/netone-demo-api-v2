@@ -4,9 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ProducerProductTrans;
 use App\Http\Requests\StoreProducerSendProductToDepartTransRequest;
-use App\Http\Requests\UpdateProducerProductTransRequest;
 use App\Http\Resources\ProducerProductTransResource;
-use App\Policies\ProducerProductTransPolicy;
 use App\Services\ProductTransfer\ProducerProductTransService;
 use Illuminate\Support\Facades\Gate;
 
@@ -40,7 +38,7 @@ class ProducerProductTransController extends Controller
     }
 
 
-    public function show(ProducerProductTrans $producerProductTrans)
+    public function show(string $id)
     {
         //
     }
