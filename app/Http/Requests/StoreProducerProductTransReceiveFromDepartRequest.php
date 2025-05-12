@@ -37,7 +37,7 @@ class StoreProducerProductTransReceiveFromDepartRequest extends FormRequest
                 $productStockId = $item['product_stock_id'];
 
                 // Transfer Item
-                $transferItem = ProducerProductTransDetails::where('trans_id')->find($itemId);
+                $transferItem = ProducerProductTransDetails::where('trans_id', $transId)->find($itemId);
                 if (!$transferItem) {
                     $validator->errors()->add("trans_list.$key.item_id", "O'tkazma mahsulot topilmadi");
                 } else {
