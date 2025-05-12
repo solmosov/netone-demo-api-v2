@@ -63,6 +63,13 @@ class ProducerProductTransService
     }
   }
 
+  public function receiveProductFromProducer(array $data)
+  { 
+    // Data
+    $reqDepartId = $data['depart_id'];
+    $reqItemsList = $data['items_list'];
+  }
+  
   public static function getStatusSend()
   {
     return StatusService::findByCode('producerSendProduct');
