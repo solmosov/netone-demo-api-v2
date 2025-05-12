@@ -27,7 +27,7 @@ class ProducerProductTransController extends Controller
         // Gate
         Gate::authorize('sendProductToDepart', ProducerProductTrans::class);
 
-        $data = $this->producerProductTransService->create($request->validated());
+        $data = $this->producerProductTransService->sendProductToDepart($request->validated());
 
         return response()->json([
             'message' => '',

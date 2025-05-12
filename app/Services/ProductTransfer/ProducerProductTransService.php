@@ -5,17 +5,15 @@ namespace App\Services\ProductTransfer;
 use App\Exceptions\InvalidDataException;
 use App\Models\ProducerProductTrans;
 use App\Models\ProductStock;
-use App\Policies\ProducerProductTransPolicy;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
 
 class ProducerProductTransService
 {
   public function findAll() {}
   public function findOne() {}
-  public function create(array $data)
+  public function sendProductToDepart(array $data)
   {
     // Data
     $reqDepartId = $data['depart_id'];
