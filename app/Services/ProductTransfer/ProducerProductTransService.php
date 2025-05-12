@@ -84,7 +84,9 @@ class ProducerProductTransService
     $statusSend = self::getStatusSend();
 
     // Transfer
-    $transfer = ProducerProductTrans::where('status_id', $statusSend->id)->findOrFail($id);
+    $transfer = ProducerProductTrans::where('is_sending_depart', false)
+      ->where('status_id', $statusSend->id)
+      ->findOrFail($id);
 
     // Status Received
     $statusReceived = self::getStatusReceive();
@@ -112,6 +114,10 @@ class ProducerProductTransService
 
       // Increment to Product Stock
       $productStock->increment('amount', $transAmount);
+
+      // Change of Transfer Item 
+      $transferItem->product_stock_id = $productStock->id;
+      $transferItem->save();
     }
 
     // Change Status
