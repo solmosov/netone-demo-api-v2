@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::table('product_stocks', function (Blueprint $table) {
             $table->dropColumn('name');
-            $table->foreignId('polka_id')->constrained('polkas');
+            $table->unsignedBigInteger('polka_id')->nullable();
+            $table->foreign('polka_id')->references('id')->on('polkas');
         });
     }
 
