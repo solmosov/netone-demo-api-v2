@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Department\DepartTransProcessDetail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -48,7 +47,7 @@ class DepartTransProcess extends Model
     public function details(): HasMany
     {
         return $this->hasMany(DepartTransProcessDetail::class, 'depart_trans_process_id')
-        ->with(['product', 'polka.ownerDepart', 'amountType']);
+            ->with(['amountType','senderDepartStock','receiverDepartStock']);
     }
 
     public function status(): BelongsTo

@@ -11,9 +11,8 @@ class DepartTransProcessDetailsResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'product' => ProductResource::make($this->product),
-            'polka' => PolkaResource::make($this->polka),
-            'receive_polka' => PolkaResource::make($this->receivedPolka),
+            'sender_depart_stock' => DepartStockResource::make($this->senderDepartStock),
+            'receiver_depart_stock' => DepartStockResource::make($this->receiverDepartStock),
             'amount' => (float) $this->amount,
             'amount_type' => $this->amountType,
             'created_at' => $this->created_at,

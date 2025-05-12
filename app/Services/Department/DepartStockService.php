@@ -4,8 +4,10 @@ namespace App\Services\Department;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\DepartStock;
+use App\Models\Polka;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 class DepartStockService
 {
@@ -20,37 +22,62 @@ class DepartStockService
         $product = Product::findOrFail($productId);
         $amountTypeId = $product->price_amount_type_id;
 
-        // New Depart Stock
-        $newDepartStock = DepartStock::create([
-            'depart_id' => $departId,
-            'polka_id' => $polkaId,
-            'product_id' => $productId,
-            'amount_type_id' => $amountTypeId,
-        ]);
+        // Polka
+        $polka = Polka::where('id', $polkaId)
+            ->firstOrFail();
 
-        return $newDepartStock;
+        DB::beginTransaction();
+
+        try {
+            // New Depart Stock
+            $newDepartStock = DepartStock::create([
+                'depart_id' => $departId,
+                'polka_id' => $polkaId,
+                'product_id' => $productId,
+                'amount_type_id' => $amountTypeId,
+            ]);
+
+            // Change of Polka Owner
+            $polka->owner_id = $departId;
+            $polka->save();
+
+            DB::commit();
+
+            return $newDepartStock;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
+        }
     }
 
-    public function findAll(): Collection
+    public function findAll(array $queryParams): Collection
     {
+        // Query Params
+        $departId = $queryParams['depart_id'] ?? null;
 
-        return DepartStock::with(['depart','polka','amountType','product'])->get();
+        $query = DepartStock::with(['depart', 'polka', 'amountType', 'product']);
+
+        if ($departId) {
+            $query->where('depart_id', $departId);
+        }
+
+        return $query->get();
     }
 
     public function findOne(int $id): DepartStock
     {
-        return DepartStock::with(['depart','polka','amountType','product'])->findOrfail($id);
+        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])->findOrFail($id);
     }
 
     public function delete(int $id): DepartStock
     {
         $departStock  = $this->findOne($id);
 
-        try{
+        try {
             $departStock->delete();
 
             return $departStock;
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
     }

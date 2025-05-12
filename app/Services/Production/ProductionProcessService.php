@@ -4,9 +4,11 @@ namespace App\Services\Production;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
+use App\Models\DepartStock;
 use App\Models\Product;
 use App\Models\ProductionProcess;
 use App\Models\ProductStock;
+use App\Models\RecipeItems;
 use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
@@ -34,24 +36,38 @@ class ProductionProcessService
                 'out_amount' => 0,
                 'cost_price' => 0,
             ]);
-            // New Process Items
-            $newProcess->processItems()->createMany($reqItemsList);
+
+            $attachItems = [];
 
             // Decrement from stock
             foreach ($reqItemsList as $reqItem) {
-                $productId = $reqItem['product_id'];
-                $polkaId = $reqItem['polka_id'];
-                $amountTypeId = $reqItem['amount_type_id'];
+                $recipeItemId = $reqItem['recipe_item_id'];
+                $departStockId = $reqItem['depart_stock_id'];
                 $amount = $reqItem['amount'];
-                $stockItem = ProductStock::where('product_id', $productId)
-                    ->where('polka_id', $polkaId)
-                    ->firstOrFail();
-                if ($stockItem->amount_type_id != $amountTypeId) {
-                    throw new InvalidDataException("Zaxira polka o'lchov birligi bilan siz tanlagan o'lchov birligi mos emas!");
-                }
 
-                $stockItem->decrement('amount', $amount);
+                // Recipe Item
+                $recipeItem = RecipeItems::findOrFail($recipeItemId);
+
+                // Department Stock
+                $departStockItem = DepartStock::where('product_id', $recipeItem->product_id)
+                    ->where('amount_type_id', $recipeItem->amount_type_id)
+                    ->findOrFail($departStockId);
+
+
+                $attachItems[] = [
+                    'production_process_id' => $reqProductionRecipeId,
+                    'product_id' => $recipeItem->product_id,
+                    'amount_type_id' => $recipeItem->amount_type_id,
+                    'amount' => $amount,
+                ];
+
+                // Department Stock
+                $departStockItem->decrement('amount', $amount);
             }
+
+
+            // New Process Items
+            $newProcess->processItems()->createMany($attachItems);
 
             DB::commit();
 
@@ -92,8 +108,8 @@ class ProductionProcessService
     public function finish(array $data, int $id): array
     {
         // Req Data
-        $reqPolkaId = $data['polka_id'];
-        $reqTotalAmount = $data['total_amount'];
+        $reqDepartStockId = $data['depart_stock_id'];
+        $reqOutAmount = $data['out_amount'];
 
         // Process
         $productionProcess = ProductionProcess::with([
@@ -101,57 +117,42 @@ class ProductionProcessService
             'processItems'
         ])
             ->findOrFail($id);
+        $outProductId = $productionProcess->productionRecipe->out_product_id;
 
-        // Status completed
-        $statusCurrent = StatusService::findById($productionProcess->status_id);
 
-        if ($statusCurrent->code !== 'productionProcess') {
-            if ($statusCurrent->code === 'productionCancel') {
-                throw new InvalidDataException('Bu ishlab chiqarish jarayoni allaqachon bekor qilingan');
-            } else if ($statusCurrent->code === 'productionStopped') {
-                throw new InvalidDataException("Bu ishlab chiqarish jarayoni allaqachon to'xtatilgan");
-            } else if ($statusCurrent->code === 'productionCompleted') {
-                throw new InvalidDataException("Bu ishlab chiqarish jarayoni allaqachon tayyorlangan");
-            }
+        // Status Completed
+        $statusCompleted = self::getStatusCompleted();
 
-            throw new InvalidDataException("Bu ishlab chiqarish jarayonini tugallab bo'lmaydi");
-        }
-
-        // Status productionCompleted
-        $statusProductionCompleted = self::getStatusCompleted();
-
-        // Stock
-        $stock = ProductStock::where('product_id', $productionProcess->productionRecipe->out_product_id)->firstOrFail();
+        // Depart Stock
+        $departStock = DepartStock::where('product_id', $outProductId)
+            ->findOrFail(id: $reqDepartStockId);
 
         // Out Product
-        $outProduct = Product::findOrFail($productionProcess->productionRecipe->out_product_id);
+        $outProduct = Product::findOrFail($outProductId);
 
         DB::beginTransaction();
 
         try {
-            $productionProcess->status_id = $statusProductionCompleted->id;
-            $productionProcess->out_amount = $reqTotalAmount;
+            // Change Process Status And Out Amount
+            $productionProcess->status_id = $statusCompleted->id;
+            $productionProcess->out_amount = $reqOutAmount;
 
-            // Change stock
-            $stock->increment('amount', $productionProcess->out_amount);
+            // Change Depart Stock Amount
+            $departStock->increment('amount', $productionProcess->out_amount);
 
             $productionProcess->save();
 
             // Cost Price
-            $outProductCostPrice = 0;
+            $totalOutPrice = 0;
 
             foreach ($productionProcess->processItems as $item) {
-                // Get Last Receive Product
-                // $lastReceive = ReceiveProductDetail::where('product_id', $item->product_id)->latest()->first();
-                // if ($lastReceive) {
-                //     $costPrice += $lastReceive->price * $item->amount;
-                // }
-
                 $product = Product::findOrFail($item->product_id);
-                $outProductCostPrice += $product->cost_price * $item->amount;
+
+                $totalOutPrice += $product->cost_price * $item->amount;
             }
 
-            $outProductCostPrice = $outProductCostPrice / $reqTotalAmount;
+            // Calc Cost Price
+            $outProductCostPrice = $totalOutPrice / $reqOutAmount;
 
             // Set Cost Price
             $productionProcess->cost_price = $outProductCostPrice;

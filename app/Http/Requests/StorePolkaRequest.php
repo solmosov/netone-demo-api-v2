@@ -17,8 +17,8 @@ class StorePolkaRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255|unique:polkas,name',
-            'parent_id' => 'nullable|string|max:255|exists:polkas,id',
-            'owner_id' => 'nullable|numeric|exists:users,id'
+            'parent_id' => 'nullable|integer|max:255|exists:polkas,id',
+            'owner_id' => 'nullable|integer|exists:users,id'
         ];
     }
 

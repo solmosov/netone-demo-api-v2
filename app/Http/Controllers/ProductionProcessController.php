@@ -15,9 +15,7 @@ class ProductionProcessController extends Controller
 {
     public function __construct(
         protected ProductionProcessService $productionProcessService,
-    )
-    {
-    }
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -58,6 +56,7 @@ class ProductionProcessController extends Controller
 
     public function finish(FinishProductionProcessRequest $request, string $id): JsonResponse
     {
+        dd('render');
         $result = $this->productionProcessService->finish($request->validated(), (int)$id);
         return response()->json([
             'message' => $result['message'],

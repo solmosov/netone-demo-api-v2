@@ -6,8 +6,11 @@ use App\Models\Polka;
 
 class PolkaService
 {
-  public function findAll(bool $isTree)
+  public function findAll(array $params)
   {
+    $isTree = $params['is_tree'] ?? false;
+    $ownerId = $params['owner_id'] ?? null;
+    $isPublic = $params['is_public'] ?? null;
 
     $query = Polka::query();
 
@@ -16,7 +19,15 @@ class PolkaService
         ->where('parent_id', null);
     }
 
-    $data = $query->get();
+    if ($ownerId) {
+      $query->where('owner_id', $ownerId);
+    } else if ($isPublic) {
+      $query->whereNull('owner_id');
+    }
+
+    $data = $query
+      ->with(['parentPolka', 'ownerDepart'])
+      ->get();
 
     return [
       'data' => $data
@@ -27,11 +38,12 @@ class PolkaService
     $query = Polka::query();
 
     if ($isTree) {
-      $query->with('children')
-        ->where('parent_id', null);
+      $query->with('children');
     }
 
-    $data = $query->findOrFail($id);
+    $data = $query
+      ->with(['parentPolka', 'ownerDepart'])
+      ->findOrFail($id);
 
     return [
       'data' => $data

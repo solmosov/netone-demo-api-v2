@@ -4,47 +4,64 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDepartStockRequest;
 use App\Http\Resources\DepartStockResource;
+use App\Models\DepartStock;
 use App\Services\Department\DepartStockService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class DepartStockController extends Controller
 {
     public function __construct(
         protected DepartStockService $departStockService
-    )
-    {
-    }
+    ) {}
 
-    public function store(StoreDepartStockRequest $request): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $result = $this->departStockService->create($request->validated());
+        // Gate
+        Gate::authorize('viewAny', DepartStock::class);
 
-        return response()->json([
-            'message' => "Yangi bo'lim zaxira qo'shildi",
-            'data' => DepartStockResource::make($result)
-        ], 201);
-    }
+        $validated = $request->validate([
+            'depart_id' => 'nullable|integer|exists:departs,id',
+        ]);
 
-    public function index(): JsonResponse
-    {
-        $data = $this->departStockService->findAll();
+        $data = $this->departStockService->findAll($validated);
 
         return response()->json([
             'data' => DepartStockResource::collection($data),
         ]);
     }
 
+    public function store(StoreDepartStockRequest $request): JsonResponse
+    {
+        // Gate
+        Gate::authorize('create', DepartStock::class);
+
+        $result = $this->departStockService->create($request->validated());
+
+        return response()->json([
+            'message' => "Yangi bo'lim zaxirasi qo'shildi",
+            'data' => DepartStockResource::make($result)
+        ], 201);
+    }
+
     public function show(string $id): JsonResponse
     {
+        // Gate
+        Gate::authorize('view', DepartStock::class);
+
         $data = $this->departStockService->findOne((int) $id);
 
         return response()->json([
-           'data' => DepartStockResource::make($data),
+            'data' => DepartStockResource::make($data),
         ]);
     }
 
     public function destroy(string $id): JsonResponse
     {
+        // Gate
+        Gate::authorize('delete', DepartStock::class);
+
         $data = $this->departStockService->delete((int) $id);
 
         return response()->json([

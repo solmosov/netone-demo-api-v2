@@ -9,17 +9,19 @@ use App\Models\ProductionRecipe;
 use App\Services\AmountConverterService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ProductionRecipeController extends Controller
 {
     public function __construct(
         protected AmountConverterService $amountConverter
-    )
-    {
-    }
+    ) {}
 
     public function index(): JsonResponse
     {
+        // Gate
+        Gate::authorize('viewAny', ProductionRecipe::class);
+
         $data = ProductionRecipe::with(
             'outProduct',
             'outAmountType',
@@ -34,6 +36,9 @@ class ProductionRecipeController extends Controller
 
     public function store(StoreProductionRecipeRequest $request)
     {
+        // Gate
+        Gate::authorize('create', ProductionRecipe::class);
+
         DB::beginTransaction();
 
         try {
@@ -75,6 +80,9 @@ class ProductionRecipeController extends Controller
 
     public function show(string $id): JsonResponse
     {
+        // Gate
+        Gate::authorize('view', ProductionRecipe::class);
+
         $productionRecipe = ProductionRecipe::with(
             'outProduct',
             'outAmountType',

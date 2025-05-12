@@ -66,6 +66,11 @@ class Depart extends Model
     public function transPermProperty(): HasMany
     {
         return $this->hasMany(DepartTransPermProperty::class, 'depart_id')
-            ->with(['transPerm','details']);
+            ->with(['transPerm', 'details']);
+    }
+
+    public function departTransPropertyDetails(): HasMany
+    {
+        return $this->hasMany(DepartTransPermPropertyDetails::class, 'depart_id');
     }
 }

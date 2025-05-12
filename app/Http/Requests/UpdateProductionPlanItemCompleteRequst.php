@@ -46,7 +46,7 @@ class UpdateProductionPlanItemCompleteRequst extends FormRequest
             } else {
                 $exists = ProductionPlan::where('id', $planItem->plan_id)
                     ->where('status_id', ProductionPlanService::getNewStatus()->id)
-                    ->where('status_id', ProductionPlanService::getCompletedStatus()->id)
+                    ->whereOr('status_id', ProductionPlanService::getCompletedStatus()->id)
                     ->exists();
                 if(!$exists){
                     $validator->errors()->add('depart_id', "Bu topshiriq allaqachon yakunlangan");

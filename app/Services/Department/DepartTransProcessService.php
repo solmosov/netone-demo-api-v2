@@ -3,33 +3,36 @@
 namespace App\Services\Department;
 
 use App\Exceptions\InvalidDataException;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\ServerErrorException;
-use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
-use App\Models\Polka;
-use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Status;
+use App\Models\TransPerm;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InvalidArgumentException;
 
 class DepartTransProcessService
 {
-  public function findAll()
+  public function findAll(array $queryParams): array
   {
-    $data = DepartTransProcess::with([
-      'transferPermission',
-      'senderDepartment',
-      'receiverDepartment',
-      'senderUser',
-      'receiverUser',
-      'status'
-    ])
+    // Auth User
+    $authUser = Auth::user();
+
+    // Query
+    $query = $query = $this->createQuery($queryParams);
+
+    if (!$authUser->isAdmin()) {
+      $query
+        ->where('sender_user_id', $authUser->id)
+        ->whereOr('receiver_user_id', $authUser->id);
+    }
+
+    $data = $query
       ->orderByDesc('created_at')
+      ->limit(100)
       ->get();
 
     return [
@@ -37,61 +40,143 @@ class DepartTransProcessService
     ];
   }
 
+  public function findAllBySend(array $queryParams): array
+  {
+    // Auth User
+    $authUser = Auth::user();
+
+    // Query
+    $query = $query = $this->createQuery($queryParams);
+
+    if (!$authUser->isAdmin()) {
+      $query->where('sender_user_id', $authUser->id);
+    }
+
+    $data = $query
+      ->orderByDesc('created_at')
+      ->limit(100)
+      ->get();
+
+    return [
+      'data' => $data
+    ];
+  }
+
+  public function findAllByReceive(array $queryParams): array
+  {
+    // Auth User
+    $authUser = Auth::user();
+
+    $receiverDepartId = $queryParams['receiver_depart_id'] ?? null;
+
+    if (!$authUser->isAdmin() && !$receiverDepartId) {
+      throw new InvalidDataException("Qabul qiluvchi bo'lim noto'g'ri yuborilmoqda");
+    }
+
+    // Query
+    $query = $query = $this->createQuery($queryParams);
+
+    if (!$authUser->isAdmin() && $receiverDepartId) {
+      $userDepart = DB::table('depart_user')
+        ->where('user_id', $authUser->id)
+        ->where('depart_id', $receiverDepartId)
+        ->firstOrFail();
+
+      $query->where('receiver_depart_id', $userDepart->id);
+    }
+
+    $data = $query
+      ->orderByDesc('created_at')
+      ->limit(100)
+      ->get();
+
+    return [
+      'data' => $data
+    ];
+  }
+
+  public function createQuery(array $queryParams)
+  {
+    // Query
+    $query = DepartTransProcess::with([
+      'transferPermission',
+      'senderDepartment',
+      'receiverDepartment',
+      'senderUser',
+      'receiverUser',
+      'status'
+    ]);
+
+    foreach ($queryParams as $key => $value) {
+      if ($key == 'trans_perm_code') {
+        $transPerm = TransPerm::where('code', $value)->firstOrFail();
+        $query->where('trans_perm_id', $transPerm->id);
+      } else if ($key == 'status_code') {
+        $status = StatusService::findByCode($value);
+        $query->where('status_id', $status->id);
+      } else if (!is_null($value)) {
+        $query->where($key, $value);
+      }
+    }
+
+    return $query;
+  }
+
   public function create(array $data)
   {
-    // Req Data
-    $transPermId = $data['trans_perm_id'];
+    $authId = Auth::id();
+
+    // Request Data
     $senderDepartId = $data['sender_depart_id'];
     $receiverDepartId = $data['receiver_depart_id'];
     $productList = $data['product_list'];
     $comment = $data['comment'] ?? null;
 
-    // Validate
-    $exists = DB::table('depart_user')->where('user_id', Auth::id())->where('depart_id', $senderDepartId)->exists();
-    if(!$exists){
-      throw new InvalidDataException("Mahsulotlarini yuborish mumkin emas",403);
-    }
+    // Trans Perm
+    $sendTransPerm = DepartTransPermService::getSendProduct();
 
-    // Check Polka Owner Validation
-    $pluckPolka = array_column($productList, 'polka_id');
-    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if($exists){
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
-    }
-
-    // Receiver Depart
-    $receiverDepart = Depart::findOrFail($receiverDepartId);
+    // Status Process 
+    $statusProcess = self::getSendProductStatus();
 
     DB::beginTransaction();
 
     try {
       // New Process
       $newProcess = DepartTransProcess::create([
-        'trans_perm_id' => $transPermId,
+        'trans_perm_id' => $sendTransPerm->id,
         'sender_depart_id' => $senderDepartId,
         'receiver_depart_id' => $receiverDepartId,
-        'sender_user_id' => Auth::id(),
-        'status_id' => DepartTransProcessService::getSendProductStatus()->id,
+        'sender_user_id' => $authId,
+        'status_id' => $statusProcess->id,
         'comment' => $comment,
       ]);
 
-      $insertDetailData = [];
+      // New Process Details
+      $creatableDetails = [];
+
       foreach ($productList as $item) {
-        $insertDetailData[] = [
+        // Values
+        $departStockId = $item['depart_stock_id'];
+        $amount = $item['amount'];
+
+        // Depart Stock
+        $departStock = DepartStock::where('id', $departStockId)->firstOrFail();
+
+
+        $creatableDetails[] = [
           'depart_trans_process_id' => $newProcess->id,
-          'product_id' => $item['product_id'],
-          'polka_id' => $item['polka_id'],
-          'amount' => $item['amount'],
-          'amount_type_id' => $item['amount_type_id']
+          'sender_depart_stock_id' => $departStock->id,
+          'amount_type_id' => $departStock->amount_type_id,
+          'amount'  => $amount,
         ];
       }
-      $newProcess->details()->createMany($insertDetailData);
 
-      // Finish
+      $newProcess->details()->createMany($creatableDetails);
+
       DB::commit();
 
       return [
-        'message' => "{$receiverDepart->name} bo'limga mahsulotlar yuborildi, qabul qilinishi kutilmoqda"
+        'message' => "Yuk muvaffaqiyatli yuborildi",
       ];
     } catch (\Exception $e) {
       DB::rollBack();
@@ -99,7 +184,7 @@ class DepartTransProcessService
     }
   }
 
-  public function findOne(int $id)
+  public function findOne(int $id): array
   {
     $data = DepartTransProcess::with([
       'transferPermission',
@@ -117,7 +202,7 @@ class DepartTransProcessService
     ];
   }
 
-  public function receive(array $data, int $id)
+  public function receive(array $data, int $id): array
   {
     // Req Data
     $reqDetailsList = $data['details_list'];
@@ -130,28 +215,8 @@ class DepartTransProcessService
       ->where('status_id', $sendStatus->id)
       ->findOrFail($id);
 
-    $count  = array_column($reqDetailsList, 'item_id');
-    if ($transProcess->details()->count() !== sizeof($count)) {
-      throw new InvalidDataException("O'tkazma mahsulotlari to'liq emas");
-    }
-
-    // Receiver Depart Id
     $senderDepartId = $transProcess->sender_depart_id;
     $receiverDepartId = $transProcess->receiver_depart_id;
-
-    $exists = DB::table('depart_user')
-      ->where('depart_id', $receiverDepartId)
-      ->where('user_id', Auth::id());
-    if (!$exists) {
-      throw new InvalidDataException("Bu amalni bajarib bo'lmadi", 403);
-    }
-    
-    // Check Polka Owner Validation
-    $pluckPolka = array_column($reqDetailsList, 'polka_id');
-    $exists = Polka::whereIn('id', $pluckPolka)->where('owner_id', '!=', Auth::id())->exists();
-    if($exists){
-      throw new InvalidDataException("O'zingizga tegishli bo'lgan polkani tanlang",403);
-    }
 
     // Status
     $receivedStatus = DepartTransProcessService::getReceiveProductStatus();
@@ -160,37 +225,40 @@ class DepartTransProcessService
     try {
       // Increment Stock
       foreach ($reqDetailsList as $reqItem) {
+        // Values
         $reqItemId = $reqItem['item_id'];
-        $reqPolkaId = $reqItem['polka_id'];
+        $departStockId = $reqItem['depart_stock_id'];
 
         // Transfer Item
         $transProcessItem = DepartTransProcessDetail::where('depart_trans_process_id', $transProcess->id)
           ->findOrFail($reqItemId);
-        $senderPolkaId = $transProcessItem->polka_id;
+        // Transfer Item Values
+        $amountTypeId = $transProcessItem->amount_type_id;
+        $senderDepartStockId = $transProcessItem->sender_depart_stock_id;
 
-        //Receiver Depart Stock
-        $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
-          ->where('amount_type_id', $transProcessItem->amount_type_id)
-          ->where('polka_id', $reqPolkaId)
-          ->firstOrFail();
+
 
         // Sender Depart Stock
-        $senderStockItem = DepartStock::with('polka')
-          ->where('depart_id', $senderDepartId)
-          ->where('polka_id', $senderPolkaId)
-          ->firstOrFail();
+        $senderStockItem = DepartStock::where('depart_id', $senderDepartId)
+          ->findOrFail($senderDepartStockId);
 
-        // Change Stock
-        $senderStockItem->decrement('amount', $transProcessItem->amount);
+        // Change of Sender Department Stock
+
         if ($senderStockItem->amount < $transProcessItem->amount) {
           throw new InvalidDataException("Yuboruvchining `{$senderStockItem->polka->name}` polkasida zaxira yetarli emas!");
         }
 
+        $senderStockItem->decrement('amount', $transProcessItem->amount);
+
+        //Receiver Depart Stock
+        $receiverStockItem = DepartStock::where('depart_id', $receiverDepartId)
+          ->where('amount_type_id', $amountTypeId)
+          ->findOrFail($departStockId);
         $receiverStockItem->increment('amount', $transProcessItem->amount);
 
 
         // Set Received Polka
-        $transProcessItem->received_polka_id = $reqPolkaId;
+        $transProcessItem->receive_depart_stock_id = $departStockId;
         $transProcessItem->save();
       }
 
@@ -211,10 +279,7 @@ class DepartTransProcessService
     } catch (\Exception $e) {
       DB::rollBack();
 
-      return [
-        'message' => $e->getMessage(),
-        'code' => $e->getCode() > 0 ? $e->getCode() : 404,
-      ];
+      throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
   }
 

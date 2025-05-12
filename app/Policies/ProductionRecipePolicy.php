@@ -13,7 +13,7 @@ class ProductionRecipePolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -21,7 +21,7 @@ class ProductionRecipePolicy
      */
     public function view(User $user, ProductionRecipe $productionRecipe): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -29,7 +29,7 @@ class ProductionRecipePolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -37,7 +37,7 @@ class ProductionRecipePolicy
      */
     public function update(User $user, ProductionRecipe $productionRecipe): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
@@ -45,7 +45,7 @@ class ProductionRecipePolicy
      */
     public function delete(User $user, ProductionRecipe $productionRecipe): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**

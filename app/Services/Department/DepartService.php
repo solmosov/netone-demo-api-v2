@@ -5,10 +5,9 @@ namespace App\Services\Department;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
 use App\Models\Department\DepartStatus;
-use App\Models\DepartStock;
 use App\Models\DepartTransPermProperty;
 use App\Models\Polka;
-use App\Models\Status;
+use App\Models\TransPerm;
 use Illuminate\Support\Facades\DB;
 
 class DepartService
@@ -28,6 +27,24 @@ class DepartService
         ];
     }
 
+    public function findAllByTransPerm(array $queryParams)
+    {
+        $permCode = $queryParams['perm_code'];
+        $departId = $queryParams['depart_id'];
+
+        $permId = TransPerm::where('code', $permCode)
+            ->firstOrFail()
+            ->id;
+        $propertyId = DepartTransPermProperty::where('trans_perm_id', $permId)
+            ->where('depart_id', $departId)
+            ->firstOrFail()
+            ->id;
+
+        return Depart::whereHas('departTransPropertyDetails', function ($q) use ($propertyId) {
+            $q->where('property_id', $propertyId);
+        })
+            ->get();
+    }
 
     public function findOne(int $id): array
     {
@@ -50,15 +67,10 @@ class DepartService
     {
         // Req Data
         $userList = $data['user_list'];
-        $polkaId = $data['polka_id'];
+        $polkaList = $data['polka_list'];
         $name = $data['name'];
         $comment = $data['comment'] ?? null;
         $statusName = $data['status_name'];
-
-        // Polka
-        $polka = Polka::where('id', $polkaId)
-            ->whereNull('owner_id')
-            ->firstOrFail();
 
         DB::beginTransaction();
         try {
@@ -71,9 +83,12 @@ class DepartService
             // Attach User
             $newDepart->users()->attach($userList);
 
-            // Polka
-            $polka->owner_id = $newDepart->id;
-            $polka->save();
+            // Change owner of polka
+            foreach ($polkaList as $polkaId) {
+                $polka = Polka::findOrFail($polkaId);
+                $polka->owner_id = $newDepart->id;
+                $polka->save();
+            }
 
             // Department Status
             DepartStatus::create([
