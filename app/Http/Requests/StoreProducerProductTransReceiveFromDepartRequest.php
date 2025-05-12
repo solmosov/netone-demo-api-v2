@@ -30,23 +30,34 @@ class StoreProducerProductTransReceiveFromDepartRequest extends FormRequest
     public function withValidator(Validator $validator)
     {
         $validator->after(function ($validator) {
+            // Auth User
+            $authUser = Auth::user();
+
+            // Req
             $transId = $this->route('producer_product_trans');
             $transList = $this->input('items_list');
-            
+
             // Transfer
-            ProducerProductTrans::where('is_sending_depart', false)->findOrFail($transId);
-            
+            ProducerProductTrans::where('producer_id', $authUser->id)
+                ->where('is_sending_depart', false)
+                ->findOrFail($transId);
+
             foreach ($transList as $key => $item) {
                 $itemId = $item['item_id'];
                 $productStockId = $item['product_stock_id'];
 
                 // Transfer Item
-                $transferItem = ProducerProductTransDetails::where('trans_id', $transId)->find($itemId);
+                $transferItem = ProducerProductTransDetails::with('departStock')
+                    ->where('trans_id', $transId)
+                    ->find($itemId);
+
                 if (!$transferItem) {
                     $validator->errors()->add("items_list.$key.item_id", "O'tkazma mahsulot topilmadi");
                 } else {
                     $productStock = ProductStock::findOrFail($productStockId);
-                    if ($productStock->amount_type_id != $transferItem->amount_type_id) {
+                    if ($productStock->product_id != $transferItem->departStock->product_id) {
+                        $validator->errors()->add("items_list.$key.product_stock_id", "O'tkazma mahsulot bilan qabul qilinayotgan zaxira mahsulot bir-biriga mos emas!");
+                    } else if ($productStock->amount_type_id != $transferItem->amount_type_id) {
                         $validator->errors()->add("items_list.$key.product_stock_id", "O'tkazma mahsulot o'lchov birligi bilan zaxira mahsulot o'lchov birligi mos emas!");
                     }
                 }
