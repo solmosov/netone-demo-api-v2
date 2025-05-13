@@ -25,6 +25,14 @@ class ProducerProductTransController extends Controller
         ]);
     }
 
+    public function indexReceive()
+    {
+        $data = $this->producerProductTransService->findAllReceive();
+
+        return response()->json([
+            'data' => ProducerProductTransResource::collection($data)
+        ]);
+    }
 
     public function sendProductToDepart(StoreProducerSendProductToDepartTransRequest $request)
     {
@@ -34,19 +42,17 @@ class ProducerProductTransController extends Controller
         $data = $this->producerProductTransService->sendProductToDepart($request->validated());
 
         return response()->json([
-            'message' => '',
-            'data' => ProducerProductTransResource::make($data)
-        ]);
+            'message' => 'Yuk muvaffaqiyatli yuborildi',
+        ], 201);
     }
 
     public function receiveProductFromDepart(string $id, StoreProducerProductTransReceiveFromDepartRequest $request)
     {
         $data = $this->producerProductTransService->receiveProductFromDepart((int) $id, $request->validated());
 
-        return [
+        return response()->json([
             'message' => "Yuk muvaffaqiyatli qabul qilindi",
-            'data' => $data,
-        ];
+        ], 201);
     }
 
 

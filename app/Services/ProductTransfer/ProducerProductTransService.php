@@ -15,17 +15,40 @@ class ProducerProductTransService
 {
   public function findAll()
   {
+    $authUser = Auth::user();
+
     return ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
-    ])->where('is_sending_depart', true)
+    ])
+      ->where('producer_id', $authUser->id)
+      ->where('is_sending_depart', true)
       ->latest()
       ->get();
   }
+
+  public function findAllReceive()
+  {
+    $authUser = Auth::user();
+
+    return ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])
+      ->where('producer_id', $authUser->id)
+      ->where('is_sending_depart', false)
+      ->latest()
+      ->get();
+  }
+
   public function findOne(int $id)
   {
+    $authUser = Auth::user();
+
     return ProducerProductTrans::with([
       'producer',
       'depart',
@@ -33,7 +56,7 @@ class ProducerProductTransService
       'status',
       'details'
     ])
-      ->where('is_sending_depart', true)
+      ->where('producer_id', $authUser->id)
       ->findOrFail($id);
   }
 
