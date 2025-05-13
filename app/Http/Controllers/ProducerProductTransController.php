@@ -39,7 +39,7 @@ class ProducerProductTransController extends Controller
         // Gate
         Gate::authorize('sendProductToDepart', ProducerProductTrans::class);
 
-        $data = $this->producerProductTransService->sendProductToDepart($request->validated());
+        $this->producerProductTransService->sendProductToDepart($request->validated());
 
         return response()->json([
             'message' => 'Yuk muvaffaqiyatli yuborildi',
@@ -48,7 +48,7 @@ class ProducerProductTransController extends Controller
 
     public function receiveProductFromDepart(string $id, StoreProducerProductTransReceiveFromDepartRequest $request)
     {
-        $data = $this->producerProductTransService->receiveProductFromDepart((int) $id, $request->validated());
+        $this->producerProductTransService->receiveProductFromDepart((int) $id, $request->validated());
 
         return response()->json([
             'message' => "Yuk muvaffaqiyatli qabul qilindi",
