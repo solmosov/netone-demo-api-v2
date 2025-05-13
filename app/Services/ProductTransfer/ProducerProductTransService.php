@@ -24,7 +24,19 @@ class ProducerProductTransService
       ->latest()
       ->get();
   }
-  public function findOne() {}
+  public function findOne(int $id)
+  {
+    return ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+      'details'
+    ])
+      ->where('is_sending_depart', true)
+      ->findOrFail($id);
+  }
+
   public function sendProductToDepart(array $data)
   {
     // Data

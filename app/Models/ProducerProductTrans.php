@@ -39,6 +39,7 @@ class ProducerProductTrans extends Model
 
     public function details(): HasMany
     {
-        return $this->hasMany(ProducerProductTransDetails::class, 'trans_id');
+        return $this->hasMany(ProducerProductTransDetails::class, 'trans_id')
+            ->with(['productStock', 'departStock', 'amountType']);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProducerProductTransReceiveFromDepartRequest;
 use App\Models\ProducerProductTrans;
 use App\Http\Requests\StoreProducerSendProductToDepartTransRequest;
 use App\Http\Resources\ProducerProductTransResource;
+use App\Http\Resources\ProducerProductTransShowResource;
 use App\Services\ProductTransfer\ProducerProductTransService;
 use Illuminate\Support\Facades\Gate;
 
@@ -51,6 +52,10 @@ class ProducerProductTransController extends Controller
 
     public function show(string $id)
     {
-        //
+        $data = $this->producerProductTransService->findOne((int) $id);
+
+        return response()->json([
+            'data' => ProducerProductTransShowResource::make($data)
+        ]);
     }
 }
