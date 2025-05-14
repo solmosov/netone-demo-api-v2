@@ -7,6 +7,7 @@ use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
+use App\Services\Department\DepartTransProcessService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -83,36 +84,45 @@ class ProducerDepartProductTransService
   {
     // Req Data
     $itemsList = $data['items_list'];
-    
-    
+
     // Transfer
     $transfer = ProducerProductTrans::findOrFail($id);
-    
-    // Received Status
 
-    // Transfer Items
-    foreach($itemsList as $item){
-      $itemId = $item['item_id'];
-      $departStockId = $item['depart_stock_id'];
+    // Status Received
+    $statusReceived = DepartTransProcessService::getReceiveProductStatus();
 
-      // Transfer Item
-      $transferItem = ProducerProductTransDetails::findOrFail($itemId);
-      $amountTypeId = $transferItem->amount_type_id;
-      $amount = $transferItem->amount;
+    DB::beginTransaction();
+    try {
+      // Transfer Items
+      foreach ($itemsList as $item) {
+        $itemId = $item['item_id'];
+        $departStockId = $item['depart_stock_id'];
+
+        // Transfer Item
+        $transferItem = ProducerProductTransDetails::findOrFail($itemId);
+        $amountTypeId = $transferItem->amount_type_id;
+        $amount = $transferItem->amount;
+
+        // Product Stock
+        $productStock = ProductStock::findOrFail($transferItem->product_stock_id);
+
+        // Depart Stock
+        $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
+
+        $departStock->increment('amount', $amount);
+        $productStock->decrement('amount', $amount);
+      }
+
+      // Change Transfer status
+      $transfer->status_id = $statusReceived;
+
+      // Finish
+      DB::commit();
       
-      // Product Stock
-      $productStock = ProductStock::findOrFail($transferItem->product_stock_id);
-      
-      // Depart Stock
-      $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
-
-      $departStock->increment('amount', $amount);
-      $productStock->decrement('amount', $amount);
+      return $transfer;
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
     }
-
-    
-
-
-    
   }
 }

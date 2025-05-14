@@ -2,9 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Exceptions\NotFoundException;
 use App\Models\DepartStock;
+use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Validator;
 
 class StoreProducerReceiveProductFromProducerRequest extends FormRequest
@@ -12,7 +16,7 @@ class StoreProducerReceiveProductFromProducerRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        return Auth::user()->isDepartUser();
     }
 
 
@@ -27,25 +31,38 @@ class StoreProducerReceiveProductFromProducerRequest extends FormRequest
 
     public function withValidator(Validator $validator)
     {
-        $validator->after(function($validator){
+        $validator->after(function ($validator) {
+            $authUser = Auth::user();
             $transId = $this->route('producer_product_trans');
             $itemsList = $this->input('items_list');
 
-            foreach($itemsList as $key => $item){
+            // Transfer
+            $transfer = ProducerProductTrans::findOrFail($transId);
+            $exists = DB::table('depart_user')
+                ->where('user_id', $authUser->id)
+                ->where('depart_id', $transfer->depart_id)
+                ->exists();
+            if (!$exists) {
+                throw new NotFoundException("Qabul qilinadigan mahsulot o'tkazmasi topilmadi");
+            }
+
+            foreach ($itemsList as $key => $item) {
                 $itemId = $item['item_id'];
                 $departStockId = $item['depart_stock_id'];
 
                 // Transfer Item
-                $transferItem = ProducerProductTransDetails::with(['productStock'])->where('trans_id', $transId)->findOrFail($itemId);
+                $transferItem = ProducerProductTransDetails::with(['productStock'])
+                    ->where('trans_id', $transId)
+                    ->findOrFail($itemId);
 
                 // Depart Stock
                 $departStock = DepartStock::findOrFail($departStockId);
-                
-                if($departStock->product_id != $transferItem->productStock->product_id){
+
+                if ($departStock->product_id != $transferItem->productStock->product_id) {
                     $validator->errors()->add("items_list.$key.depart_stock_id",  "Qabul qilinayotgan mahsulot bilan zaxira polka mahsuloti bir-biriga mos emas");
-                }else if($transferItem->amount_type_id != $departStock->amount_type_id){
+                } else if ($transferItem->amount_type_id != $departStock->amount_type_id) {
                     $validator->errors()->add("items_list.$key.depart_stock_id", "Yuborilayotgan mahsulot bilan qabul qilinayotgan zaxira mahsulot o'lchov birligi mos emas");
-                }else if($transferItem->productStock->amount < $transferItem->amount){
+                } else if ($transferItem->productStock->amount < $transferItem->amount) {
                     $validator->errors()->add("items_list.$key.depart_stock_id", "Mahsulot yuboruvchining zaxirasi yetarli emas");
                 }
             }

@@ -7,4 +7,5 @@ Route::group(['prefix' => 'producer-product-transfers/depart', 'middleware' => [
   Route::get('/', [ProducerDepartProductTransController::class, 'index']);
   Route::get('/{producer_product_trans}', [ProducerDepartProductTransController::class, 'show']);
   Route::post('/', [ProducerDepartProductTransController::class, 'sendProductToProducer']);
+  Route::post('/{producer_product_trans}/receive', [ProducerDepartProductTransController::class, 'receiveProductFromProducer']);
 });
