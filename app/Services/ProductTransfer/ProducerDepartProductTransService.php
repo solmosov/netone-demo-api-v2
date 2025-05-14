@@ -36,7 +36,7 @@ class ProducerDepartProductTransService
       ->get();
   }
 
-  public function findAllReceives()
+  public function findAllReceive()
   {
     $authUser = Auth::user();
 

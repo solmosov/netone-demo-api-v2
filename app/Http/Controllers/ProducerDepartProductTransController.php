@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProducerReceiveProductFromProducerRequest;
 use App\Http\Requests\StoreProducerSendProductToProducerTransRequest;
 use App\Http\Resources\ProducerProductTransResource;
+use App\Http\Resources\ProducerProductTransShowResource;
 use App\Models\ProducerProductTrans;
 use App\Services\ProductTransfer\ProducerDepartProductTransService;
 use Illuminate\Http\Request;
@@ -27,12 +28,12 @@ class ProducerDepartProductTransController extends Controller
             'data' => ProducerProductTransResource::collection($data)
         ]);
     }
-    public function indexReceives()
+    public function indexReceive()
     {
         // Gate
         Gate::authorize('viewAnyDepart', ProducerProductTrans::class);
 
-        $data = $this->producerDepartProductTransService->findAllReceives();
+        $data = $this->producerDepartProductTransService->findAllReceive();
 
         return response()->json([
             'data' => ProducerProductTransResource::collection($data)
@@ -64,6 +65,10 @@ class ProducerDepartProductTransController extends Controller
 
     public function show(string $id)
     {
-        //
+        $data = $this->producerDepartProductTransService->findOne((int) $id);
+
+        return response()->json([
+            'data' =>  ProducerProductTransShowResource::make($data),
+        ]);
     }
 }
