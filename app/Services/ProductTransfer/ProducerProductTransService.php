@@ -15,16 +15,51 @@ class ProducerProductTransService
 {
   public function findAll()
   {
+    $authUser = Auth::user();
+
     return ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
-    ])->where('is_sending_depart', true)
+    ])
+      ->where('producer_id', $authUser->id)
+      ->where('is_sending_depart', true)
       ->latest()
       ->get();
   }
-  public function findOne() {}
+
+  public function findAllReceive()
+  {
+    $authUser = Auth::user();
+
+    return ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])
+      ->where('producer_id', $authUser->id)
+      ->where('is_sending_depart', false)
+      ->latest()
+      ->get();
+  }
+
+  public function findOne(int $id)
+  {
+    $authUser = Auth::user();
+
+    return ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+      'details'
+    ])
+      ->where('producer_id', $authUser->id)
+      ->findOrFail($id);
+  }
+
   public function sendProductToDepart(array $data)
   {
     // Data
@@ -91,38 +126,50 @@ class ProducerProductTransService
     // Status Received
     $statusReceived = self::getStatusReceive();
 
-    // Product Stock
-    foreach ($reqItemsList as $item) {
-      $itemId = $item['item_id'];
-      $productStockId = $item['product_stock_id'];
+    DB::beginTransaction();
 
-      // Transfer Item
-      $transferItem = ProducerProductTransDetails::findOrFail($itemId);
-      $transAmount = $transferItem->amount;
-      $transAmountTypeId = $transferItem->amount_type_id;
-      $transDepartStockId = $transferItem->depart_stock_id;
-
+    try {
       // Product Stock
-      $productStock = ProductStock::where('amount_type_id', $transAmountTypeId)
-        ->findOrFail($productStockId);
+      foreach ($reqItemsList as $item) {
+        $itemId = $item['item_id'];
+        $productStockId = $item['product_stock_id'];
 
-      // Depart Stock
-      $departStock = DepartStock::findOrFail($transDepartStockId);
+        // Transfer Item
+        $transferItem = ProducerProductTransDetails::findOrFail($itemId);
+        $transAmount = $transferItem->amount;
+        $transAmountTypeId = $transferItem->amount_type_id;
+        $transDepartStockId = $transferItem->depart_stock_id;
 
-      // Decrement From Depart Stock
-      $departStock->decrement('amount', $transAmount);
+        // Product Stock
+        $productStock = ProductStock::where('amount_type_id', $transAmountTypeId)
+          ->findOrFail($productStockId);
 
-      // Increment to Product Stock
-      $productStock->increment('amount', $transAmount);
+        // Depart Stock
+        $departStock = DepartStock::findOrFail($transDepartStockId);
 
-      // Change of Transfer Item 
-      $transferItem->product_stock_id = $productStock->id;
-      $transferItem->save();
+        // Decrement From Depart Stock
+        $departStock->decrement('amount', $transAmount);
+
+        // Increment to Product Stock
+        $productStock->increment('amount', $transAmount);
+
+        // Change of Transfer Item 
+        $transferItem->product_stock_id = $productStock->id;
+        $transferItem->save();
+      }
+
+      // Change Status
+      $transfer->status_id = $statusReceived->id;
+      $transfer->save();
+
+      // Finish
+      DB::commit();
+
+      return $transfer;
+    } catch (\Exception $e) {
+      DB::commit();
+      throw new InvalidDataException($e->getMessage(), (int)$e->getCode(), $e);
     }
-
-    // Change Status
-    $transfer->status_id = $statusReceived->id;
-    $transfer->save();
   }
 
   public static function getStatusSend()

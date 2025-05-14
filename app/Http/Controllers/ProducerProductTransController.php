@@ -6,6 +6,7 @@ use App\Http\Requests\StoreProducerProductTransReceiveFromDepartRequest;
 use App\Models\ProducerProductTrans;
 use App\Http\Requests\StoreProducerSendProductToDepartTransRequest;
 use App\Http\Resources\ProducerProductTransResource;
+use App\Http\Resources\ProducerProductTransShowResource;
 use App\Services\ProductTransfer\ProducerProductTransService;
 use Illuminate\Support\Facades\Gate;
 
@@ -24,33 +25,43 @@ class ProducerProductTransController extends Controller
         ]);
     }
 
+    public function indexReceive()
+    {
+        $data = $this->producerProductTransService->findAllReceive();
+
+        return response()->json([
+            'data' => ProducerProductTransResource::collection($data)
+        ]);
+    }
 
     public function sendProductToDepart(StoreProducerSendProductToDepartTransRequest $request)
     {
         // Gate
         Gate::authorize('sendProductToDepart', ProducerProductTrans::class);
 
-        $data = $this->producerProductTransService->sendProductToDepart($request->validated());
+        $this->producerProductTransService->sendProductToDepart($request->validated());
 
         return response()->json([
-            'message' => '',
-            'data' => ProducerProductTransResource::make($data)
-        ]);
+            'message' => 'Yuk muvaffaqiyatli yuborildi',
+        ], 201);
     }
 
     public function receiveProductFromDepart(string $id, StoreProducerProductTransReceiveFromDepartRequest $request)
     {
-        $data = $this->producerProductTransService->receiveProductFromDepart((int) $id, $request->validated());
+        $this->producerProductTransService->receiveProductFromDepart((int) $id, $request->validated());
 
-        return [
+        return response()->json([
             'message' => "Yuk muvaffaqiyatli qabul qilindi",
-            'data' => $data,
-        ];
+        ], 201);
     }
 
 
     public function show(string $id)
     {
-        //
+        $data = $this->producerProductTransService->findOne((int) $id);
+
+        return response()->json([
+            'data' => ProducerProductTransShowResource::make($data)
+        ]);
     }
 }

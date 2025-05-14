@@ -22,12 +22,14 @@ class ProducerProductTransDetails extends Model
 
     public function productStock(): BelongsTo
     {
-        return $this->belongsTo(ProductStock::class, 'product_stock_id');
+        return $this->belongsTo(ProductStock::class, 'product_stock_id')
+            ->with(['product', 'polka', 'amountType']);
     }
 
     public function departStock(): BelongsTo
     {
-        return $this->belongsTo(DepartStock::class, 'depart_stock_id');
+        return $this->belongsTo(DepartStock::class, 'depart_stock_id')
+            ->with(['polka', 'amountType', 'product']);
     }
 
     public function amountType(): BelongsTo
