@@ -8,7 +8,6 @@ use App\Http\Resources\ProducerProductTransResource;
 use App\Http\Resources\ProducerProductTransShowResource;
 use App\Models\ProducerProductTrans;
 use App\Services\ProductTransfer\ProducerDepartProductTransService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class ProducerDepartProductTransController extends Controller
