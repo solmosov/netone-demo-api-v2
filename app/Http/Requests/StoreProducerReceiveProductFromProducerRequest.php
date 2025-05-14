@@ -6,6 +6,7 @@ use App\Exceptions\NotFoundException;
 use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
+use App\Services\Status\StatusService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +26,7 @@ class StoreProducerReceiveProductFromProducerRequest extends FormRequest
         return [
             'items_list' => 'required|array',
             'items_list.*.item_id' => 'required|integer|exists:producer_product_trans_details,id',
-            'items_list.*.depart_stock_id' => 'required|integer|exists:depart_stock_id,id'
+            'items_list.*.depart_stock_id' => 'required|integer|exists:depart_stocks,id'
         ];
     }
 
@@ -36,13 +37,17 @@ class StoreProducerReceiveProductFromProducerRequest extends FormRequest
             $transId = $this->route('producer_product_trans');
             $itemsList = $this->input('items_list');
 
+            // Status Send Product
+            $statusSendProduct = StatusService::findByCode('producerSendProduct');
+
             // Transfer
-            $transfer = ProducerProductTrans::findOrFail($transId);
-            $exists = DB::table('depart_user')
+            $transfer = ProducerProductTrans::where('status_id', $statusSendProduct->id)->findOrFail($transId);
+
+            $departUser = DB::table('depart_user')
                 ->where('user_id', $authUser->id)
                 ->where('depart_id', $transfer->depart_id)
-                ->exists();
-            if (!$exists) {
+                ->first();
+            if (!$departUser) {
                 throw new NotFoundException("Qabul qilinadigan mahsulot o'tkazmasi topilmadi");
             }
 
@@ -56,7 +61,7 @@ class StoreProducerReceiveProductFromProducerRequest extends FormRequest
                     ->findOrFail($itemId);
 
                 // Depart Stock
-                $departStock = DepartStock::findOrFail($departStockId);
+                $departStock = DepartStock::where('depart_id', $departUser->depart_id)->findOrFail($departStockId);
 
                 if ($departStock->product_id != $transferItem->productStock->product_id) {
                     $validator->errors()->add("items_list.$key.depart_stock_id",  "Qabul qilinayotgan mahsulot bilan zaxira polka mahsuloti bir-biriga mos emas");

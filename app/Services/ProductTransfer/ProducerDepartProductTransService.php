@@ -8,6 +8,7 @@ use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
 use App\Services\Department\DepartTransProcessService;
+use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -85,8 +86,11 @@ class ProducerDepartProductTransService
     // Req Data
     $itemsList = $data['items_list'];
 
+    // Status Send Product
+    $statusSendProduct = StatusService::findByCode('producerSendProduct');
+
     // Transfer
-    $transfer = ProducerProductTrans::findOrFail($id);
+    $transfer = ProducerProductTrans::where('status_id', $statusSendProduct->id)->findOrFail($id);
 
     // Status Received
     $statusReceived = DepartTransProcessService::getReceiveProductStatus();
@@ -111,14 +115,19 @@ class ProducerDepartProductTransService
 
         $departStock->increment('amount', $amount);
         $productStock->decrement('amount', $amount);
+
+        $transferItem->depart_stock_id = $departStock->id;
+        $transferItem->save();
       }
 
       // Change Transfer status
-      $transfer->status_id = $statusReceived;
+      $transfer->status_id = $statusReceived->id;
+      $transfer->depart_user_id = Auth::id();
+      $transfer->save();
 
       // Finish
       DB::commit();
-      
+
       return $transfer;
     } catch (\Exception $e) {
       DB::rollBack();
