@@ -16,19 +16,42 @@ class ProducerDepartProductTransService
 {
   public function findAll()
   {
-    $data = ProducerProductTrans::with([
+    $authUser = Auth::user();
+
+    $query  = ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
-    ])
-      ->where('is_sending_depart', false)
-      ->latest()
-      ->get();
+    ]);
 
-    return $data;
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query->latest()
+      ->get();
   }
-  public function findOne() {}
+  public function findOne(int $id)
+  {
+    $authUser = Auth::user();
+
+    $query =  ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+      'details'
+    ]);
+
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query->findOrFail($id);
+  }
   public function create(array $data)
   {
     // Auth User
