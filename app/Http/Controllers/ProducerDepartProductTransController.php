@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProducerReceiveProductFromProducerRequest;
 use App\Http\Requests\StoreProducerSendProductToProducerTransRequest;
 use App\Http\Resources\ProducerProductTransResource;
 use App\Models\ProducerProductTrans;
@@ -33,12 +34,20 @@ class ProducerDepartProductTransController extends Controller
         // Gate
         Gate::authorize('sendProductToProducer', ProducerProductTrans::class);
 
-        $data = $this->producerDepartProductTransService->create($request->validated());
+        $this->producerDepartProductTransService->create($request->validated());
 
         return response()->json([
-            'message' => '',
-            'data' => ProducerProductTransResource::make($data)
-        ]);
+            'message' => "Mahsulot muvaffaqiyatli yuborildi",
+        ], 201);
+    }
+
+    public function receiveProductFromProducer(string $id, StoreProducerReceiveProductFromProducerRequest $request)
+    {
+        $this->producerDepartProductTransService->receive($id, $request->validated());
+
+        return response()->json([
+            'message' => "Mahsulot muvaffaqiyatli qabul qilindi"
+        ], 201);
     }
 
 

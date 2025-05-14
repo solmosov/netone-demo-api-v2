@@ -5,6 +5,8 @@ namespace App\Services\ProductTransfer;
 use App\Exceptions\ServerErrorException;
 use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
+use App\Models\ProducerProductTransDetails;
+use App\Models\ProductStock;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -75,5 +77,42 @@ class ProducerDepartProductTransService
       DB::rollBack();
       throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
+  }
+
+  public function receive(int $id, array $data)
+  {
+    // Req Data
+    $itemsList = $data['items_list'];
+    
+    
+    // Transfer
+    $transfer = ProducerProductTrans::findOrFail($id);
+    
+    // Received Status
+
+    // Transfer Items
+    foreach($itemsList as $item){
+      $itemId = $item['item_id'];
+      $departStockId = $item['depart_stock_id'];
+
+      // Transfer Item
+      $transferItem = ProducerProductTransDetails::findOrFail($itemId);
+      $amountTypeId = $transferItem->amount_type_id;
+      $amount = $transferItem->amount;
+      
+      // Product Stock
+      $productStock = ProductStock::findOrFail($transferItem->product_stock_id);
+      
+      // Depart Stock
+      $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
+
+      $departStock->increment('amount', $amount);
+      $productStock->decrement('amount', $amount);
+    }
+
+    
+
+
+    
   }
 }
