@@ -23,16 +23,41 @@ class ProducerDepartProductTransService
       'depart',
       'departUser',
       'status',
-    ]);
+    ])
+      ->where('is_sending_depart', false);
 
     if (!$authUser->isAdmin()) {
       $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
       $query->whereIn('depart_id', $pluckDepartIds);
     }
 
-    return $query->latest()
+    return $query
+      ->latest()
       ->get();
   }
+
+  public function findAllReceives()
+  {
+    $authUser = Auth::user();
+
+    $query  = ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])
+      ->where('is_sending_depart', true);
+
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query
+      ->latest()
+      ->get();
+  }
+
   public function findOne(int $id)
   {
     $authUser = Auth::user();

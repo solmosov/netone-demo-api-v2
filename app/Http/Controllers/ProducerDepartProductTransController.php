@@ -27,6 +27,17 @@ class ProducerDepartProductTransController extends Controller
             'data' => ProducerProductTransResource::collection($data)
         ]);
     }
+    public function indexReceives()
+    {
+        // Gate
+        Gate::authorize('viewAnyDepart', ProducerProductTrans::class);
+
+        $data = $this->producerDepartProductTransService->findAllReceives();
+
+        return response()->json([
+            'data' => ProducerProductTransResource::collection($data)
+        ]);
+    }
 
 
     public function sendProductToProducer(StoreProducerSendProductToProducerTransRequest $request)
