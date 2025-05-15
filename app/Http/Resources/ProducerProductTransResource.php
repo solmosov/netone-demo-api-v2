@@ -15,6 +15,7 @@ class ProducerProductTransResource extends JsonResource
             'depart' => DepartResource::make($this->whenLoaded('depart')),
             'depart_user' => UserResource::make($this->whenLoaded('departUser')),
             'status' => $this->whenLoaded('status'),
+            'comment' => $this->comment,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];
