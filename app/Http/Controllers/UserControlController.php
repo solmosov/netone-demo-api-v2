@@ -8,18 +8,36 @@ use App\Http\Requests\UpdateUserControlRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class UserControlController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        // Gate
-        Gate::authorize('viewAny', User::class);
+        $validated = $request->validate([
+            'role' => 'nullable|string|in:producer'
+        ]);
 
-        $data = User::with('roles')->where('id', '<>', 1)->get();
+        $role = $validated['role'] ?? null;
+
+        if (!$role) {
+            // Gate
+            Gate::authorize('viewAny', User::class);
+        }
+
+        $query = User::with('roles')
+            ->where('id', '<>', 1);
+
+        if ($role) {
+            $query->whereHas('roles', function ($q) use ($role) {
+                $q->where('name', $role);
+            });
+        }
+
+        $data = $query->get();
 
         return response()->json([
             'data' => UserResource::collection($data),
@@ -162,6 +180,4 @@ class UserControlController extends Controller
     {
         return User::with('roles')->where('id', '<>', 1)->findOrFail($id);
     }
-
 }
-

@@ -17,13 +17,18 @@ class ProducerProductTransService
   {
     $authUser = Auth::user();
 
-    return ProducerProductTrans::with([
+    $query =  ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
-    ])
-      ->where('producer_id', $authUser->id)
+    ]);
+
+    if (!$authUser->isAdmin()) {
+      $query->where('producer_id', $authUser->id);
+    }
+
+    return $query
       ->where('is_sending_depart', true)
       ->latest()
       ->get();
@@ -33,14 +38,18 @@ class ProducerProductTransService
   {
     $authUser = Auth::user();
 
-    return ProducerProductTrans::with([
+    $query = ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
-    ])
-      ->where('producer_id', $authUser->id)
-      ->where('is_sending_depart', false)
+    ]);
+
+    if (!$authUser->isAdmin()) {
+      $query->where('producer_id', $authUser->id);
+    }
+    
+    return $query->where('is_sending_depart', false)
       ->latest()
       ->get();
   }

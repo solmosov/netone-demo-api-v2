@@ -7,6 +7,8 @@ use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
+use App\Services\Department\DepartTransProcessService;
+use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -14,19 +16,67 @@ class ProducerDepartProductTransService
 {
   public function findAll()
   {
-    $data = ProducerProductTrans::with([
+    $authUser = Auth::user();
+
+    $query  = ProducerProductTrans::with([
       'producer',
       'depart',
       'departUser',
       'status',
     ])
-      ->where('is_sending_depart', false)
+      ->where('is_sending_depart', false);
+
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query
       ->latest()
       ->get();
-
-    return $data;
   }
-  public function findOne() {}
+
+  public function findAllReceive()
+  {
+    $authUser = Auth::user();
+
+    $query  = ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+    ])
+      ->where('is_sending_depart', true);
+
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query
+      ->latest()
+      ->get();
+  }
+
+  public function findOne(int $id)
+  {
+    $authUser = Auth::user();
+
+    $query =  ProducerProductTrans::with([
+      'producer',
+      'depart',
+      'departUser',
+      'status',
+      'details'
+    ]);
+
+    if (!$authUser->isAdmin()) {
+      $pluckDepartIds = DB::table('depart_user')->where('user_id', $authUser->id)->get()->pluck('depart_id');
+      $query->whereIn('depart_id', $pluckDepartIds);
+    }
+
+    return $query->findOrFail($id);
+  }
   public function create(array $data)
   {
     // Auth User
@@ -83,36 +133,53 @@ class ProducerDepartProductTransService
   {
     // Req Data
     $itemsList = $data['items_list'];
-    
-    
+
+    // Status Send Product
+    $statusSendProduct = StatusService::findByCode('producerSendProduct');
+
     // Transfer
-    $transfer = ProducerProductTrans::findOrFail($id);
-    
-    // Received Status
+    $transfer = ProducerProductTrans::where('status_id', $statusSendProduct->id)->findOrFail($id);
 
-    // Transfer Items
-    foreach($itemsList as $item){
-      $itemId = $item['item_id'];
-      $departStockId = $item['depart_stock_id'];
+    // Status Received
+    $statusReceived = DepartTransProcessService::getReceiveProductStatus();
 
-      // Transfer Item
-      $transferItem = ProducerProductTransDetails::findOrFail($itemId);
-      $amountTypeId = $transferItem->amount_type_id;
-      $amount = $transferItem->amount;
-      
-      // Product Stock
-      $productStock = ProductStock::findOrFail($transferItem->product_stock_id);
-      
-      // Depart Stock
-      $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
+    DB::beginTransaction();
+    try {
+      // Transfer Items
+      foreach ($itemsList as $item) {
+        $itemId = $item['item_id'];
+        $departStockId = $item['depart_stock_id'];
 
-      $departStock->increment('amount', $amount);
-      $productStock->decrement('amount', $amount);
+        // Transfer Item
+        $transferItem = ProducerProductTransDetails::findOrFail($itemId);
+        $amountTypeId = $transferItem->amount_type_id;
+        $amount = $transferItem->amount;
+
+        // Product Stock
+        $productStock = ProductStock::findOrFail($transferItem->product_stock_id);
+
+        // Depart Stock
+        $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
+
+        $departStock->increment('amount', $amount);
+        $productStock->decrement('amount', $amount);
+
+        $transferItem->depart_stock_id = $departStock->id;
+        $transferItem->save();
+      }
+
+      // Change Transfer status
+      $transfer->status_id = $statusReceived->id;
+      $transfer->depart_user_id = Auth::id();
+      $transfer->save();
+
+      // Finish
+      DB::commit();
+
+      return $transfer;
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
     }
-
-    
-
-
-    
   }
 }

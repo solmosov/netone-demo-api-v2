@@ -18,6 +18,9 @@ class ProducerProductTransController extends Controller
 
     public function index()
     {
+        // Gate
+        Gate::authorize('viewAnyProducer', ProducerProductTrans::class);
+
         $data = $this->producerProductTransService->findAll();
 
         return response()->json([
@@ -27,6 +30,9 @@ class ProducerProductTransController extends Controller
 
     public function indexReceive()
     {
+        // Gate
+        Gate::authorize('viewAnyProducer', ProducerProductTrans::class);
+
         $data = $this->producerProductTransService->findAllReceive();
 
         return response()->json([
@@ -58,6 +64,9 @@ class ProducerProductTransController extends Controller
 
     public function show(string $id)
     {
+        // Gate
+        Gate::authorize('viewProducer', ProducerProductTrans::class);
+
         $data = $this->producerProductTransService->findOne((int) $id);
 
         return response()->json([

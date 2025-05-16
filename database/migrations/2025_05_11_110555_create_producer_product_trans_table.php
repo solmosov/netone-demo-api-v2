@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->foreignId('status_id')->constrained('statuses');
             $table->boolean('is_sending_depart');
-            $table->string('comment');
+            $table->string('comment')->nullable();
             $table->timestamps();
         });
     }
