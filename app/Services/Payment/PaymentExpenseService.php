@@ -59,13 +59,13 @@ class PaymentExpenseService
             ->where('wallet_id', $walletId)
             ->firstOrFail();
 
-        if ($userWallet->amount < $amount) {
-            throw new InvalidDataException("`$userWallet->name` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
+        if ($userWallet->wallet->amount < $amount) {
+            throw new InvalidDataException("`{$userWallet->wallet->name}` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
         }
 
         // Expense
         $expense = Expense::findOrFail($expenseId);
-
+        
         // Status Payment Expense
         $statusPaymentExpense = StatusService::findByCode('paymentExpense');
 
