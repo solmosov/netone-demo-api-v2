@@ -73,7 +73,7 @@ class UpdateOrderCompletedRequest extends FormRequest
                 } else if ($orderItem->amount_type_id != $productStock->amount_type_id) {
                     $validator->errors()->add("items_list.$key.product_stock_id", "Buyurtma mahsuloti bilan zaxira polka mahsulot o'lchov birligi mos emas");
                 } else if ($productStock->amount < $completedAmount) {
-                    $validator->errors()->add("items_list.$key.completed_amount");
+                    $validator->errors()->add("items_list.$key.completed_amount", "Zaxira yetarli emas");
                 }
             }
         });
