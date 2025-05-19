@@ -19,6 +19,7 @@ use App\Models\ProductStock;
 use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -274,13 +275,9 @@ class OrderService
      */
     public function completed(array $data, int $id): array
     {
+        // Req Body
         $itemsList = $data['items_list'];
         $comment = $data['comment'] ?? null;
-
-        $pluckItemsList = [];
-        foreach ($itemsList as $item) {
-            $pluckItemsList[$item['item_id']] = $item['completed_amount'];
-        }
 
         // Status
         $orderNewStatus = StatusService::findByCode('orderNew');
@@ -291,60 +288,6 @@ class OrderService
             ->whereIn('status_id', [$orderNewStatus->id, $orderInProgressStatus->id])
             ->findOrFail($id);
 
-        /************* */
-
-        // Length
-        $orderItemLength = $order->orderDetails->count();
-        $prodItemLength = count($pluckItemsList);
-
-        if ($orderItemLength !== $prodItemLength) {
-            throw new InvalidDataException("Siz buyurtma mahsulotlarni noto'g'ri kiritmoqdasiz, iltimos etiborli bo'ling.");
-        }
-
-        foreach ($order->orderDetails as $item) {
-            if (!isset($pluckItemsList[$item->id])) {
-                throw new InvalidDataException("Siz buyurtma mahsulotlarni not'g'ri kiritmoqdasiz, iltimos etiborli bo'ling.");
-            }
-        }
-
-        // Plucked Order Details Products ID
-        $pluckProductsIdList = $order->orderDetails->pluck('product_id')->toArray();
-
-        // Validate Product Stock
-        $stockList = ProductStock::with('product')
-            ->whereIn('product_id', $pluckProductsIdList)
-            ->get();
-
-        if ($stockList->isEmpty()) {
-            throw new InvalidDataException("Buyurtmani tayyorlab bo'lmadi. Zaxirani tekshiring!");
-        }
-
-        // Products
-        $productPluckList = Product::whereIn('id', $pluckProductsIdList)
-            ->select('id', 'name')
-            ->get()
-            ->pluck('name', 'id');
-
-        // Stock Amount Pluck List
-        $stockAmountPluckList = $stockList->pluck('amount', 'product_id');
-
-        foreach ($order->orderDetails as $item) {
-            // Check Exists
-            if (!$stockAmountPluckList->has($item->product_id)) {
-                $productName = $productPluckList->get($item->product_id);
-                throw new InvalidDataException("`$productName` mahsuloti bo'yicha zaxira mavjud emas!");
-            }
-
-            $completedAmount = $pluckItemsList[$item->id];
-            $stockAmount = $stockAmountPluckList->get($item->product_id);
-
-            // Check Amounts
-            if ($stockAmount < $completedAmount) {
-                $productName = $productPluckList->get($item->product_id);
-                throw new InvalidDataException("`$productName` mahsuloti bo'yicha zaxira yetarli emas!");
-            }
-        }
-
         // Status Code
         $statusCompleted = StatusService::findByCode('orderCompleted');
 
@@ -353,7 +296,7 @@ class OrderService
         try {
             // Create New Completed Order
             $newCompletedOrder = CompletedOrder::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'order_id' => $order->id,
                 'status_id' => $statusCompleted->id,
                 'comment' => $comment,
@@ -366,25 +309,28 @@ class OrderService
             $totalSalePrice = 0;
 
             // Add Order Details completed amounts
-            foreach ($order->orderDetails as $detail) {
-                if (isset($pluckItemsList[$detail->id])) {
-                    // Completed Amount
-                    $completedAmount = $pluckItemsList[$detail->id];
+            foreach ($itemsList as $item) {
+                $itemId = $item['item_id'];
+                $completedAmount = $item['completed_amount'];
+                $productStockId = $item['product_stock_id'];
 
-                    // Calc Total Prices
-                    $totalCostPrice += $completedAmount * $detail->product->cost_price;
-                    $totalSalePrice += $completedAmount * $detail->product->sale_price;
+                // Order Detail Item
+                $orderItem = OrderDetail::findOrFail($itemId);
 
+                // Product Stock
+                $productStock = ProductStock::where('amount_type_id', $orderItem->amount_type_id)
+                    ->findOrFail($productStockId);
 
-                    // Update Order details item
-                    $detail->update(['completed_amount' => $completedAmount]);
+                // Calc Total Prices
+                $totalCostPrice += $completedAmount * $orderItem->cost_price;
+                $totalSalePrice += $completedAmount * $orderItem->sale_price;
 
-                    // Change Stock
-                    $stock = ProductStock::where('product_id', $detail->product_id)->firstOrFail();
-                    $stock->decrement('amount', $completedAmount);
-                } else {
-                    throw new InvalidDataException("Siz buyurtma mahsulotlarni tanlang!");
-                }
+                // Decrement From Stock
+                $productStock->decrement('amount', $completedAmount);
+
+                // Update completed amount
+                $orderItem->completed_amount = $completedAmount;
+                $orderItem->save();
             }
 
             // Change Total Price Of Completed Order
@@ -400,7 +346,7 @@ class OrderService
 
             // Event
             OrderCompletedEvent::dispatch($order);
-            
+
             return [
                 'message' => "Buyurtma topshirishga tayyor, hozirgi holati tayyorlandi",
                 'data' => [
@@ -458,7 +404,7 @@ class OrderService
 
             // Event
             OrderSubmittedEvent::dispatch($order);
-            
+
             return [
                 'message' => "Buyurtma muvaffaqiyatli topshirildi! Mijoz balansini tekshiring",
                 'data' => [
