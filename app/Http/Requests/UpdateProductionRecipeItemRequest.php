@@ -17,9 +17,9 @@ class UpdateProductionRecipeItemRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => 'required|integer|exists:products,id',
-            'amount' => 'required|numeric|min:0.01',
-            'amount_type_id' => 'required|integer|exists:amount_types,id',
+            'product_id' => 'nullable|integer|exists:products,id',
+            'amount' => 'nullable|numeric|min:0.01',
+            'amount_type_id' => 'nullable|integer|exists:amount_types,id',
             'is_change' => 'nullable|boolean',
         ];
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductionRecipeRequest;
+use App\Http\Requests\UpdateProductionRecipeItemRequest;
 use App\Http\Requests\UpdateProductionRecipeRequest;
 use App\Http\Resources\RecipeResource;
 use App\Models\ProductionRecipe;
@@ -67,6 +68,16 @@ class ProductionRecipeController extends Controller
             'message' => "Retsept yangilandi",
             'data' => $data,
         ]);
+    }
+
+    public function updateItem(UpdateProductionRecipeItemRequest $request, string $id)
+    {
+        $data = $this->productionRecipeService->updateItem($request->validated(), (int) $id);
+
+        return [
+            'message' => 'Retsept biri yangilandi',
+            'data' => $data,
+        ];
     }
 
 

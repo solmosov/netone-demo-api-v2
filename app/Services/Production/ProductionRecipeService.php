@@ -4,6 +4,7 @@ namespace App\Services\Production;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\ProductionRecipe;
+use App\Models\RecipeItems;
 use Illuminate\Support\Facades\DB;
 
 class ProductionRecipeService
@@ -86,8 +87,31 @@ class ProductionRecipeService
 
     return $recipe;
   }
-  public function updateItem(array $data, int $id) {
+  public function updateItem(array $data, int $id)
+  {
     // Req Body
-    $items_list = $data['items_list'];
+    $productId = $data['product_id'] ?? null;
+    $amount = $data['amount'] ?? null;
+    $amountTypeId = $data['amount_type_id'] ?? null;
+    $isChange = $data['is_change'] ?? null;
+
+    // Recipe Item
+    $recipeItem = RecipeItems::findOrFail($id);
+
+    // Recipe
+    $recipe = ProductionRecipe::findOrFail($recipeItem->production_recipe_id);
+    $recipeOutAmount = $recipe->out_amount;
+
+    if ($productId) $recipeItem->product_id = $productId;
+    if ($amount) {
+      $recipeItem->amount = $amount;
+      $recipeItem->coefficient = $amount / $recipeOutAmount;
+    }
+    if ($amountTypeId) $recipeItem->amount_type_id = $amountTypeId;
+    if ($isChange !== null) $recipeItem->isChange = $isChange;
+
+    $recipeItem->save();
+
+    return $recipeItem;
   }
 }
