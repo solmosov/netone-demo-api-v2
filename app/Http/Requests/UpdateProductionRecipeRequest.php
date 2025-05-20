@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class UpdateProductionRecipeRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class UpdateProductionRecipeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return Auth::user()->isAdmin();
     }
 
     /**
@@ -21,8 +23,17 @@ class UpdateProductionRecipeRequest extends FormRequest
      */
     public function rules(): array
     {
+        $recipeId = $this->route('production_recipe');
+
         return [
-            //
+            'name' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('production_recipes', 'name')->where('id', '!=', $recipeId),
+            ],
+            'out_product_id' => 'nullable|integer|exists:products,id',
+            'out_amount_type_id' => 'nullable|integer|exists:amount_types,id',
         ];
     }
 }

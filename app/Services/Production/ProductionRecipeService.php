@@ -75,6 +75,16 @@ class ProductionRecipeService
       throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
     }
   }
-  public function update() {}
+  public function update(array $data, int $id)
+  {
+
+    // Find
+    $recipe = ProductionRecipe::findOrFail($id);
+
+    // Update -> name, out_product_id, out_amount_type_id
+    $recipe->update($data);
+
+    return $recipe;
+  }
   public function updateItem() {}
 }

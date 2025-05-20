@@ -59,9 +59,14 @@ class ProductionRecipeController extends Controller
     }
 
 
-    public function update(UpdateProductionRecipeRequest $request, ProductionRecipe $productionRecipe)
+    public function update(UpdateProductionRecipeRequest $request, string $id)
     {
-        //
+        $data = $this->productionRecipeService->update($request->validated(), (int)$id);
+
+        return response()->json([
+            'message' => "Retsept yangilandi",
+            'data' => $data,
+        ]);
     }
 
 
