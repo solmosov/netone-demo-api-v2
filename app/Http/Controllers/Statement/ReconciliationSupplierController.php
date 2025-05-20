@@ -23,7 +23,7 @@ class ReconciliationSupplierController extends Controller
             'endDate' => 'required|date|date_format:d-m-Y|after_or_equal:startDate',
         ]);
 
-        if (!Customer::findOrFail($supplierId)) abort(404);
+        if (!Supplier::findOrFail($supplierId)) abort(404);
 
         $this->reconciliationService->setDateInterVal($validated['startDate'], $validated['endDate']);
         $data = $this->reconciliationService->getBySupplier($supplierId);

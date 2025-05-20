@@ -5,22 +5,17 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductionRecipeResource extends JsonResource
+class RecipeResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'out_amount' => (float) $this->out_amount,
+            'out_product' => ProductResource::make($this->whenLoaded('outProduct')),
             'out_amount_type' => $this->outAmountType,
-            'out_product' => ProductResource::make($this->outProduct),
-            'recipe_items' => ProductionRecipeItemResource::collection($this->recipeItems),
+            'out_amount' => (float) $this->out_amount,
+            'recipe_items' => RecipeItemResource::collection($this->whenLoaded('recipeItems')),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

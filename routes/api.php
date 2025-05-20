@@ -19,11 +19,20 @@ require __DIR__ . "/api/common/orderCancel.php";
 require __DIR__ . "/api/common/expense.php";
 require __DIR__ . "/api/common/wallet.php";
 require __DIR__ . "/api/common/orderReturn.php";
+require __DIR__ . "/api/common/polka.php";
+require __DIR__ . "/api/common/transPerm.php";
+require __DIR__ . "/api/common/departStatus.php";
+require __DIR__ . "/api/common/departTransProcess.php";
+require __DIR__ . "/api/common/departStock.php";
+require __DIR__ . "/api/common/depart.php";
+require __DIR__ . "/api/common/producerProductTrans.php";
+require __DIR__ . "/api/common/producerDepartProductTrans.php";
 
 // Production
 require __DIR__ . "/api/production/recipe.php";
 require __DIR__ . "/api/production/process.php";
 require __DIR__ . "/api/production/checkStock.php";
+require __DIR__ . "/api/production/productionPlan.php";
 
 // Finance
 require __DIR__ . "/api/finance/currency.php";

@@ -9,7 +9,7 @@ class UserProfileController extends Controller
 {
     public function profile()
     {
-        $user = User::with('roles')->findOrFail(auth()->id());
+        $user = User::with(['roles','departs'])->findOrFail(auth()->id());
 
         return response()->json([
             "data" => $user

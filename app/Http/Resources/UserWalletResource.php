@@ -16,7 +16,7 @@ class UserWalletResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user' => $this->user,
+            'user' => UserResource::make($this->user),
             'wallet' => WalletResource::make($this->wallet),
             'amount' => (float) $this->amount,
             'created_at' => $this->created_at,

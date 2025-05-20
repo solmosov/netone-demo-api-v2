@@ -6,6 +6,10 @@ use App\Models\Status;
 
 class StatusService
 {
+    static function findById(int $id): Status
+    {
+        return Status::findOrFail($id);
+    }
     static function findByCode(string $code)
     {
         return Status::where('code', $code)->firstOrFail();

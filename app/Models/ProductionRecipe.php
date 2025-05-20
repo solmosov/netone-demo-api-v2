@@ -32,6 +32,11 @@ class ProductionRecipe extends Model
     public function recipeItems(): HasMany
     {
         return $this->hasMany(RecipeItems::class, 'production_recipe_id')
-            ->with('product.stock.amountType');
+            ->with(['product', 'amountType']);
+    }
+
+    public function productionPlan(): BelongsTo
+    {
+        return $this->belongsTo(ProductionRecipe::class, 'recipe_id');
     }
 }

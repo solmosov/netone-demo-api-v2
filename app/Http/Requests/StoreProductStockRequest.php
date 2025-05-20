@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Polka;
+use App\Models\ProductStock;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreProductStockRequest extends FormRequest
 {
@@ -23,9 +26,29 @@ class StoreProductStockRequest extends FormRequest
     {
         return [
             'product_id' => 'required|numeric|exists:products,id',
-            'name' => 'required|string|min:1|max:255|unique:product_stocks,name',
+            'polka_id' => 'required|numeric|exists:polkas,id',
             'amount_type_id' => 'required|numeric|exists:amount_types,id',
             'amount' => 'required|numeric|min:0'
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function ($validator) {
+            $product_id = $this->input('product_id');
+            $polka_id = $this->input('polka_id');
+
+            $polka = Polka::whereNull('owner_id')->findOrFail($polka_id);
+
+            if (!$polka) {
+                $validator->errors()->add('polka_id', "Bu `$polka->name` polka bo'limga tegishli");
+            }
+            if (ProductStock::where('product_id', $product_id)
+                ->where('polka_id', $polka_id)
+                ->exists()
+            ) {
+                $validator->errors()->add('product_id', 'Bu mahsulot va polka zaxirasi allaqachon mavjud.');
+            }
+        });
     }
 }

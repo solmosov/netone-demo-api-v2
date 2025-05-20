@@ -4,34 +4,41 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductionRecipeRequest;
 use App\Http\Requests\UpdateProductionRecipeRequest;
-use App\Http\Resources\ProductionRecipeResource;
+use App\Http\Resources\RecipeResource;
 use App\Models\ProductionRecipe;
 use App\Services\AmountConverterService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class ProductionRecipeController extends Controller
 {
     public function __construct(
         protected AmountConverterService $amountConverter
-    )
-    {
-    }
+    ) {}
 
-    public function index()
+    public function index(): JsonResponse
     {
+        // Gate
+        Gate::authorize('viewAny', ProductionRecipe::class);
+
         $data = ProductionRecipe::with(
             'outProduct',
+            'outAmountType',
             'recipeItems.product'
         )->get();
 
         return response()->json([
-            'data' => ProductionRecipeResource::collection($data)
+            'data' => RecipeResource::collection($data)
         ]);
     }
 
 
     public function store(StoreProductionRecipeRequest $request)
     {
+        // Gate
+        Gate::authorize('create', ProductionRecipe::class);
+
         DB::beginTransaction();
 
         try {
@@ -71,15 +78,19 @@ class ProductionRecipeController extends Controller
     }
 
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
+        // Gate
+        Gate::authorize('view', ProductionRecipe::class);
+
         $productionRecipe = ProductionRecipe::with(
             'outProduct',
-            'recipeItems'
+            'outAmountType',
+            'recipeItems.product'
         )->findOrFail($id);
 
         return response()->json([
-            'data' => ProductionRecipeResource::make($productionRecipe)
+            'data' => RecipeResource::make($productionRecipe)
         ]);
     }
 

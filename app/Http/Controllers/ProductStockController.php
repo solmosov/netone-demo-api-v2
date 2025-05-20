@@ -16,7 +16,7 @@ class ProductStockController extends Controller
         // Gate
         Gate::authorize('viewAny', ProductStock::class);
 
-        $data = ProductStock::with('product', 'amountType')->get();
+        $data = ProductStock::with('polka', 'product', 'amountType')->get();
 
         return response()->json([
             "data" => ProductStockResource::collection($data),
@@ -38,13 +38,15 @@ class ProductStockController extends Controller
     }
 
 
-    public function show(ProductStock $productStock)
+    public function show(string $id)
     {
         // Gate
         Gate::authorize('view', ProductStock::class);
 
+        $data = ProductStock::with('polka', 'product', 'amountType')->findOrFail($id);
+
         return response()->json([
-            "data" => ProductStockResource::make($productStock),
+            "data" => ProductStockResource::make($data),
         ]);
     }
 
@@ -53,12 +55,6 @@ class ProductStockController extends Controller
     {
         // Gate
         Gate::authorize('update', ProductStock::class);
-
-        // Check if Name already exists
-        if ($request->validated('name')) {
-            $nameExist = ProductStock::where('name', $request->validated('name'))->where('id', '<>', $productStock->id)->exists();
-            if ($nameExist) abort(422, 'Mahsulot zahira polka nomi allaqachon mavjud');
-        }
 
         $productStock->update($request->validated());
 

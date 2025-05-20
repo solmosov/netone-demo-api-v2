@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -21,6 +22,11 @@ class DatabaseSeeder extends Seeder
             AmountSettingsSeeder::class,
             CurrencySeeder::class,
             ExchangeRateSeeder::class,
+            TransPermSeeder::class,
+            StatusDepartTransferSeeder::class,
+            StatusProductionPlanSeeder::class,
+            StatusProductionPlanItemSeeder::class,
+            StatusProducerProductTransSeeder::class,
 
             // Optional
             // ProductSeeder::class,
@@ -30,6 +36,7 @@ class DatabaseSeeder extends Seeder
             // WalletSeeder::class,
             // OrderSeeder::class,
             // CompletedOrderSeeder::class,
+            // PolkaSeeder::class
         ]);
     }
 }

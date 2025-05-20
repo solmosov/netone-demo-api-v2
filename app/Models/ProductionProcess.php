@@ -9,12 +9,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductionProcess extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
+        'depart_id',
         'production_recipe_id',
         'status_id',
         'out_amount',
         'cost_price'
     ];
+
+    public function depart(): BelongsTo
+    {
+        return $this->belongsTo(Depart::class, 'depart_id');
+    }
 
     public function productionRecipe(): BelongsTo
     {
