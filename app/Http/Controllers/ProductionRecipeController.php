@@ -12,6 +12,7 @@ use App\Services\Production\ProductionRecipeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class ProductionRecipeController extends Controller
 {
@@ -81,8 +82,13 @@ class ProductionRecipeController extends Controller
     }
 
 
-    public function destroy(ProductionRecipe $productionRecipe)
+    public function destroy(string $id)
     {
-        //
+        $data = $this->productionRecipeService->delete((int)$id);
+
+        return response()->json([
+            'message' => "{$data->name} nomli retsept o'chirildi",
+            'data'  => $data,
+        ]);
     }
 }

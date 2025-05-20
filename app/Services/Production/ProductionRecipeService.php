@@ -114,4 +114,15 @@ class ProductionRecipeService
 
     return $recipeItem;
   }
+
+  public function delete(int $id)
+  {
+    // Recipe
+    $recipe = ProductionRecipe::findOrFail($id);
+
+    // Delete 
+    $recipe->delete();
+
+    return $recipe;
+  }
 }
