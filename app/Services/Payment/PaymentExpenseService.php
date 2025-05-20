@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentExpenseService
@@ -47,6 +48,9 @@ class PaymentExpenseService
      */
     public function create(array $data): array
     {
+        // Auth User
+        $authUser = Auth::user();
+        
         $expenseId = $data['expense_id'];
         $walletId = $data['wallet_id'];
         $amount = $data['amount'];
@@ -55,26 +59,25 @@ class PaymentExpenseService
 
         // Validation User Wallet
         $userWallet = UserWallet::with('wallet.currency')
-            ->where('user_id', auth()->id())
+            ->where('user_id', $authUser->id)
             ->where('wallet_id', $walletId)
             ->firstOrFail();
 
-        if ($userWallet->wallet->amount < $amount) {
+        if ($userWallet->amount < $amount) {
             throw new InvalidDataException("`{$userWallet->wallet->name}` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
         }
 
         // Expense
         $expense = Expense::findOrFail($expenseId);
-        
+
         // Status Payment Expense
         $statusPaymentExpense = StatusService::findByCode('paymentExpense');
 
         DB::beginTransaction();
-
         try {
             // New Payment For Expense
             $payment = new Payment([
-                'user_id' => auth()->id(),
+                'user_id' => $authUser->id,
                 'status_id' => $statusPaymentExpense->id,
                 'comment' => $comment
             ]);
