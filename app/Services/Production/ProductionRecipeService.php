@@ -86,5 +86,8 @@ class ProductionRecipeService
 
     return $recipe;
   }
-  public function updateItem() {}
+  public function updateItem(array $data, int $id) {
+    // Req Body
+    $items_list = $data['items_list'];
+  }
 }
