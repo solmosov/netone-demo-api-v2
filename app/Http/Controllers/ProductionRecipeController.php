@@ -91,4 +91,14 @@ class ProductionRecipeController extends Controller
             'data'  => $data,
         ]);
     }
+
+    public function destroyItem(string $id)
+    {
+        $data = $this->productionRecipeService->deleteItem((int) $id);
+
+        return response()->json([
+            'message' => "Retsept mahsuloti o'chirildi",
+            'data'  => $data,
+        ]);
+    }
 }

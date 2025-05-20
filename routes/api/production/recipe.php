@@ -6,8 +6,9 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::group(['prefix' => '/production-recipes', 'middleware' => ['auth:sanctum']], function () {
-  Route::group(['prefix' => '/production-recipes/items', 'middleware' => ['auth:sanctum']], function () {
+  Route::group(['prefix' => '/items', 'middleware' => ['auth:sanctum']], function () {
     Route::put('/{recipe_item}', [ProductionRecipeController::class, 'updateItem']);
+    Route::delete('/{recipe_item}', [ProductionRecipeController::class, 'destroyItem']);
   });
 
   Route::get('/', [ProductionRecipeController::class, 'index']);
