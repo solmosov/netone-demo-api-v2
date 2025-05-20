@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProductionRecipeRequest;
 use App\Http\Resources\RecipeResource;
 use App\Models\ProductionRecipe;
 use App\Services\AmountConverterService;
+use App\Services\Production\ProductionRecipeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\Gate;
 class ProductionRecipeController extends Controller
 {
     public function __construct(
-        protected AmountConverterService $amountConverter
+        protected AmountConverterService $amountConverter,
+        protected ProductionRecipeService $productionRecipeService
     ) {}
 
     public function index(): JsonResponse
@@ -22,11 +24,7 @@ class ProductionRecipeController extends Controller
         // Gate
         Gate::authorize('viewAny', ProductionRecipe::class);
 
-        $data = ProductionRecipe::with(
-            'outProduct',
-            'outAmountType',
-            'recipeItems.product'
-        )->get();
+        $data = $this->productionRecipeService->findAll();
 
         return response()->json([
             'data' => RecipeResource::collection($data)
@@ -39,42 +37,12 @@ class ProductionRecipeController extends Controller
         // Gate
         Gate::authorize('create', ProductionRecipe::class);
 
-        DB::beginTransaction();
+        $data = $this->productionRecipeService->create($request->validated());
 
-        try {
-
-            // New Recipe
-            $newRecipe = ProductionRecipe::create([
-                "name" => $request->validated('name'),
-                'out_product_id' => $request->validated('out_product_id'),
-                'out_amount_type_id' => $request->validated('out_amount_type_id'),
-                'out_amount' => $request->validated('out_amount')
-            ]);
-
-
-            // Create Recipe Items
-            $list = [];
-            foreach ($request->validated('items_list') as $item) {
-                $list[] = [
-                    'production_recipe_id' => $newRecipe->id,
-                    "product_id" => $item['product_id'],
-                    "amount" => $item["amount"],
-                    "amount_type_id" => $item['amount_type_id'],
-                    'coefficient' => $item['amount'] / $request->validated('out_amount'),
-                    'is_change' => (bool) $item['is_change'],
-                ];
-            }
-            $newRecipe->recipeItems()->createMany($list);
-
-            DB::commit();
-            return response()->json([
-                "message" => "Ishlab chiqarish uchun retsept yaratildi",
-                "data" => $newRecipe
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->serverError($e);
-        }
+        return response()->json([
+            "message" => "Yangi retsept qo'shildi",
+            "data" => $data
+        ], 201);
     }
 
 
@@ -83,11 +51,7 @@ class ProductionRecipeController extends Controller
         // Gate
         Gate::authorize('view', ProductionRecipe::class);
 
-        $productionRecipe = ProductionRecipe::with(
-            'outProduct',
-            'outAmountType',
-            'recipeItems.product'
-        )->findOrFail($id);
+        $productionRecipe = $this->productionRecipeService->findOne((int) $id);
 
         return response()->json([
             'data' => RecipeResource::make($productionRecipe)
