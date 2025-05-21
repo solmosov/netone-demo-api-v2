@@ -147,10 +147,18 @@ class YearlySalesService
 
         foreach ($this->completedOrderData as $item) {
             $marja = $this->calcMarjaAmount($item->sale_price, $item->cost_price);
-            $percent = round($marja / $item->sale_price * 100, 2);
 
-            $list["month_number_$item->month_number"] = $percent;
-            $totalMarjaPercent += $percent;
+            $percent = null;
+
+            if ($marja) {
+                $percent = round($marja / ($item->sale_price ?? 1) * 100, 2);
+            }
+
+            $list["month_number_$item->month_number"] = $percent ?? '';
+            
+            if ($percent) {
+                $totalMarjaPercent += $percent;
+            }
         }
 
         $list["total_amount"] = round($totalMarjaPercent, 2);
