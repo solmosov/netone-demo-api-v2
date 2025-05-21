@@ -91,22 +91,13 @@ class ProductionRecipeService
   {
     // Req Body
     $productId = $data['product_id'] ?? null;
-    $amount = $data['amount'] ?? null;
     $amountTypeId = $data['amount_type_id'] ?? null;
     $isChange = $data['is_change'] ?? null;
 
     // Recipe Item
     $recipeItem = RecipeItems::findOrFail($id);
 
-    // Recipe
-    $recipe = ProductionRecipe::findOrFail($recipeItem->production_recipe_id);
-    $recipeOutAmount = $recipe->out_amount;
-
     if ($productId) $recipeItem->product_id = $productId;
-    if ($amount) {
-      $recipeItem->amount = $amount;
-      $recipeItem->coefficient = $amount / $recipeOutAmount;
-    }
     if ($amountTypeId) $recipeItem->amount_type_id = $amountTypeId;
     if ($isChange !== null) $recipeItem->isChange = $isChange;
 
@@ -124,15 +115,5 @@ class ProductionRecipeService
     $recipe->delete();
 
     return $recipe;
-  }
-
-  public function deleteItem(int $id)
-  {
-    // Recipe Item
-    $recipeItem = RecipeItems::findOrFail($id);
-
-    $recipeItem->delete();
-
-    return $recipeItem;
   }
 }
