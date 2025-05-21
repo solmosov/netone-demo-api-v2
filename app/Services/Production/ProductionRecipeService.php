@@ -78,14 +78,72 @@ class ProductionRecipeService
   }
   public function update(array $data, int $id)
   {
+    // Req Data
+    $name = $data['name'];
+    $out_product_id = $data['out_product_id'];
+    $out_amount_type_id = $data['out_amount_type_id'];
+    $out_amount = $data['out_amount'];
+    $items_list = $data['items_list'];
 
     // Find
     $recipe = ProductionRecipe::findOrFail($id);
 
-    // Update -> name, out_product_id, out_amount_type_id
-    $recipe->update($data);
 
-    return $recipe;
+    DB::beginTransaction();
+
+    try {
+
+      // New Recipe
+      $recipe->update([
+        "name" => $name,
+        'out_product_id' => $out_product_id,
+        'out_amount_type_id' => $out_amount_type_id,
+        'out_amount' => $out_amount
+      ]);
+
+
+      // Create Recipe Items
+      $existingIds = [];
+      foreach ($items_list as $item) {
+        $itemId = $item['item_id'] ?? null;
+        $product_id = $item['product_id'];
+        $amount = $item['amount'];
+        $amount_type_id = $item['amount_type_id'];
+        $is_change = (bool) $item['is_change'];
+
+
+        // Coefficient
+        $coefficient = $amount / $out_amount;
+
+        // Item Data
+        $itemData = [
+          'production_recipe_id' => $recipe->id,
+          "product_id" => $product_id,
+          "amount" => $amount,
+          "amount_type_id" => $amount_type_id,
+          'coefficient' => $coefficient,
+          'is_change' => $is_change,
+        ];
+
+        if ($itemId) {
+          // Update
+          $existingIds[] = $itemId;
+          RecipeItems::findOrFail($itemId)->update($itemData);
+        } else {
+          // Create
+          RecipeItems::create($itemData);
+        }
+      }
+
+      $recipe->recipeItems()->whereNotIn('id', $existingIds)->delete();
+
+      DB::commit();
+
+      return $recipe;
+    } catch (\Exception $e) {
+      DB::rollBack();
+      throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
+    }
   }
   public function updateItem(array $data, int $id)
   {
