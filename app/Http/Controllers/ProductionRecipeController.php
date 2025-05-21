@@ -10,9 +10,7 @@ use App\Models\ProductionRecipe;
 use App\Services\AmountConverterService;
 use App\Services\Production\ProductionRecipeService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 class ProductionRecipeController extends Controller
 {
