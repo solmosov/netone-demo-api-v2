@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProductionRecipe;
 use App\Models\RecipeItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateProductionRecipeRequest extends FormRequest
@@ -27,7 +29,12 @@ class UpdateProductionRecipeRequest extends FormRequest
         $recipeId = $this->route('production_recipe');
 
         return [
-            'name' => 'required|string|max:255|unique:production_recipes,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('production_recipes', 'name')->where('id', '<>', $this->route('recipe'))
+            ],
             'out_product_id' => 'required|integer|exists:products,id',
             'out_amount_type_id' => 'required|integer|exists:amount_types,id',
             'out_amount' => 'required|numeric|min:0.01',
@@ -46,6 +53,7 @@ class UpdateProductionRecipeRequest extends FormRequest
             $recipeId = $this->route('recipe');
             $itemsList = $this->input('items_list');
 
+            ProductionRecipe::findOrFail($recipeId);
 
             foreach ($itemsList as $key => $item) {
                 // Req Values

@@ -131,7 +131,8 @@ class ProductionRecipeService
           RecipeItems::findOrFail($itemId)->update($itemData);
         } else {
           // Create
-          RecipeItems::create($itemData);
+          $newRecipeItem = RecipeItems::create($itemData);
+          $existingIds[] = $newRecipeItem->id;
         }
       }
 
