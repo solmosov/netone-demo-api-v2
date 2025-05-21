@@ -63,6 +63,9 @@ class ProductionRecipeController extends Controller
 
     public function update(UpdateProductionRecipeRequest $request, string $id)
     {
+        // Gate
+        Gate::authorize('update', ProductionRecipe::class);
+
         $data = $this->productionRecipeService->update($request->validated(), (int)$id);
 
         return response()->json([
@@ -73,6 +76,9 @@ class ProductionRecipeController extends Controller
 
     public function updateItem(UpdateProductionRecipeItemRequest $request, string $id)
     {
+        // Gate
+        Gate::authorize('update', ProductionRecipe::class);
+
         $data = $this->productionRecipeService->updateItem($request->validated(), (int) $id);
 
         return [
@@ -84,6 +90,9 @@ class ProductionRecipeController extends Controller
 
     public function destroy(string $id)
     {
+        // Gate
+        Gate::authorize('delete', ProductionRecipe::class);
+
         $data = $this->productionRecipeService->delete((int)$id);
 
         return response()->json([
@@ -94,6 +103,9 @@ class ProductionRecipeController extends Controller
 
     public function destroyItem(string $id)
     {
+        // Gate
+        Gate::authorize('delete', ProductionRecipe::class);
+
         $data = $this->productionRecipeService->deleteItem((int) $id);
 
         return response()->json([
