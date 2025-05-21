@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('recipe_items', function (Blueprint $table) {
-            $table->dropForeign('recipe_items_production_recipe_id_foreign');
+            $table->dropForeign(['production_recipe_id']);
 
             $table->foreign('production_recipe_id')
                 ->references('id')
@@ -28,7 +28,7 @@ return new class extends Migration
     {
         Schema::table('recipe_items', function (Blueprint $table) {
 
-            $table->dropForeign('recipe_items_production_recipe_id_foreign');
+            $table->dropForeign(['production_recipe_id']);
 
             $table->foreign('product_recipe_id')
                 ->references('id')
