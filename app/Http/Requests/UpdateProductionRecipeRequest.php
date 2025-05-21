@@ -33,7 +33,7 @@ class UpdateProductionRecipeRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('production_recipes', 'name')->where('id', '<>', $this->route('recipe'))
+                Rule::unique('production_recipes', 'name')->where('id', '!=', $recipeId)
             ],
             'out_product_id' => 'required|integer|exists:products,id',
             'out_amount_type_id' => 'required|integer|exists:amount_types,id',
