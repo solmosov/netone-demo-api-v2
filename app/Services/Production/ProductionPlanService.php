@@ -87,7 +87,6 @@ class ProductionPlanService
                     'amount' => $calcAmount,
                     'amount_type_id' => $itemAmountTypeId,
                 ];
-
             }
 
             $newProductionPlan->planItems()->createMany($itemsList);
@@ -140,9 +139,9 @@ class ProductionPlanService
         ];
     }
 
-    public function findPlanItemsByDepart(int $departId): Collection
+    public function findPlanItemsByDepart(array $queryParams): Collection
     {
-        return ProductionPlanItem::with([
+        $query =  ProductionPlanItem::with([
             'plan',
             'depart',
             'recipeItem',
@@ -150,9 +149,19 @@ class ProductionPlanService
             'status',
             'product',
             'amountType'
-        ])
-            ->where('depart_id', $departId)
-            ->latest()
+        ]);
+
+        foreach ($queryParams as $key => $item) {
+
+            if ($key === 'status_code') {
+                $status = StatusService::findByCode($item);
+                $query->where('status_id', $status->id);
+            } else {
+                $query->where($key, $item);
+            }
+        }
+
+        return $query->latest()
             ->get();
     }
 

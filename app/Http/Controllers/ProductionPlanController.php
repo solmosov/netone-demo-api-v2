@@ -17,9 +17,7 @@ use Illuminate\Support\Facades\Gate;
 
 class ProductionPlanController extends Controller
 {
-    public function __construct(protected ProductionPlanService $productionPlanService)
-    {
-    }
+    public function __construct(protected ProductionPlanService $productionPlanService) {}
 
     public function index(): JsonResponse
     {
@@ -58,7 +56,7 @@ class ProductionPlanController extends Controller
 
     public function showPlanItemsByDepart(GetPlanItemsByDepartRequest $request): JsonResponse
     {
-        $data = $this->productionPlanService->findPlanItemsByDepart($request->validated('depart_id'));
+        $data = $this->productionPlanService->findPlanItemsByDepart($request->validated());
 
         return response()->json([
             'data' => PlanItemByDepartResource::collection($data),
