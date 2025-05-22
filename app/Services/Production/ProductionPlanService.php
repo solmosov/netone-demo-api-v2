@@ -21,6 +21,7 @@ class ProductionPlanService
             'amountType',
             'status'
         ])
+            ->latest()
             ->get();
 
         return [
