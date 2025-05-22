@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\GetPlanItemsByDepartRequest;
 use App\Http\Requests\StoreProductionPlanRequest;
-use App\Http\Requests\UpdateProductionPlanItemCompleteRequst;
+use App\Http\Requests\UpdateProductionPlanItemCompleteRequest;
 use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
 use App\Http\Resources\PlanItemByDepartResource;
@@ -76,7 +76,7 @@ class ProductionPlanController extends Controller
         return response()->json($result);
     }
 
-    public function completedPlanItem(UpdateProductionPlanItemCompleteRequst $request, int $planItemId): JsonResponse
+    public function completedPlanItem(UpdateProductionPlanItemCompleteRequest $request, int $planItemId): JsonResponse
     {
         $result = $this->productionPlanService->completedPlanItem($planItemId);
 
