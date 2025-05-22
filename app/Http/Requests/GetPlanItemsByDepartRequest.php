@@ -23,7 +23,7 @@ class GetPlanItemsByDepartRequest extends FormRequest
                 'integer',
                 Rule::exists('depart_user', 'depart_id')->where('user_id', Auth::id())
             ],
-            'status_code' => 'nullable|string|exists:statuses,code',
+            'status_code' => 'nullable|string|exists:statuses,code', /* productionPlanDepartNew, productionPlanDepartReceived, productionPlanDepartCompleted */
         ];
     }
 }
