@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class StoreProductionRecipeRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class StoreProductionRecipeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::user()->isAdmin();
     }
 
     /**
@@ -28,7 +29,7 @@ class StoreProductionRecipeRequest extends FormRequest
             'out_amount' => 'required|numeric|min:0.01',
             'items_list' => 'required|array',
             'items_list.*.product_id' => 'required|integer|exists:products,id',
-            'items_list.*.amount' => 'required|numeric|min:0.01',
+            'items_list.*.amount' => 'required|numeric|min:0',
             'items_list.*.amount_type_id' => 'required|integer|exists:amount_types,id',
             'items_list.*.is_change' => 'nullable|boolean',
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Services\Production;
 
+use App\Exceptions\ServerErrorException;
 use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
@@ -10,17 +11,31 @@ use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\CssSelector\Exception\InternalErrorException;
 
 class ProductionPlanService
 {
 
-    public function findAll(): array
+    public function findAll(array $queryParams): array
     {
-        $data = ProductionPlan::with([
+        $query = ProductionPlan::with([
             'recipe.outAmountType',
             'amountType',
             'status'
-        ])
+        ]);
+
+        foreach ($queryParams as $key => $item) {
+            if ($key === 'status_code') {
+                $status = StatusService::findByCode($item);
+                $query->where('status_id', $status->id);
+            } else {
+                $query->where($key, $item);
+            }
+        }
+
+        $data = $query
+            ->latest()
+            ->limit(200)
             ->get();
 
         return [
@@ -87,7 +102,6 @@ class ProductionPlanService
                     'amount' => $calcAmount,
                     'amount_type_id' => $itemAmountTypeId,
                 ];
-
             }
 
             $newProductionPlan->planItems()->createMany($itemsList);
@@ -140,9 +154,9 @@ class ProductionPlanService
         ];
     }
 
-    public function findPlanItemsByDepart(int $departId): Collection
+    public function findPlanItemsByDepart(array $queryParams): Collection
     {
-        return ProductionPlanItem::with([
+        $query =  ProductionPlanItem::with([
             'plan',
             'depart',
             'recipeItem',
@@ -150,20 +164,44 @@ class ProductionPlanService
             'status',
             'product',
             'amountType'
-        ])
-            ->where('depart_id', $departId)
-            ->latest()
+        ]);
+
+        foreach ($queryParams as $key => $item) {
+
+            if ($key === 'status_code') {
+                $status = StatusService::findByCode($item);
+                $query->where('status_id', $status->id);
+            } else {
+                $query->where($key, $item);
+            }
+        }
+
+        return $query->latest()
             ->get();
     }
 
-    public function receivePlanItem(int $planItemId): array
+    public function receivePlanItem(int $planItemId): ProductionPlanItem
     {
-        $statusReceived = self::getPlanItemReceivedStatus();
-        ProductionPlanItem::findOrFail($planItemId)->update(['status_id' => $statusReceived->id]);
+        $statusPlanProcess = self::getProcessStatus();
+        $statusPlanItemReceived = self::getPlanItemReceivedStatus();
 
-        return [
-            'message' => "Muvaffaqiyatli qabul qilindi",
-        ];
+        DB::beginTransaction();
+
+        try {
+            // Plan Item
+            $planItem = ProductionPlanItem::findOrFail($planItemId);
+            $planItem->update(['status_id' => $statusPlanItemReceived->id]);
+
+            // Plan
+            ProductionPlan::findOrFail($planItem->plan_id)->update(['status_id' => $statusPlanProcess->id]);
+
+            DB::commit();
+
+            return $planItem;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
+        }
     }
 
     public function completedPlanItem(int $planItemId): array
@@ -178,20 +216,32 @@ class ProductionPlanService
         ];
     }
 
-    public function finish(int $planId): array
+    public function finish(int $planId): ProductionPlan
     {
         $statusCompleted = self::getCompletedStatus();
-        ProductionPlan::where('id', $planId)
-            ->where('status_id', '!=', $statusCompleted->id)
-            ->firstOrFail()
-            ->update([
+        $statusPlanItem = self::getPlanItemCompletedStatus();
+
+        DB::beginTransaction();
+
+        try {
+            $plan = ProductionPlan::where('id', $planId)
+                ->where('status_id', '!=', $statusCompleted->id)
+                ->firstOrFail();
+
+            $plan->update([
                 'status_id' => $statusCompleted->id,
                 'finish_date' => now()
             ]);
 
-        return [
-            'message' => "Topshiriq yakunlandi",
-        ];
+            $plan->planItems()->update(['status_id' => $statusPlanItem->id]);
+
+            DB::commit();
+
+            return $plan;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new InternalErrorException($e->getMessage(), (int) $e->getCode(), $e);
+        }
     }
 
     public static function getNewStatus()

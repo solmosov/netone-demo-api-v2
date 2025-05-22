@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GetPlanItemsByDepartRequest;
+use App\Http\Requests\GetProductionPlanRequest;
 use App\Http\Requests\StoreProductionPlanRequest;
-use App\Http\Requests\UpdateProductionPlanItemCompleteRequst;
+use App\Http\Requests\UpdateProductionPlanItemCompleteRequest;
 use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
 use App\Http\Requests\UpdateProductionPlanRequest;
 use App\Http\Resources\PlanItemByDepartResource;
@@ -17,13 +18,11 @@ use Illuminate\Support\Facades\Gate;
 
 class ProductionPlanController extends Controller
 {
-    public function __construct(protected ProductionPlanService $productionPlanService)
-    {
-    }
+    public function __construct(protected ProductionPlanService $productionPlanService) {}
 
-    public function index(): JsonResponse
+    public function index(GetProductionPlanRequest $request): JsonResponse
     {
-        $result = $this->productionPlanService->findAll();
+        $result = $this->productionPlanService->findAll($request->validated());
 
         return response()->json([
             'data' => ProductionPlanResource::collection($result['data'])
@@ -58,7 +57,7 @@ class ProductionPlanController extends Controller
 
     public function showPlanItemsByDepart(GetPlanItemsByDepartRequest $request): JsonResponse
     {
-        $data = $this->productionPlanService->findPlanItemsByDepart($request->validated('depart_id'));
+        $data = $this->productionPlanService->findPlanItemsByDepart($request->validated());
 
         return response()->json([
             'data' => PlanItemByDepartResource::collection($data),
@@ -75,10 +74,12 @@ class ProductionPlanController extends Controller
     {
         $result = $this->productionPlanService->receivePlanItem($planItemId);
 
-        return response()->json($result);
+        return response()->json([
+            'message' => "Muvaffaqiyatli qabul qilindi"
+        ]);
     }
 
-    public function completedPlanItem(UpdateProductionPlanItemCompleteRequst $request, int $planItemId): JsonResponse
+    public function completedPlanItem(UpdateProductionPlanItemCompleteRequest $request, int $planItemId): JsonResponse
     {
         $result = $this->productionPlanService->completedPlanItem($planItemId);
 
@@ -95,7 +96,8 @@ class ProductionPlanController extends Controller
         $result = $this->productionPlanService->finish((int)$id);
 
         return response()->json([
-            'message' => $result['message']
+            'message' => 'Topshiriq yakunlandi',
+            'data' => $result
         ]);
     }
 }

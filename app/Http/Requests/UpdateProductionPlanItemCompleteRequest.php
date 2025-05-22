@@ -5,13 +5,12 @@ namespace App\Http\Requests;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
 use App\Services\Production\ProductionPlanService;
-use App\Services\Status\StatusService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Validator;
 
-class UpdateProductionPlanItemCompleteRequst extends FormRequest
+class UpdateProductionPlanItemCompleteRequest extends FormRequest
 {
 
     public function authorize(): bool

@@ -33,7 +33,10 @@ class UpdateProductionPlanItemReceiveRequest extends FormRequest
             $departId = $this->input('depart_id');
             $planItemId = $this->route('plan_item_id');
 
-            $exists = DB::table('depart_user')->where('depart_id', $departId)->where('user_id', Auth::id())->exists();
+            $exists = DB::table('depart_user')
+                ->where('depart_id', $departId)
+                ->where('user_id', Auth::id())
+                ->exists();
             if (!$exists) {
                 $validator->errors()->add('depart_id', "O'zingizga tegishli bo'lmagan bo'limni tanlamoqdasiz");
             }
@@ -41,14 +44,20 @@ class UpdateProductionPlanItemReceiveRequest extends FormRequest
             $planItem = ProductionPlanItem::where('id', $planItemId)
                 ->where('depart_id', $departId)
                 ->first();
-            if (!$exists) {
+            if (!$planItem) {
+                $validator->errors()->add('depart_id', "Plan item noto'g'ri tanlandi");
+            } else if (!$exists) {
                 $validator->errors()->add('depart_id', "Bo'lim noto'g'ri tanlandi");
-            }else {
+            } else {
+                $allowStatusId = [
+                    ProductionPlanService::getNewStatus()->id,
+                    ProductionPlanService::getProcessStatus()->id
+                ];
+
                 $exists = ProductionPlan::where('id', $planItem->plan_id)
-                    ->where('status_id', ProductionPlanService::getNewStatus()->id)
-                    ->whereOr('status_id', ProductionPlanService::getCompletedStatus()->id)
+                    ->whereIn('status_id', $allowStatusId)
                     ->exists();
-                if(!$exists){
+                if (!$exists) {
                     $validator->errors()->add('depart_id', "Bu topshiriq allaqachon yakunlangan");
                 }
             }
