@@ -11,6 +11,7 @@ use App\Models\Status;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\CssSelector\Exception\InternalErrorException;
 
 class ProductionPlanService
 {
@@ -215,20 +216,32 @@ class ProductionPlanService
         ];
     }
 
-    public function finish(int $planId): array
+    public function finish(int $planId): ProductionPlan
     {
         $statusCompleted = self::getCompletedStatus();
-        ProductionPlan::where('id', $planId)
-            ->where('status_id', '!=', $statusCompleted->id)
-            ->firstOrFail()
-            ->update([
+        $statusPlanItem = self::getPlanItemCompletedStatus();
+
+        DB::beginTransaction();
+
+        try {
+            $plan = ProductionPlan::where('id', $planId)
+                ->where('status_id', '!=', $statusCompleted->id)
+                ->firstOrFail();
+
+            $plan->update([
                 'status_id' => $statusCompleted->id,
                 'finish_date' => now()
             ]);
 
-        return [
-            'message' => "Topshiriq yakunlandi",
-        ];
+            $plan->planItems()->update(['status_id' => $statusPlanItem->id]);
+
+            DB::commit();
+
+            return $plan;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new InternalErrorException($e->getMessage(), (int) $e->getCode(), $e);
+        }
     }
 
     public static function getNewStatus()

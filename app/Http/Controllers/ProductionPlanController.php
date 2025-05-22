@@ -96,7 +96,8 @@ class ProductionPlanController extends Controller
         $result = $this->productionPlanService->finish((int)$id);
 
         return response()->json([
-            'message' => $result['message']
+            'message' => 'Topshiriq yakunlandi',
+            'data' => $result
         ]);
     }
 }
