@@ -43,12 +43,12 @@ class UpdateProductionPlanItemReceiveRequest extends FormRequest
                 ->first();
             if (!$exists) {
                 $validator->errors()->add('depart_id', "Bo'lim noto'g'ri tanlandi");
-            }else {
+            } else {
                 $exists = ProductionPlan::where('id', $planItem->plan_id)
                     ->where('status_id', ProductionPlanService::getNewStatus()->id)
                     ->whereOr('status_id', ProductionPlanService::getCompletedStatus()->id)
                     ->exists();
-                if(!$exists){
+                if (!$exists) {
                     $validator->errors()->add('depart_id', "Bu topshiriq allaqachon yakunlangan");
                 }
             }
