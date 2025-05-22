@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GetPlanItemsByDepartRequest;
+use App\Http\Requests\GetProductionPlanRequest;
 use App\Http\Requests\StoreProductionPlanRequest;
 use App\Http\Requests\UpdateProductionPlanItemCompleteRequest;
 use App\Http\Requests\UpdateProductionPlanItemReceiveRequest;
@@ -19,9 +20,9 @@ class ProductionPlanController extends Controller
 {
     public function __construct(protected ProductionPlanService $productionPlanService) {}
 
-    public function index(): JsonResponse
+    public function index(GetProductionPlanRequest $request): JsonResponse
     {
-        $result = $this->productionPlanService->findAll();
+        $result = $this->productionPlanService->findAll($request->validated());
 
         return response()->json([
             'data' => ProductionPlanResource::collection($result['data'])

@@ -14,14 +14,26 @@ use Illuminate\Support\Facades\DB;
 class ProductionPlanService
 {
 
-    public function findAll(): array
+    public function findAll(array $queryParams): array
     {
-        $data = ProductionPlan::with([
+        $query = ProductionPlan::with([
             'recipe.outAmountType',
             'amountType',
             'status'
-        ])
+        ]);
+
+        foreach ($queryParams as $key => $item) {
+            if ($key === 'status_code') {
+                $status = StatusService::findByCode($item);
+                $query->where('status_id', $status->id);
+            } else {
+                $query->where($key, $item);
+            }
+        }
+
+        $data = $query
             ->latest()
+            ->limit(200)
             ->get();
 
         return [
