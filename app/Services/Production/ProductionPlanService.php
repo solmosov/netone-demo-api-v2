@@ -2,6 +2,7 @@
 
 namespace App\Services\Production;
 
+use App\Exceptions\ServerErrorException;
 use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
@@ -178,14 +179,28 @@ class ProductionPlanService
             ->get();
     }
 
-    public function receivePlanItem(int $planItemId): array
+    public function receivePlanItem(int $planItemId): ProductionPlanItem
     {
-        $statusReceived = self::getPlanItemReceivedStatus();
-        ProductionPlanItem::findOrFail($planItemId)->update(['status_id' => $statusReceived->id]);
+        $statusPlanProcess = self::getProcessStatus();
+        $statusPlanItemReceived = self::getPlanItemReceivedStatus();
 
-        return [
-            'message' => "Muvaffaqiyatli qabul qilindi",
-        ];
+        DB::beginTransaction();
+
+        try {
+            // Plan Item
+            $planItem = ProductionPlanItem::findOrFail($planItemId);
+            $planItem->update(['status_id' => $statusPlanItemReceived->id]);
+
+            // Plan
+            ProductionPlan::findOrFail($planItem->plan_id)->update(['status_id' => $statusPlanProcess->id]);
+
+            DB::commit();
+
+            return $planItem;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int) $e->getCode(), $e);
+        }
     }
 
     public function completedPlanItem(int $planItemId): array

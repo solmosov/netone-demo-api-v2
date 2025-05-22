@@ -74,7 +74,9 @@ class ProductionPlanController extends Controller
     {
         $result = $this->productionPlanService->receivePlanItem($planItemId);
 
-        return response()->json($result);
+        return response()->json([
+            'message' => "Muvaffaqiyatli qabul qilindi"
+        ]);
     }
 
     public function completedPlanItem(UpdateProductionPlanItemCompleteRequest $request, int $planItemId): JsonResponse
