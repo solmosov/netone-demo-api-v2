@@ -45,7 +45,7 @@ class StoreOrderRequest extends FormRequest
 
                 if ($salePriceAmount) {
                     $product = Product::findOrFail($productId);
-                    if (!$product) {
+                    if (!$product->is_change_price) {
                         $validator->errors()->add('product_id', "{$product->name} - mahsulotning narxini o'zgartirish mumkin emas!");
                     }
                 }
