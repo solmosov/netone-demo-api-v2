@@ -20,6 +20,7 @@ class UpdateProductRequest extends FormRequest
             'name' => 'nullable|string|max:255',
             'sale_price' => 'nullable|numeric|min:0',
             'price_amount_type_id' => 'nullable|integer|exists:amount_types,id',
+            'is_change_price' => 'nullable|boolean'
         ];
     }
 

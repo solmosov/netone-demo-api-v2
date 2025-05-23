@@ -56,52 +56,29 @@ class ProductController extends Controller
     }
 
 
-    public function update(UpdateProductRequest $request, Product $product): JsonResponse
+    public function update(UpdateProductRequest $request, string $id): JsonResponse
     {
         // Gate
         Gate::authorize('update', Product::class);
 
-        // Check Exist
-        if ($request->validated('name')) {
-            $nameIsExists = Product::where('name', $request->validated('name'))
-                ->where('id', '<>', $product->id)
-                ->exists();
-            if ($nameIsExists) abort(422, "Bu mahsulot nomi allaqachon mavjud");
-        }
-
-        // Update Data
-        $name = $request->validated('name');
-        $sale_price = $request->validated('sale_price');
-        $price_amount_type_id = $request->validated('price_amount_type_id');
-
-        if ($name) {
-            $product->name = $request->validated('name');
-        }
-        if ($sale_price) {
-            $product->sale_price = $request->validated('sale_price');
-        }
-        if ($price_amount_type_id) {
-            $product->price_amount_type_id = $request->validated('price_amount_type_id');
-        }
-
-        $product->save();
+        $product = $this->productService->update($request->validated(), (int) $id);
 
         return response()->json([
-            "message" => "Mahsulot muvaffaqiyatli tahrirlandi!",
+            "message" => "`{$product->name}` mahsulot tahrirlandi!",
             "data" => ProductResource::make($product),
         ]);
     }
 
 
-    public function destroy(Product $product): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('delete', Product::class);
 
-        $product->delete();
+        $product = $this->productService->delete($id);;
 
         return response()->json([
-            "message" => "Mahsulot muvaffaqiyatli o'chirildi!",
+            "message" => "`{$product->name}` mahsulot o'chirildi!",
             "data" => ProductResource::make($product),
         ]);
     }
