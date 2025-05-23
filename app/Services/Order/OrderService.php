@@ -20,6 +20,7 @@ use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -35,6 +36,10 @@ class OrderService
 
     public function findAll($statusCode): array
     {
+        // Auth User
+        $authUser = FacadesAuth::user();
+
+        // Query
         $query = Order::with(
             'user',
             'customer',
@@ -55,8 +60,8 @@ class OrderService
             $query->where('status_id', $status->id);
         }
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$authUser->isAdmin()) {
+            $query->where('user_id', $authUser->id);
         }
 
         $data = $query
@@ -169,6 +174,9 @@ class OrderService
 
     public function findOne(int $id): array
     {
+        // Auth User
+        $authUser = Auth::user();
+
         $query = Order::with(
             'user',
             'customer',
@@ -178,8 +186,8 @@ class OrderService
             'completedOrder'
         )->where('id', $id);
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$authUser->isAdmin()) {
+            $query->where('user_id', $authUser->id);
         }
 
         $order = $query->firstOrFail();
