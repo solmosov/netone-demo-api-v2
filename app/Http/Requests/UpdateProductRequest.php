@@ -30,10 +30,12 @@ class UpdateProductRequest extends FormRequest
             $productId = $this->route('product');
             $name = $this->input('name');
 
-            $exists = Product::where('id', '<>', $productId)
-                ->where('name', $name);
-            if ($exists) {
-                $validator->errors()->add('name', "Bu nomli mahsulot allaqachon mavjud");
+            if ($name) {
+                $exists = Product::where('id', '<>', $productId)
+                    ->where('name', $name);
+                if ($exists) {
+                    $validator->errors()->add('name', "Bu nomli mahsulot allaqachon mavjud");
+                }
             }
         });
     }
