@@ -19,6 +19,7 @@ class StoreProductRequest extends FormRequest
             'name' => 'required|string|max:255|unique:products,name',
             'sale_price' => 'required|numeric|min:0',
             'price_amount_type_id' => 'required|integer|exists:amount_types,id',
+            'is_change_price' => 'required|boolean'
         ];
     }
 

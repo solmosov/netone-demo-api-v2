@@ -13,7 +13,8 @@ class Product extends Model
         'name',
         'cost_price',
         'sale_price',
-        'receive_price'
+        'receive_price',
+        'is_change_price'
     ];
 
 
@@ -22,7 +23,7 @@ class Product extends Model
         return $this->belongsTo(AmountType::class, 'price_amount_type_id');
     }
 
-        public function stocks(): HasMany
+    public function stocks(): HasMany
     {
         return $this->hasMany(ProductStock::class, 'product_id');
     }

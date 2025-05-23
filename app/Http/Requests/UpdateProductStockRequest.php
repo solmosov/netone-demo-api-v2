@@ -26,6 +26,7 @@ class UpdateProductStockRequest extends FormRequest
     {
         return [
             'polka_id' => 'nullable|numeric|exists:polkas,id',
+            'is_change_price' => 'nullable|boolean'
         ];
     }
 
