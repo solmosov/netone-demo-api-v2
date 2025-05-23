@@ -39,14 +39,14 @@ class StoreOrderRequest extends FormRequest
         $validator->after(function ($validator) {
             $productList = $this->input('product_list');
 
-            foreach ($productList as $item) {
+            foreach ($productList as $key => $item) {
                 $productId = $item['product_id'];
                 $salePriceAmount = $item['sale_price_amount'] ?? null;
 
                 if ($salePriceAmount) {
                     $product = Product::findOrFail($productId);
                     if (!$product->is_change_price) {
-                        $validator->errors()->add('product_id', "{$product->name} - mahsulotning narxini o'zgartirish mumkin emas!");
+                        $validator->errors()->add("product_list.$key.sale_price_amount", "{$product->name} - mahsulotning narxini o'zgartirish mumkin emas!");
                     }
                 }
             }
