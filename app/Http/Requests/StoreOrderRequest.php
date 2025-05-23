@@ -27,6 +27,7 @@ class StoreOrderRequest extends FormRequest
             'product_list.*.product_id' => 'required|exists:products,id',
             'product_list.*.amount_type_id' => 'required|exists:amount_types,id',
             'product_list.*.amount' => 'required|numeric|min:0',
+            'product_list.*.sale_price_amount' => 'nullable|numeric|min:0',
         ];
     }
 }

@@ -79,25 +79,33 @@ class OrderService
      */
     public function create(array $data): array
     {
+        // Auth User
+        $authUser = Auth::user();
+
+        // Req Body
+        $customerId = $data['customer_id'];
+        $productList = $data['product_list'];
+
         // New Order status
         $newOrderStatus = StatusService::findByCode('orderNew');
 
         // Get Request Products
-        $productsId = array_column($data['product_list'] ?? [], 'product_id');
+        $productsId = array_column($productList ?? [], 'product_id');
         $products = Product::whereIn('id', $productsId)->get();
 
+        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
         $pluckedCostPrice = $products->pluck('cost_price', 'id');
         $pluckedSalePrice = $products->pluck('sale_price', 'id');
 
         // Generate Order Code
-        $orderCode = GenerateOrderCode::generate($data['customer_id']);
+        $orderCode = GenerateOrderCode::generate($customerId);
 
         DB::beginTransaction();
 
         try {
             $newOrder = Order::create([
-                "user_id" => auth()->id(),
-                "customer_id" => $data['customer_id'],
+                "user_id" => $authUser->id,
+                "customer_id" => $customerId,
                 "status_id" => $newOrderStatus->id,
                 'total_cost_price' => 0,
                 'total_sale_price' => 0,
@@ -110,16 +118,23 @@ class OrderService
 
             // Create Order Details
             $detailItemList = [];
-            foreach ($data['product_list'] as $item) {
-                $costPrice = $pluckedCostPrice[$item['product_id']];
-                $salePrice = $pluckedSalePrice[$item['product_id']];
-                $sumCostPrice = $costPrice * $item['amount'];
-                $sumSalePrice = $salePrice * $item['amount'];
+            foreach ($productList as $item) {
+                // Req Item
+                $productId = $item['product_id'];
+                $amount = $item['amount'];
+                $amountTypeId = $item['amount_type_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
+
+                // Prices
+                $costPrice = $pluckedCostPrice[$productId];
+                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $sumCostPrice = $costPrice * $amount;
+                $sumSalePrice = $salePrice * $amount;
 
                 $detailItemList[] = [
-                    'product_id' => $item['product_id'],
-                    'amount' => $item['amount'],
-                    'amount_type_id' => $item['amount_type_id'],
+                    'product_id' => $productId,
+                    'amount' => $amount,
+                    'amount_type_id' => $amountTypeId,
                     'cost_price' => $costPrice,
                     'sale_price' => $salePrice,
                     'sum_cost_price' => $sumCostPrice,
