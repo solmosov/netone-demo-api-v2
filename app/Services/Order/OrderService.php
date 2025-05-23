@@ -6,7 +6,6 @@ use App\Events\Order\OrderAddedNewProductEvent;
 use App\Events\Order\OrderCompletedEvent;
 use App\Events\Order\OrderCreatedEvent;
 use App\Events\Order\OrderProcessedEvent;
-use App\Events\Order\OrderProcessEvent;
 use App\Events\Order\OrderSubmittedEvent;
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
