@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreOrderRequest extends FormRequest
 {
@@ -29,5 +32,24 @@ class StoreOrderRequest extends FormRequest
             'product_list.*.amount' => 'required|numeric|min:0',
             'product_list.*.sale_price_amount' => 'nullable|numeric|min:0',
         ];
+    }
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function ($validator) {
+            $productList = $this->input('product_list');
+
+            foreach ($productList as $item) {
+                $productId = $item['product_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
+
+                if ($salePriceAmount) {
+                    $product = Product::findOrFail($productId);
+                    if (!$product) {
+                        $validator->errors()->add('product_id', "{$product->name} - mahsulotning narxini o'zgartirish mumkin emas!");
+                    }
+                }
+            }
+        });
     }
 }
