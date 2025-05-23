@@ -228,9 +228,11 @@ class OrderService
      */
     public function addProduct(array $data, int $id): array
     {
+        // Req Body
         $productId = $data['product_id'];
         $amount = $data['amount'];
         $amountTypeId = $data['amount_type_id'];
+        $salePriceAmount = $data['sale_price_amount'] ?? null;
 
 
         // Product
@@ -252,10 +254,14 @@ class OrderService
             throw new InvalidDataException("Bu mahsulot allaqachon mavjud");
         }
 
+        // Product Price
+        $productSalePrice = $product->is_change_price && $salePriceAmount
+            ? $salePriceAmount
+            : $product->sale_price;
 
         // Create Order Details Item
         $sumCostPrice = $product->cost_price * $amount;
-        $sumSalePrice = $product->sale_price * $amount;
+        $sumSalePrice = $productSalePrice * $amount;
 
         DB::beginTransaction();
 
@@ -265,7 +271,7 @@ class OrderService
                 'amount' => $amount,
                 'amount_type_id' => $amountTypeId,
                 'cost_price' => $product->cost_price,
-                'sale_price' => $product->sale_price,
+                'sale_price' => $productSalePrice,
                 'sum_cost_price' => $sumCostPrice,
                 'sum_sale_price' => $sumSalePrice,
             ]);
@@ -278,7 +284,7 @@ class OrderService
 
             // Event
             OrderAddedNewProductEvent::dispatch($order, $product, [
-                "price" => (float) $product->sale_price,
+                "price" => (float) $productSalePrice,
                 "amount" => (float) $amount,
                 "sum_sale_price" => (float) $sumSalePrice,
             ]);
