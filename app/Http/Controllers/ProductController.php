@@ -6,20 +6,25 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Services\Product\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        protected ProductService $productService
+    ) {}
+
     public function index()
     {
         // Gate
         Gate::authorize('viewAny', Product::class);
 
-        $data = Product::with('priceAmountType')->latest()->get();
+        $result = $this->productService->findAll();
 
         return response()->json([
-            "data" => ProductResource::collection($data),
+            "data" => ProductResource::collection($result['data']),
         ]);
     }
 
@@ -29,12 +34,7 @@ class ProductController extends Controller
         // Gate
         Gate::authorize('create', Product::class);
 
-        $newProduct = Product::create([
-            'name' => $request->validated('name'),
-            'cost_price' => 0,
-            'sale_price' => $request->validated('sale_price'),
-            'price_amount_type_id' => $request->validated('price_amount_type_id'),
-        ]);
+        $newProduct = $this->productService->create($request->validated());
 
         return response()->json([
             "message" => "Yangi mahsulot muvaffaqiyatli qo'shildi!",
@@ -43,10 +43,12 @@ class ProductController extends Controller
     }
 
 
-    public function show(Product $product): JsonResponse
+    public function show(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('view', Product::class);
+
+        $product = $this->productService->findOne((int) $id);
 
         return response()->json([
             "data" => ProductResource::make($product),
