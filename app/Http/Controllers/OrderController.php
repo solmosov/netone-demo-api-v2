@@ -66,16 +66,13 @@ class OrderController extends Controller
         // Gate
         Gate::authorize('create', Order::class);
 
-        $result = $this->orderService->create([
-            'customer_id' => $request->validated('customer_id'),
-            'product_list' => $request->validated('product_list'),
-        ]);
+        $result = $this->orderService->create($request->validated());
 
         return response()->json($result);
     }
 
 
-    public function show(Request $request, string $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('view', Order::class);

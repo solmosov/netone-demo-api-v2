@@ -32,6 +32,7 @@ class UpdateOrderCompletedRequest extends FormRequest
             'items_list.*.item_id' => 'required|integer|exists:order_details,id',
             'items_list.*.product_stock_id' => 'required|integer|exists:product_stocks,id',
             'items_list.*.completed_amount' => 'required|numeric|min:0',
+            'items_list.*.sale_price_amount' => 'nullable|numeric|min:0',
             'comment' => 'nullable|string|min:6|max:255',
         ];
     }
@@ -63,8 +64,9 @@ class UpdateOrderCompletedRequest extends FormRequest
                 $itemId = $item['item_id'];
                 $productStockId = $item['product_stock_id'];
                 $completedAmount = $item['completed_amount'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
 
-                $orderItem = OrderDetail::findOrFail($itemId);
+                $orderItem = OrderDetail::with('product')->findOrFail($itemId);
 
                 $productStock = ProductStock::findOrFail($productStockId);
 
@@ -74,6 +76,10 @@ class UpdateOrderCompletedRequest extends FormRequest
                     $validator->errors()->add("items_list.$key.product_stock_id", "Buyurtma mahsuloti bilan zaxira polka mahsulot o'lchov birligi mos emas");
                 } else if ($productStock->amount < $completedAmount) {
                     $validator->errors()->add("items_list.$key.completed_amount", "Zaxira yetarli emas");
+                } else if ($salePriceAmount) {
+                    if (!$orderItem->product->is_change_price) {
+                        $validator->errors()->add("items_list.$key.sale_price_amount", "{$orderItem->product->name} - mahsulotning narxini o'zgartirish mumkin emas!");
+                    }
                 }
             }
         });

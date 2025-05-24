@@ -6,20 +6,25 @@ use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
+use App\Services\Product\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
 class ProductController extends Controller
 {
+    public function __construct(
+        protected ProductService $productService
+    ) {}
+
     public function index()
     {
         // Gate
         Gate::authorize('viewAny', Product::class);
 
-        $data = Product::with('priceAmountType')->latest()->get();
+        $result = $this->productService->findAll();
 
         return response()->json([
-            "data" => ProductResource::collection($data),
+            "data" => ProductResource::collection($result['data']),
         ]);
     }
 
@@ -29,12 +34,7 @@ class ProductController extends Controller
         // Gate
         Gate::authorize('create', Product::class);
 
-        $newProduct = Product::create([
-            'name' => $request->validated('name'),
-            'cost_price' => 0,
-            'sale_price' => $request->validated('sale_price'),
-            'price_amount_type_id' => $request->validated('price_amount_type_id'),
-        ]);
+        $newProduct = $this->productService->create($request->validated());
 
         return response()->json([
             "message" => "Yangi mahsulot muvaffaqiyatli qo'shildi!",
@@ -43,63 +43,42 @@ class ProductController extends Controller
     }
 
 
-    public function show(Product $product): JsonResponse
+    public function show(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('view', Product::class);
 
+        $product = $this->productService->findOne((int) $id);
+
         return response()->json([
             "data" => ProductResource::make($product),
         ]);
     }
 
 
-    public function update(UpdateProductRequest $request, Product $product): JsonResponse
+    public function update(UpdateProductRequest $request, string $id): JsonResponse
     {
         // Gate
         Gate::authorize('update', Product::class);
 
-        // Check Exist
-        if ($request->validated('name')) {
-            $nameIsExists = Product::where('name', $request->validated('name'))
-                ->where('id', '<>', $product->id)
-                ->exists();
-            if ($nameIsExists) abort(422, "Bu mahsulot nomi allaqachon mavjud");
-        }
-
-        // Update Data
-        $name = $request->validated('name');
-        $sale_price = $request->validated('sale_price');
-        $price_amount_type_id = $request->validated('price_amount_type_id');
-
-        if ($name) {
-            $product->name = $request->validated('name');
-        }
-        if ($sale_price) {
-            $product->sale_price = $request->validated('sale_price');
-        }
-        if ($price_amount_type_id) {
-            $product->price_amount_type_id = $request->validated('price_amount_type_id');
-        }
-
-        $product->save();
+        $product = $this->productService->update($request->validated(), (int) $id);
 
         return response()->json([
-            "message" => "Mahsulot muvaffaqiyatli tahrirlandi!",
+            "message" => "`{$product->name}` mahsulot tahrirlandi!",
             "data" => ProductResource::make($product),
         ]);
     }
 
 
-    public function destroy(Product $product): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('delete', Product::class);
 
-        $product->delete();
+        $product = $this->productService->delete($id);;
 
         return response()->json([
-            "message" => "Mahsulot muvaffaqiyatli o'chirildi!",
+            "message" => "`{$product->name}` mahsulot o'chirildi!",
             "data" => ProductResource::make($product),
         ]);
     }

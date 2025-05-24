@@ -6,7 +6,6 @@ use App\Events\Order\OrderAddedNewProductEvent;
 use App\Events\Order\OrderCompletedEvent;
 use App\Events\Order\OrderCreatedEvent;
 use App\Events\Order\OrderProcessedEvent;
-use App\Events\Order\OrderProcessEvent;
 use App\Events\Order\OrderSubmittedEvent;
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
@@ -20,6 +19,7 @@ use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -35,6 +35,10 @@ class OrderService
 
     public function findAll($statusCode): array
     {
+        // Auth User
+        $authUser = FacadesAuth::user();
+
+        // Query
         $query = Order::with(
             'user',
             'customer',
@@ -55,8 +59,8 @@ class OrderService
             $query->where('status_id', $status->id);
         }
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$authUser->isAdmin()) {
+            $query->where('user_id', $authUser->id);
         }
 
         $data = $query
@@ -79,25 +83,33 @@ class OrderService
      */
     public function create(array $data): array
     {
+        // Auth User
+        $authUser = Auth::user();
+
+        // Req Body
+        $customerId = $data['customer_id'];
+        $productList = $data['product_list'];
+
         // New Order status
         $newOrderStatus = StatusService::findByCode('orderNew');
 
         // Get Request Products
-        $productsId = array_column($data['product_list'] ?? [], 'product_id');
+        $productsId = array_column($productList ?? [], 'product_id');
         $products = Product::whereIn('id', $productsId)->get();
 
+        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
         $pluckedCostPrice = $products->pluck('cost_price', 'id');
         $pluckedSalePrice = $products->pluck('sale_price', 'id');
 
         // Generate Order Code
-        $orderCode = GenerateOrderCode::generate($data['customer_id']);
+        $orderCode = GenerateOrderCode::generate($customerId);
 
         DB::beginTransaction();
 
         try {
             $newOrder = Order::create([
-                "user_id" => auth()->id(),
-                "customer_id" => $data['customer_id'],
+                "user_id" => $authUser->id,
+                "customer_id" => $customerId,
                 "status_id" => $newOrderStatus->id,
                 'total_cost_price' => 0,
                 'total_sale_price' => 0,
@@ -110,16 +122,23 @@ class OrderService
 
             // Create Order Details
             $detailItemList = [];
-            foreach ($data['product_list'] as $item) {
-                $costPrice = $pluckedCostPrice[$item['product_id']];
-                $salePrice = $pluckedSalePrice[$item['product_id']];
-                $sumCostPrice = $costPrice * $item['amount'];
-                $sumSalePrice = $salePrice * $item['amount'];
+            foreach ($productList as $item) {
+                // Req Item
+                $productId = $item['product_id'];
+                $amount = $item['amount'];
+                $amountTypeId = $item['amount_type_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
+
+                // Prices
+                $costPrice = $pluckedCostPrice[$productId];
+                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $sumCostPrice = $costPrice * $amount;
+                $sumSalePrice = $salePrice * $amount;
 
                 $detailItemList[] = [
-                    'product_id' => $item['product_id'],
-                    'amount' => $item['amount'],
-                    'amount_type_id' => $item['amount_type_id'],
+                    'product_id' => $productId,
+                    'amount' => $amount,
+                    'amount_type_id' => $amountTypeId,
                     'cost_price' => $costPrice,
                     'sale_price' => $salePrice,
                     'sum_cost_price' => $sumCostPrice,
@@ -154,6 +173,9 @@ class OrderService
 
     public function findOne(int $id): array
     {
+        // Auth User
+        $authUser = Auth::user();
+
         $query = Order::with(
             'user',
             'customer',
@@ -163,8 +185,8 @@ class OrderService
             'completedOrder'
         )->where('id', $id);
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$authUser->isAdmin()) {
+            $query->where('user_id', $authUser->id);
         }
 
         $order = $query->firstOrFail();
@@ -205,9 +227,11 @@ class OrderService
      */
     public function addProduct(array $data, int $id): array
     {
+        // Req Body
         $productId = $data['product_id'];
         $amount = $data['amount'];
         $amountTypeId = $data['amount_type_id'];
+        $salePriceAmount = $data['sale_price_amount'] ?? null;
 
 
         // Product
@@ -229,10 +253,14 @@ class OrderService
             throw new InvalidDataException("Bu mahsulot allaqachon mavjud");
         }
 
+        // Product Price
+        $productSalePrice = $product->is_change_price && $salePriceAmount
+            ? $salePriceAmount
+            : $product->sale_price;
 
         // Create Order Details Item
         $sumCostPrice = $product->cost_price * $amount;
-        $sumSalePrice = $product->sale_price * $amount;
+        $sumSalePrice = $productSalePrice * $amount;
 
         DB::beginTransaction();
 
@@ -242,7 +270,7 @@ class OrderService
                 'amount' => $amount,
                 'amount_type_id' => $amountTypeId,
                 'cost_price' => $product->cost_price,
-                'sale_price' => $product->sale_price,
+                'sale_price' => $productSalePrice,
                 'sum_cost_price' => $sumCostPrice,
                 'sum_sale_price' => $sumSalePrice,
             ]);
@@ -255,7 +283,7 @@ class OrderService
 
             // Event
             OrderAddedNewProductEvent::dispatch($order, $product, [
-                "price" => (float) $product->sale_price,
+                "price" => (float) $productSalePrice,
                 "amount" => (float) $amount,
                 "sum_sale_price" => (float) $sumSalePrice,
             ]);
@@ -313,23 +341,30 @@ class OrderService
                 $itemId = $item['item_id'];
                 $completedAmount = $item['completed_amount'];
                 $productStockId = $item['product_stock_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
 
                 // Order Detail Item
-                $orderItem = OrderDetail::findOrFail($itemId);
+                $orderItem = OrderDetail::with('product')->findOrFail($itemId);
 
                 // Product Stock
                 $productStock = ProductStock::where('amount_type_id', $orderItem->amount_type_id)
                     ->findOrFail($productStockId);
 
+                // Order Item Price
+                $orderItemSalePrice = $orderItem->product->is_change_price && $salePriceAmount
+                    ? $salePriceAmount
+                    : $orderItem->sale_price;
+
                 // Calc Total Prices
                 $totalCostPrice += $completedAmount * $orderItem->cost_price;
-                $totalSalePrice += $completedAmount * $orderItem->sale_price;
+                $totalSalePrice += $completedAmount * $orderItemSalePrice;
 
                 // Decrement From Stock
                 $productStock->decrement('amount', $completedAmount);
 
                 // Update completed amount
                 $orderItem->completed_amount = $completedAmount;
+                $orderItem->sale_price = $orderItemSalePrice;
                 $orderItem->save();
             }
 
