@@ -12,7 +12,8 @@ class StoreProductionRecipeRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::user()->isAdmin();
+        $authUser = Auth::user();
+        return $authUser->isAdmin() || $authUser->isProducer();
     }
 
     /**
