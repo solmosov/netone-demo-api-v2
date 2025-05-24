@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateProductRequest extends FormRequest
@@ -16,27 +17,26 @@ class UpdateProductRequest extends FormRequest
 
     public function rules(): array
     {
+        $productId = $this->route('product');
+
         return [
-            'name' => 'nullable|string|max:255',
+            // 'name' => 'nullable|string|max:255',
+            'name' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('products', 'name')->ignore($productId),
+            ],
             'sale_price' => 'nullable|numeric|min:0',
             'price_amount_type_id' => 'nullable|integer|exists:amount_types,id',
             'is_change_price' => 'nullable|boolean'
         ];
     }
 
-    public function withValidator(Validator $validator)
+    public function messages()
     {
-        $validator->after(function ($validator) {
-            $productId = $this->route('product');
-            $name = $this->input('name');
-
-            if ($name) {
-                $exists = Product::where('id', '<>', $productId)
-                    ->where('name', $name);
-                if ($exists) {
-                    $validator->errors()->add('name', "Bu nomli mahsulot allaqachon mavjud");
-                }
-            }
-        });
+        return [
+            'name.unique' => 'Bu nomli mahsulot allaqachon mavjud'
+        ];
     }
 }
