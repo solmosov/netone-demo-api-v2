@@ -15,10 +15,12 @@ class ProductResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $authUser = Auth::user();
+        
         return [
             "id" => $this->id,
             "name" => $this->name,
-            "cost_price" => Auth::user()->isAdmin() ? (float)$this->cost_price : 0,
+            "cost_price" => $authUser->isAdmin() || $authUser->isProducer() ? (float)$this->cost_price : 0,
             "sale_price" => (float)$this->sale_price,
             "receive_price" => (float)$this->receive_price,
             "price_amount_type" => $this->priceAmountType,
