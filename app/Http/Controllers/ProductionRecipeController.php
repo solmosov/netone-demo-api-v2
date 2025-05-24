@@ -40,7 +40,7 @@ class ProductionRecipeController extends Controller
         $data = $this->productionRecipeService->create($request->validated());
 
         return response()->json([
-            "message" => "Yangi retsept qo'shildi",
+            "message" => "{$data->name} - retsept qo'shildi",
             "data" => $data
         ], 201);
     }
@@ -67,7 +67,7 @@ class ProductionRecipeController extends Controller
         $data = $this->productionRecipeService->update($request->validated(), (int)$id);
 
         return response()->json([
-            'message' => "Retsept yangilandi",
+            'message' => "{$data->name} - retsept yangilandi",
             'data' => $data,
         ]);
     }
@@ -80,7 +80,7 @@ class ProductionRecipeController extends Controller
         $data = $this->productionRecipeService->updateItem($request->validated(), (int) $id);
 
         return [
-            'message' => 'Retsept biri yangilandi',
+            'message' => 'Retsept mahsulotlaridan biri yangilandi',
             'data' => $data,
         ];
     }
@@ -94,7 +94,7 @@ class ProductionRecipeController extends Controller
         $data = $this->productionRecipeService->delete((int)$id);
 
         return response()->json([
-            'message' => "{$data->name} nomli retsept o'chirildi",
+            'message' => "{$data->name} - retsept o'chirildi",
             'data'  => $data,
         ]);
     }
