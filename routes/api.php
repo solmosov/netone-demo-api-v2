@@ -55,3 +55,6 @@ require __DIR__ . '/api/chart/producer.php';
 // Rental Property
 require __DIR__ . '/api/rentalProperty/rentalProperty.php';
 require __DIR__ . '/api/rentalProperty/rentalPropertyCategory.php';
+
+// Category
+require __DIR__ . '/api/common/category.php';
