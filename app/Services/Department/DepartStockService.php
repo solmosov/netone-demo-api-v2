@@ -55,7 +55,10 @@ class DepartStockService
         // Query Params
         $departId = $queryParams['depart_id'] ?? null;
 
-        $query = DepartStock::with(['depart', 'polka', 'amountType', 'product']);
+        $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
+            ->selectRaw('depart_stocks.*, SUM(amount * products.sale_price) as total_price')
+            ->leftJoin('products', 'depart_stocks.product_id', '=', 'products.id')
+            ->groupBy('depart_stocks.id');;
 
         if ($departId) {
             $query->where('depart_id', $departId);
