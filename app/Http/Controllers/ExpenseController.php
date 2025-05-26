@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetExpenseRequest;
 use App\Models\Expense;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
 use App\Http\Resources\ExpenseResource;
+use App\Services\Expense\ExpenseService;
 use Illuminate\Support\Facades\Gate;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    public function __construct(
+        protected ExpenseService $expenseService
+    ) {}
+
+    public function index(GetExpenseRequest $request)
     {
         // Gate
         Gate::authorize('viewAny', Expense::class);
 
-        $data = Expense::with('children')->get();
+        $data = $this->expenseService->findAll($request->validated());
 
         return response()->json([
             "data" => ExpenseResource::collection($data),
