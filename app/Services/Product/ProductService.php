@@ -9,7 +9,7 @@ class ProductService
 {
   public function findAll()
   {
-    $data = Product::with('priceAmountType')->latest()->get();
+    $data = Product::with(['priceAmountType', 'category'])->latest()->get();
 
     return [
       'data' => $data,
@@ -17,7 +17,7 @@ class ProductService
   }
   public function findOne(int $id)
   {
-    return Product::findOrFail($id);
+    return Product::with(['priceAmountType', 'category'])->findOrFail($id);
   }
   public function create(array $data)
   {
