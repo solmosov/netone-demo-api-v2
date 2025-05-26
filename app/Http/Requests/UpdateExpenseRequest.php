@@ -53,7 +53,7 @@ class UpdateExpenseRequest extends FormRequest
                 $pluckChildren = $expense->children->pluck('name', 'id');
 
                 if ($expense->id === $parentId || !empty($pluckChildren[$parentId])) {
-                    $validator->errors()->add("parent_id", "Ota xarajatni no'g'ri tanlang!");
+                    $validator->errors()->add("parent_id", "Ota xarajatni to'g'ri tanlang!");
                 }
             }
 
