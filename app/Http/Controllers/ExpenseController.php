@@ -70,16 +70,16 @@ class ExpenseController extends Controller
     }
 
 
-    public function destroy(Expense $expense)
+    public function destroy(string $id)
     {
         // Gate
         Gate::authorize('delete', Expense::class);
 
-        $expense->delete();
+        $deleteExpense = $this->expenseService->delete((int)$id);
 
         return response()->json([
-            "message" => "Xarajat turi o'chirildi",
-            "data" => ExpenseResource::make($expense),
+            "message" => "{$deleteExpense->name} - xarajat turi o'chirildi",
+            "data" => ExpenseResource::make($deleteExpense),
         ]);
     }
 }

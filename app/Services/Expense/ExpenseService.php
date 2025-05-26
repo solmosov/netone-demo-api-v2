@@ -35,5 +35,12 @@ class ExpenseService
 
     return $expense;
   }
-  public function delete() {}
+  public function delete(int $id)
+  {
+    $expense = Expense::with('children')->findOrFail($id);
+
+    $expense->delete();
+
+    return $expense;
+  }
 }
