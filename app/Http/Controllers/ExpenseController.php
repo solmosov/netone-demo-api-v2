@@ -34,10 +34,10 @@ class ExpenseController extends Controller
         // Gate
         Gate::authorize('create', Expense::class);
 
-        $newExpense = Expense::create($request->validated());
+        $newExpense = $this->expenseService->create($request->validated());
 
         return response()->json([
-            "message" => "Yangi xarajat turi muvaffaqiyatli qo'shildi!",
+            "message" => "{$newExpense->name} - xarajat turi qo'shildi!",
             "data" => ExpenseResource::make($newExpense),
         ], 201);
     }

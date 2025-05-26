@@ -24,7 +24,10 @@ class ExpenseService
   {
     return Expense::with(['children', 'parent'])->findOrFail($id);
   }
-  public function create() {}
+  public function create(array $data)
+  {
+    return Expense::create($data);
+  }
   public function update() {}
   public function delete() {}
 }
