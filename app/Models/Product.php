@@ -14,9 +14,14 @@ class Product extends Model
         'cost_price',
         'sale_price',
         'receive_price',
-        'is_change_price'
+        'is_change_price',
+        'category_id'
     ];
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
 
     public function priceAmountType(): BelongsTo
     {
