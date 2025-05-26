@@ -9,7 +9,7 @@ class CategoryService
   public function findAll(array $queryParams)
   {
     // Params
-    $isTree = $queryParams['is_tree'];
+    $isTree = $queryParams['is_tree'] ?? null;
 
     $query = Category::with('parent');
 
@@ -44,7 +44,7 @@ class CategoryService
     $category = $this->findOne($id);
 
     $category->delete();
-    
+
     return $category;
   }
 }
