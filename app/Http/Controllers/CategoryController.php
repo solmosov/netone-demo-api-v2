@@ -24,7 +24,7 @@ class CategoryController extends Controller
         $result = $this->categoryService->findAll($request->validated());
 
         return response()->json([
-            'data' => CategoryResource::make($result['data'])
+            'data' => CategoryResource::collection($result['data'])
         ]);
     }
 
@@ -39,7 +39,7 @@ class CategoryController extends Controller
         return response()->json([
             'message' => "{$newCategory->name} - yangi kategoriya yaratildi",
             'data' => CategoryResource::make($newCategory),
-        ]);
+        ], 201);
     }
 
 
