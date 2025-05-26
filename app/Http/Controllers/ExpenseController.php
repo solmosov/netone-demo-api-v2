@@ -61,19 +61,11 @@ class ExpenseController extends Controller
         // Gate
         Gate::authorize('update', Expense::class);
 
-        $expense = Expense::with('children')->find($id);
-        if (!$expense) return $this->mainErrRes('Bu xarajat turi topilmadi!');
-
-        // Check Parent And Children
-        if ($request->validated('parent_id')) {
-           
-        }
-
-        $expense->update($request->validated());
+        $updateExpense = $this->expenseService->update($request->validated(), $id);
 
         return response()->json([
-            "message" => "Xarajat turi muvaffaqiyatli yangilandi",
-            "data" => ExpenseResource::make($expense),
+            "message" => "{$updateExpense->name} - xarajat turi yangilandi",
+            "data" => ExpenseResource::make($updateExpense),
         ]);
     }
 

@@ -28,6 +28,12 @@ class ExpenseService
   {
     return Expense::create($data);
   }
-  public function update() {}
+  public function update(array $data, int $id)
+  {
+    $expense = Expense::with('children')->findOrFail($id);
+    $expense->update($data);
+
+    return $expense;
+  }
   public function delete() {}
 }
