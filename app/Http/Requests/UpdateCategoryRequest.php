@@ -29,7 +29,10 @@ class UpdateCategoryRequest extends FormRequest
                 'nullable',
                 'numeric',
                 'exists:categories,id',
-                Rule::notIn($this->getDescendants($this->route('category')))
+                Rule::notIn(array_merge(
+                    [$this->route('category')],
+                    $this->getDescendants($this->route('category'))
+                )),
             ],
 
         ];

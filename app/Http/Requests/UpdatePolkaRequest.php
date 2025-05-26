@@ -28,7 +28,10 @@ class UpdatePolkaRequest extends FormRequest
                 'nullable',
                 'numeric',
                 'exists:polkas,id',
-                Rule::notIn($this->getDescendants($this->route('polka')))
+                Rule::notIn(
+                    [$this->route('polka')],
+                    $this->getDescendants($this->route('polka'))
+                )
             ],
             'owner_id' => 'nullable|numeric|exists:users,id'
         ];
