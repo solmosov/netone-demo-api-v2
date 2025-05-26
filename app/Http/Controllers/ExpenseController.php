@@ -48,7 +48,7 @@ class ExpenseController extends Controller
         // Gate
         Gate::authorize('view', Expense::class);
 
-        $data = Expense::with('children')->findOrFail($id);
+        $data = $this->expenseService->findOne($id);
 
         return response()->json([
             "data" => ExpenseResource::make($data),

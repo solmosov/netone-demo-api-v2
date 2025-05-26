@@ -20,7 +20,10 @@ class ExpenseService
     return $query->with('parent')
       ->get();
   }
-  public function findOne() {}
+  public function findOne(int $id)
+  {
+    return Expense::with(['children', 'parent'])->findOrFail($id);
+  }
   public function create() {}
   public function update() {}
   public function delete() {}
