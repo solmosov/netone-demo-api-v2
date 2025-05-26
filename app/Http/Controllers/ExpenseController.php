@@ -64,20 +64,9 @@ class ExpenseController extends Controller
         $expense = Expense::with('children')->find($id);
         if (!$expense) return $this->mainErrRes('Bu xarajat turi topilmadi!');
 
-        // validate exist
-        if ($request->validated('name')) {
-            $isExist = Expense::where('name', $request->validated('name'))
-                ->where('id', "<>", $expense->id)->exists();
-            if ($isExist) return $this->mainErrRes('Bu xarajat turi mavjud!');
-        }
-
         // Check Parent And Children
         if ($request->validated('parent_id')) {
-            $pluckChildren = $expense->children->pluck('name', 'id');
-
-            if ($expense->id === $request->validated('parent_id') || !empty($pluckChildren[$request->validated('parent_id')])) {
-                return $this->mainErrRes("Ma'lumotni noto'g'ri kiritdingiz!");
-            }
+           
         }
 
         $expense->update($request->validated());
