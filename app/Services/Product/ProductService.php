@@ -22,12 +22,14 @@ class ProductService
   public function create(array $data)
   {
     // Req Body
+    $categoryId = $data['category_id'] ?? null;
     $name = $data['name'];
     $sale_price = $data['sale_price'];
     $price_amount_type_id = $data['price_amount_type_id'];
     $is_change_price = $data['is_change_price'];
 
     return Product::create([
+      'category_id' => $categoryId,
       'name' => $name,
       'cost_price' => 0,
       'sale_price' => $sale_price,

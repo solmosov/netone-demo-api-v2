@@ -16,10 +16,11 @@ class StoreProductRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'category_id' => 'nullable|integer|exists:categories,id',
             'name' => 'required|string|max:255|unique:products,name',
             'sale_price' => 'required|numeric|min:0',
             'price_amount_type_id' => 'required|integer|exists:amount_types,id',
-            'is_change_price' => 'required|boolean'
+            'is_change_price' => 'required|boolean',
         ];
     }
 
