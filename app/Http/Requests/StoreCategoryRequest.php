@@ -27,7 +27,7 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name.required' => "Nomi talab qilinadi",
             "name.unique" => "Bu nomli polka allaqachon mavjud",
-            "parent_id.exists" => "Ota katalokni noto'g'ri tanladingiz",
+            "parent_id.exists" => "Ota kategoriyani noto'g'ri tanladingiz",
         ];
     }
 }

@@ -37,7 +37,7 @@ class CategoryController extends Controller
         $newCategory = $this->categoryService->create($request->validated());
 
         return response()->json([
-            'message' => "{$newCategory->name} - yangi katalok yaratildi",
+            'message' => "{$newCategory->name} - yangi kategoriya yaratildi",
             'data' => CategoryResource::make($newCategory),
         ]);
     }
@@ -64,7 +64,7 @@ class CategoryController extends Controller
         $updateCategory = $this->categoryService->update($request->validated(), (int) $id);
 
         return response()->json([
-            'message' => "{$updateCategory->name} - katalok tahrirlandi",
+            'message' => "{$updateCategory->name} - kategoriya tahrirlandi",
             'data' => CategoryResource::make($updateCategory),
         ]);
     }
@@ -78,7 +78,7 @@ class CategoryController extends Controller
         $updateCategory = $this->categoryService->delete((int) $id);
 
         return response()->json([
-            'message' => "{$updateCategory->name} - katalok o'chirildi",
+            'message' => "{$updateCategory->name} - kategoriya o'chirildi",
             'data' => CategoryResource::make($updateCategory),
         ]);
     }
