@@ -345,6 +345,8 @@ class OrderService
 
                 // Order Detail Item
                 $orderItem = OrderDetail::with('product')->findOrFail($itemId);
+                $orderItemSalePrice = $orderItem->sale_price;
+                $orderItemCostPrice = $orderItem->cost_price;
 
                 // Product Stock
                 $productStock = ProductStock::where('amount_type_id', $orderItem->amount_type_id)
@@ -353,18 +355,25 @@ class OrderService
                 // Order Item Price
                 $orderItemSalePrice = $orderItem->product->is_change_price && $salePriceAmount
                     ? $salePriceAmount
-                    : $orderItem->sale_price;
+                    : $orderItemSalePrice;
+
+                // Sum Price
+                $sumCost = $completedAmount * $orderItemCostPrice;
+                $sumPrice = $completedAmount * $orderItemSalePrice;
 
                 // Calc Total Prices
-                $totalCostPrice += $completedAmount * $orderItem->cost_price;
-                $totalSalePrice += $completedAmount * $orderItemSalePrice;
+                $totalCostPrice += $sumCost;
+                $totalSalePrice += $sumPrice;
 
                 // Decrement From Stock
                 $productStock->decrement('amount', $completedAmount);
 
                 // Update completed amount
                 $orderItem->completed_amount = $completedAmount;
+                $orderItem->cost_price = $orderItemCostPrice;
                 $orderItem->sale_price = $orderItemSalePrice;
+                $orderItem->sum_cost_price = $sumCost;
+                $orderItem->sum_sale_price = $sumCost;
                 $orderItem->save();
             }
 
