@@ -15,7 +15,8 @@ class Payment extends Model
         'comment',
         'paymentable_id',
         'paymentable_type',
-        'total_amount'
+        'total_amount',
+        'payment_date'
     ];
 
     public function paymentable(): MorphTo

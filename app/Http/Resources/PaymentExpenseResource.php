@@ -22,6 +22,7 @@ class PaymentExpenseResource extends JsonResource
             'total_price' => (float)$this->wallets[0]->pivot->sum_price,
             'status' => $this->status,
             'comment' => $this->comment,
+            'payment_date' => $this->payment_date,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

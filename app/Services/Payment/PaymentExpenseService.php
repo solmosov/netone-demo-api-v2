@@ -50,12 +50,13 @@ class PaymentExpenseService
     {
         // Auth User
         $authUser = Auth::user();
-        
+
         $expenseId = $data['expense_id'];
         $walletId = $data['wallet_id'];
         $amount = $data['amount'];
         $rateAmount = $data['rate_amount'];
         $comment = $data['comment'] ?? null;
+        $paymentDate = $data["payment_date"] ?? date('Y-m-d');
 
         // Validation User Wallet
         $userWallet = UserWallet::with('wallet.currency')
@@ -79,7 +80,8 @@ class PaymentExpenseService
             $payment = new Payment([
                 'user_id' => $authUser->id,
                 'status_id' => $statusPaymentExpense->id,
-                'comment' => $comment
+                'comment' => $comment,
+                'payment_date' => $paymentDate
             ]);
             $expense->payments()->save($payment);
 
