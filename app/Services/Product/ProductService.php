@@ -7,9 +7,17 @@ use App\Models\Product;
 
 class ProductService
 {
-  public function findAll()
+  public function findAll(array $data)
   {
-    $data = Product::with(['priceAmountType', 'category'])->latest()->get();
+    $search = $data['search'] ?? null;
+    $categoryId = $data['category_id'] ?? null;
+
+    $query = Product::with(['priceAmountType', 'category']);
+
+    if ($search) $query->whereLike('name', "%$search%");
+    if ($categoryId) $query->where('category_id', $categoryId);
+
+    $data = $query->latest()->get();
 
     return [
       'data' => $data,
