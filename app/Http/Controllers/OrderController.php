@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
 use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\StoreSalePosOrderRequest;
 use App\Http\Requests\UpdateOrderAddProductRequest;
 use App\Http\Requests\UpdateOrderCompletedRequest;
 use App\Http\Requests\UpdateOrderSubmittedRequest;
@@ -67,6 +68,16 @@ class OrderController extends Controller
         Gate::authorize('create', Order::class);
 
         $result = $this->orderService->create($request->validated());
+
+        return response()->json($result);
+    }
+
+    public function storeSalePos(StoreSalePosOrderRequest $request)
+    {
+        // Gate
+        Gate::authorize('create', Order::class);
+
+        $result = $this->orderService->createSalePos($request->validated());
 
         return response()->json($result);
     }
