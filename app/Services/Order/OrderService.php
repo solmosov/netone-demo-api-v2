@@ -760,6 +760,9 @@ class OrderService
 
             return [
                 'message' => "Yangi {$formatOrderVal} so'mlik buyurtma muvaffaqiyatli topshirildi! {$customer->first_name}.{$customer->last_name[0]} mijozdan {$formatVal} so'm o'tkazma qabul qilindi",
+                'data' => [
+                    'order_id' => $order->id,
+                ]
             ];
         } catch (\Exception $e) {
             DB::rollBack();
