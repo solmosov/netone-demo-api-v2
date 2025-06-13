@@ -16,6 +16,7 @@ class DepartStockResource extends JsonResource
             'product' => ProductResource::make($this->whenLoaded('product')),
             'amount' => (float)$this->amount,
             'amount_type' => $this->whenLoaded('amountType'),
+            'total_price' => (float) $this->total_price,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

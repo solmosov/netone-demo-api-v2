@@ -7,21 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\QueryParameterRequest;
 use App\Http\Requests\StorePaymentExpenseRequest;
 use App\Http\Resources\PaymentExpenseResource;
-use App\Models\Expense;
-use App\Models\Payment;
-use App\Models\Status;
 use App\Services\Payment\PaymentExpenseService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PaymentExpenseController extends Controller
 {
     public function __construct(
         protected PaymentExpenseService $paymentExpenseService
-    )
-    {
-    }
+    ) {}
 
     public function index(QueryParameterRequest $request): JsonResponse
     {

@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Expense;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdateExpenseRequest extends FormRequest
 {
@@ -34,5 +36,35 @@ class UpdateExpenseRequest extends FormRequest
             'amount' => 'nullable|numeric|min:0',
             'comment' => 'nullable|string|min:6|max:255',
         ];
+    }
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function ($validator) {
+            $expenseId = $this->route('expense');
+            $parentId = $this->input('parent_id') ?? null;
+            $name = $this->input('name') ?? null;
+
+            // Expense
+            $expense = Expense::findOrFail($expenseId);
+
+            // Parent ID
+            if ($parentId) {
+                $pluckChildren = $expense->children->pluck('name', 'id');
+
+                if ($expense->id === $parentId || !empty($pluckChildren[$parentId])) {
+                    $validator->errors()->add("parent_id", "Ota xarajatni to'g'ri tanlang!");
+                }
+            }
+
+            // Name
+            if ($name) {
+                $isExist = Expense::where('name', $name)
+                    ->where('id', "<>", $expenseId)->exists();
+                if ($isExist) {
+                    $validator->errors()->add("name", "Bu xarajat allaqachon mavjud");
+                };
+            }
+        });
     }
 }

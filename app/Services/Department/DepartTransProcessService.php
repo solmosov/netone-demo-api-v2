@@ -13,6 +13,7 @@ use App\Models\TransPerm;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DepartTransProcessService
 {
@@ -82,7 +83,7 @@ class DepartTransProcessService
         ->where('depart_id', $receiverDepartId)
         ->firstOrFail();
 
-      $query->where('receiver_depart_id', $userDepart->id);
+      $query->where('receiver_depart_id', $userDepart->depart_id);
     }
 
     $data = $query

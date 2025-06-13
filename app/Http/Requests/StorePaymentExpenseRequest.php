@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\WalletBelongsToUser;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class StorePaymentExpenseRequest extends FormRequest
 {
@@ -27,18 +28,18 @@ class StorePaymentExpenseRequest extends FormRequest
             'wallet_id' => [
                 'required',
                 'integer',
-                'exists:user_wallet,wallet_id,user_id,'.auth()->id(),
-//                Rule::exists('user_wallet', 'wallet_id')->where('user_id', auth()->id()),
+                'exists:user_wallet,wallet_id,user_id,' . Auth::id(),
             ],
             'amount' => 'required|numeric|min:0',
             'rate_amount' => 'required|numeric|min:1',
             'comment' => 'nullable|string|min:3|max:255',
+            'payment_date' => 'nullable|date',
         ];
     }
 
     public function messages(): array
     {
-        $userName = auth()->user()->name;
+        $userName = Auth::user()->name;
 
         return [
             'wallet_id.exists' => "Xurmatli $userName foydalanuvchi, sizda mavjud bo'lmagan hisobni tanlayapsiz!"

@@ -13,8 +13,10 @@ use App\Models\CompletedOrder;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
@@ -171,6 +173,137 @@ class OrderService
         }
     }
 
+    public function createSalePos(array $data): array
+    {
+        // Auth User
+        $authUser = Auth::user();
+
+        // Req Body
+        $customerId = $data['customer_id'];
+        $productList = $data['product_list'];
+        $payment = $data['payment'];
+
+        // New Order status
+        $newOrderStatus = StatusService::findByCode('orderNew');
+
+        // Customer
+        $customer = Customer::findOrFail($customerId);
+
+        // Get Request Products
+        $productsId = array_column($productList ?? [], 'product_id');
+        $products = Product::whereIn('id', $productsId)->get();
+
+        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
+        $pluckedCostPrice = $products->pluck('cost_price', 'id');
+        $pluckedSalePrice = $products->pluck('sale_price', 'id');
+
+        // User Wallet
+        $userWallet = UserWallet::find($payment['user_wallet_id']);
+
+        // Generate Order Code
+        $orderCode = GenerateOrderCode::generate($customerId);
+
+        // Status Payment Debt Customer
+        $statusDebtCustomer = StatusService::findByCode('paymentCustomer');
+
+        DB::beginTransaction();
+
+        try {
+            $newOrder = Order::create([
+                "user_id" => $authUser->id,
+                "customer_id" => $customer->id,
+                "status_id" => $newOrderStatus->id,
+                'total_cost_price' => 0,
+                'total_sale_price' => 0,
+                'ord_code' => $orderCode
+            ]);
+
+
+            $totalCostPrice = 0;
+            $totalSalePrice = 0;
+
+            // Create Order Details
+            $detailItemList = [];
+            foreach ($productList as $item) {
+                // Req Item
+                $productId = $item['product_id'];
+                $amount = $item['amount'];
+                $amountTypeId = $item['amount_type_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
+
+                // Prices
+                $costPrice = $pluckedCostPrice[$productId];
+                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $sumCostPrice = $costPrice * $amount;
+                $sumSalePrice = $salePrice * $amount;
+
+                $detailItemList[] = [
+                    'product_id' => $productId,
+                    'amount' => $amount,
+                    'amount_type_id' => $amountTypeId,
+                    'cost_price' => $costPrice,
+                    'sale_price' => $salePrice,
+                    'sum_cost_price' => $sumCostPrice,
+                    'sum_sale_price' => $sumSalePrice,
+                ];
+
+                $totalCostPrice += $sumCostPrice;
+                $totalSalePrice += $sumSalePrice;
+            }
+
+            // Create Many Items
+            $newOrder->orderDetails()->createMany($detailItemList);
+
+
+            // Change Totals
+            $newOrder->total_cost_price = $totalCostPrice;
+            $newOrder->total_sale_price = $totalSalePrice;
+
+            $newOrder->save();
+
+            // Payment
+            $newPayment = new Payment([
+                'user_id' => $authUser->id,
+                'status_id' => $statusDebtCustomer->id,
+            ]);
+
+            $customer->payments()->save($newPayment);
+
+            // Sum Amount
+            $sumAmount = $payment['amount'] * $payment['currency_amount'];
+
+            // Wallet Attach 
+            $newPayment->wallets()->attach($userWallet->wallet_id, [
+                'amount' => $payment['amount'],
+                'rate_amount' => $payment['currency_amount'],
+                'sum_price' => $sumAmount,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]);
+
+            // Change User wallet amount
+            $userWallet->increment('amount', $payment['amount']);
+
+
+            // Change Customer Balance
+            $customer->increment('balance', $sumAmount);
+
+            DB::commit();
+
+            // Event
+            OrderCreatedEvent::dispatch($newOrder);
+
+            $formatVal = number_format($sumAmount);
+
+            return [
+                "message" => "Yangi buyurtma muvaffaqiyatli qo'shildi! {$customer->first_name}.{$customer->last_name[0]} mijozdan {$formatVal} so'm o'tkazma qabul qilindi",
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
     public function findOne(int $id): array
     {
         // Auth User
@@ -198,9 +331,11 @@ class OrderService
 
     public function confirm(int $id): array
     {
+        $authUser = Auth::user();
+
         $newOrderStatus = StatusService::findByCode('orderNew');
 
-        $order = Order::where('user_id', auth()->id())
+        $order = Order::where('user_id', $authUser->id)
             ->where('status_id', $newOrderStatus->id)
             ->findOrFail($id);
 
@@ -227,6 +362,8 @@ class OrderService
      */
     public function addProduct(array $data, int $id): array
     {
+        $authUser = Auth::user();
+
         // Req Body
         $productId = $data['product_id'];
         $amount = $data['amount'];
@@ -241,7 +378,7 @@ class OrderService
         $statusOrderInProgress = StatusService::findByCode('orderInProgress');
 
         // Order
-        $order = Order::where('user_id', auth()->id())
+        $order = Order::where('user_id', $authUser->id)
             ->where('status_id', $statusOrderInProgress->id)
             ->findOrFail($id);
 
@@ -345,6 +482,8 @@ class OrderService
 
                 // Order Detail Item
                 $orderItem = OrderDetail::with('product')->findOrFail($itemId);
+                $orderItemSalePrice = $orderItem->sale_price;
+                $orderItemCostPrice = $orderItem->cost_price;
 
                 // Product Stock
                 $productStock = ProductStock::where('amount_type_id', $orderItem->amount_type_id)
@@ -353,18 +492,25 @@ class OrderService
                 // Order Item Price
                 $orderItemSalePrice = $orderItem->product->is_change_price && $salePriceAmount
                     ? $salePriceAmount
-                    : $orderItem->sale_price;
+                    : $orderItemSalePrice;
+
+                // Sum Price
+                $sumCost = $completedAmount * $orderItemCostPrice;
+                $sumPrice = $completedAmount * $orderItemSalePrice;
 
                 // Calc Total Prices
-                $totalCostPrice += $completedAmount * $orderItem->cost_price;
-                $totalSalePrice += $completedAmount * $orderItemSalePrice;
+                $totalCostPrice += $sumCost;
+                $totalSalePrice += $sumPrice;
 
                 // Decrement From Stock
                 $productStock->decrement('amount', $completedAmount);
 
                 // Update completed amount
                 $orderItem->completed_amount = $completedAmount;
+                $orderItem->cost_price = $orderItemCostPrice;
                 $orderItem->sale_price = $orderItemSalePrice;
+                $orderItem->sum_cost_price = $sumCost;
+                $orderItem->sum_sale_price = $sumCost;
                 $orderItem->save();
             }
 
@@ -506,5 +652,145 @@ class OrderService
             'total_amount' => (float) $result->total_amount,
             'total_count' => $result->total_count,
         ];
+    }
+
+    /**
+     * Create and instantly deliver a POS order (for /pos-order endpoint).
+     * Checks stock, decrements it, sets status to completed, and processes payment.
+     *
+     * @param array $data
+     * @return array
+     * @throws ServerErrorException
+     */
+    public function createInstantPosOrder(array $data): array
+    {
+        $authUser = Auth::user();
+        $customerId = $data['customer_id'];
+        $productList = $data['product_list'];
+        $payment = $data['payment'];
+
+        $submitOrderStatus = StatusService::findByCode('orderSubmitted');
+        $customer = Customer::findOrFail($customerId);
+        $productsId = array_column($productList ?? [], 'product_id');
+        $products = Product::whereIn('id', $productsId)->get();
+        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
+        $pluckedCostPrice = $products->pluck('cost_price', 'id');
+        $pluckedSalePrice = $products->pluck('sale_price', 'id');
+        $userWallet = UserWallet::find($payment['user_wallet_id']);
+        $orderCode = GenerateOrderCode::generate($customerId);
+        $statusDebtCustomer = StatusService::findByCode('paymentCustomer');
+
+        DB::beginTransaction();
+        try {
+            // Stock check and decrement
+            $this->decrementStockForOrder($products, $productList, true);
+
+            $order = Order::create([
+                'user_id' => $authUser->id,
+                'customer_id' => $customer->id,
+                'status_id' => $submitOrderStatus->id,
+                'total_cost_price' => 0,
+                'total_sale_price' => 0,
+                'ord_code' => $orderCode
+            ]);
+
+            $totalCostPrice = 0;
+            $totalSalePrice = 0;
+            $orderDetails = [];
+            foreach ($productList as $item) {
+                $productId = $item['product_id'];
+                $amount = $item['amount'];
+                $amountTypeId = $item['amount_type_id'];
+                $salePriceAmount = $item['sale_price_amount'] ?? null;
+                $costPrice = $pluckedCostPrice[$productId];
+                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $sumCostPrice = $costPrice * $amount;
+                $sumSalePrice = $salePrice * $amount;
+                $orderDetails[] = [
+                    'product_id' => $productId,
+                    'amount' => $amount,
+                    'amount_type_id' => $amountTypeId,
+                    'cost_price' => $costPrice,
+                    'sale_price' => $salePrice,
+                    'sum_cost_price' => $sumCostPrice,
+                    'sum_sale_price' => $sumSalePrice,
+                ];
+                $totalCostPrice += $sumCostPrice;
+                $totalSalePrice += $sumSalePrice;
+            }
+            $order->orderDetails()->createMany($orderDetails);
+            $order->update([
+                'total_cost_price' => $totalCostPrice,
+                'total_sale_price' => $totalSalePrice,
+            ]);
+
+            $paymentModel = new Payment([
+                'user_id' => $authUser->id,
+                'status_id' => $statusDebtCustomer->id,
+            ]);
+            $customer->payments()->save($paymentModel);
+            $sumAmount = $payment['amount'] * $payment['currency_amount'];
+            $paymentModel->wallets()->attach($userWallet->wallet_id, [
+                'amount' => $payment['amount'],
+                'rate_amount' => $payment['currency_amount'],
+                'sum_price' => $sumAmount,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]);
+            $userWallet->increment('amount', $payment['amount']);
+            $customer->increment('balance', $sumAmount);
+
+            // Create completed order record
+            CompletedOrder::create([
+                'user_id' => $authUser->id,
+                'order_id' => $order->id,
+                'status_id' => $submitOrderStatus->id,
+                'total_cost_price' => $totalCostPrice,
+                'total_sale_price' => $totalSalePrice,
+                'customer_old_balance' => $customer->balance,
+                'comment' => null,
+                'submitted_comment' => null,
+            ]);
+
+            DB::commit();
+            OrderCreatedEvent::dispatch($order);
+            $formatVal = number_format($sumAmount);
+
+            $formatOrderVal = number_format($totalSalePrice);
+
+            return [
+                'message' => "Yangi {$formatOrderVal} so'mlik buyurtma muvaffaqiyatli topshirildi! {$customer->first_name}.{$customer->last_name[0]} mijozdan {$formatVal} so'm o'tkazma qabul qilindi",
+                'data' => [
+                    'order_id' => $order->id,
+                ]
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Decrement stock for each product in the order, or throw if not enough stock.
+     *
+     * @param \Illuminate\Support\Collection $products
+     * @param array $productList
+     * @param bool $throwOnInsufficient
+     * @return void
+     * @throws \Exception
+     */
+    private function decrementStockForOrder($products, array $productList, bool $throwOnInsufficient = false): void
+    {
+        foreach ($productList as $item) {
+            $product = $products->find($item['product_id']);
+            $stock = $product->stocks()->where('amount_type_id', $item['amount_type_id'])->first();
+            if (!$stock || $stock->amount < $item['amount']) {
+                if ($throwOnInsufficient) {
+                    throw new \Exception("{$product->name} uchun yetarli mahsulot yo'q!");
+                }
+                continue;
+            }
+            $stock->decrement('amount', $item['amount']);
+        }
     }
 }

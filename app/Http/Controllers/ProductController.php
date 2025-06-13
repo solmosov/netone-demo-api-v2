@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetProductRequest;
 use App\Models\Product;
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
@@ -16,12 +17,12 @@ class ProductController extends Controller
         protected ProductService $productService
     ) {}
 
-    public function index()
+    public function index(GetProductRequest $request)
     {
         // Gate
         Gate::authorize('viewAny', Product::class);
 
-        $result = $this->productService->findAll();
+        $result = $this->productService->findAll($request->validated());
 
         return response()->json([
             "data" => ProductResource::collection($result['data']),

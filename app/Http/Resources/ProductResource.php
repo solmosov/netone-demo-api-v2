@@ -19,6 +19,7 @@ class ProductResource extends JsonResource
         
         return [
             "id" => $this->id,
+            "category" => CategoryResource::make($this->whenLoaded('category')),
             "name" => $this->name,
             "cost_price" => $authUser->isAdmin() || $authUser->isProducer() ? (float)$this->cost_price : 0,
             "sale_price" => (float)$this->sale_price,

@@ -20,7 +20,9 @@ class ExpenseResource extends JsonResource
             "amount" => (float) $this->amount,
             "comment" => $this->comment,
             "parent_id" => $this->parent_id,
-            "children" => self::collection($this->children),
+            "parent" => self::make($this->whenLoaded('parent')),
+            
+            "children" => self::collection($this->whenLoaded('children')),
         ];
     }
 }
