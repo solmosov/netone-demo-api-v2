@@ -12,4 +12,5 @@ Route::group(['prefix' => 'orders', 'middleware' => ['auth:sanctum']], function 
     Route::put('/{id}/add-product', [OrderController::class, 'addProduct']);
     Route::put('/{id}/completed', [OrderController::class, 'completed']);
     Route::put('/{id}/submitted', [OrderController::class, 'submitted']);
+    Route::post('/pos-order', [\App\Http\Controllers\PosOrderController::class, 'store']);
 });
