@@ -654,7 +654,7 @@ class OrderService
         }
 
         if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+            $query->where('orders.user_id', $authUser->id);
         }
 
         $result = $query->first();
