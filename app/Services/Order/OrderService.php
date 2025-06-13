@@ -669,7 +669,7 @@ class OrderService
         $productList = $data['product_list'];
         $payment = $data['payment'];
 
-        $completedOrderStatus = StatusService::findByCode('orderCompleted');
+        $submitOrderStatus = StatusService::findByCode('orderSubmitted');
         $customer = Customer::findOrFail($customerId);
         $productsId = array_column($productList ?? [], 'product_id');
         $products = Product::whereIn('id', $productsId)->get();
@@ -688,7 +688,7 @@ class OrderService
             $order = Order::create([
                 'user_id' => $authUser->id,
                 'customer_id' => $customer->id,
-                'status_id' => $completedOrderStatus->id,
+                'status_id' => $submitOrderStatus->id,
                 'total_cost_price' => 0,
                 'total_sale_price' => 0,
                 'ord_code' => $orderCode
@@ -744,7 +744,7 @@ class OrderService
             CompletedOrder::create([
                 'user_id' => $authUser->id,
                 'order_id' => $order->id,
-                'status_id' => $completedOrderStatus->id,
+                'status_id' => $submitOrderStatus->id,
                 'total_cost_price' => $totalCostPrice,
                 'total_sale_price' => $totalSalePrice,
                 'customer_old_balance' => $customer->balance,
