@@ -8,61 +8,48 @@ use App\Http\Resources\UserWalletResource;
 use App\Models\User;
 use App\Models\UserWallet;
 use App\Models\Wallet;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class UserWalletController extends Controller
 {
+    public function __construct(
+        protected UserWalletService $userWalletService
+    ) {}
+
     public function index(): JsonResponse
     {
-        $query = UserWallet::with('user', 'wallet.currency');
+        // Gate
+        Gate::authorize('viewAny', UserWallet::class);
 
-        if(!auth()->user()->isAdmin()){
-            $query->where('user_id', auth()->id());
-        }
-
-        $data = $query->get();
+        $result = $this->userWalletService->findAll();
 
         return response()->json([
-            'data' => UserWalletResource::collection($data),
+            'data' => UserWalletResource::collection($result['data']),
+            'total_count' => (int) $result['total_count']
         ]);
     }
 
     public function store(StoreUserWalletRequest $request): JsonResponse
     {
         // Gate
-        if (!auth()->user()->isAdmin()) abort(403);
+        Gate::authorize('create', UserWallet::class);
 
-        $user = User::findOrFail($request->validated('user_id'));
+        $result = $this->userWalletService->create($request->validated());
 
-        $exist = $user->wallets()->find($request->validated('wallet_id'));
-        if ($exist) {
-            abort(403, "$user->name foydalnuvchi uchun bu hisob allaqachon ochilgan!");
-        }
-
-        $user->wallets()->attach([$request->validated('wallet_id')], [
-            'amount' => $request->validated('amount') ? $request->validated('amount') : 0,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
-
-        return response()->json([
-            'message' => "$user->name uchun yangi hisob ochildi"
-        ], 201);
+        return response()->json($result, 201);
     }
 
     public function show(string $id): JsonResponse
     {
-         $query = UserWallet::with('user', 'wallet.currency');
+        // Gate
+        Gate::authorize('view', UserWallet::class);
 
-        if(!auth()->user()->isAdmin()){
-            $query->where('user_id', auth()->id());
-        }
-
-        $data = $query->findOrFail($id);
+        $result = $this->userWalletService->findOne((int)$id);
 
         return response()->json([
-            'data' => UserWalletResource::make($data),
+            'data' => UserWalletResource::make($result),
         ]);
     }
 }
