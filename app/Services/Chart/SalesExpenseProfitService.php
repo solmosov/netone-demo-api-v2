@@ -4,7 +4,7 @@
 namespace App\Services\Chart;
 
 use App\Models\Order;
-use App\Models\Expense;
+use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use App\Services\Utils\DateFormatter;
 
@@ -36,9 +36,11 @@ class SalesExpenseProfitService
         ->groupBy($groupBy)
         ->pluck('total', $groupBy);
 
-    // Expenses
-    $expenses = Expense::select(DB::raw("DATE_FORMAT(created_at, '$dateFormat') as $groupBy"), DB::raw('SUM(amount) as total'))
-        ->whereBetween('created_at', [$startDate, $endDate])
+    // Expenses from Payments table
+    $expenses = Payment::join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
+        ->select(DB::raw("DATE_FORMAT(payments.created_at, '$dateFormat') as $groupBy"), DB::raw('SUM(payment_wallet.sum_price) as total'))
+        ->where('payments.paymentable_type', 'App\Models\Expense')
+        ->whereBetween('payments.created_at', [$startDate, $endDate])
         ->groupBy($groupBy)
         ->pluck('total', $groupBy);
 
