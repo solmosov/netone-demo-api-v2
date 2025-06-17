@@ -16,7 +16,7 @@ class GetChartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'date_type' => 'required|string|in:yearly,monthly,weekly',
+            'year' => 'required|string|regex:/^\\d{4}$/',
         ];
     }
 }
