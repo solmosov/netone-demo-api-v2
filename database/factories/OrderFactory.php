@@ -25,6 +25,7 @@ class OrderFactory extends Factory
             'status_id' => 5,
             'total_cost_price' => fake()->numberBetween(100000, 10000000),
             'total_sale_price' => fake()->numberBetween(100000, 10000000),
+            'ord_code' => 'ORD-' . fake()->unique()->numberBetween(1000, 9999),
             'created_at' => $date,
             'updated_at' => $date,
         ];

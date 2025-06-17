@@ -611,16 +611,23 @@ class OrderService
 
     private function getTotalsOrderCompleted(string $statusCode): array
     {
+        $authUser = Auth::user();
+
         $status = StatusService::findByCode($statusCode);
 
-        $result = DB::table('completed_orders')
+        $query = DB::table('completed_orders')
             ->select(
                 DB::raw('SUM(completed_orders.total_sale_price) as total_amount'),
                 DB::raw('COUNT(completed_orders.id) as total_count')
             )
             ->whereBetween('completed_orders.updated_at', [$this->startDate, $this->endDate])
-            ->where('completed_orders.status_id', $status->id)
-            ->first();
+            ->where('completed_orders.status_id', $status->id);
+
+        if (!$authUser->isAdmin()) {
+            $query->where('user_id', $authUser->id);
+        }
+
+        $result = $query->first();
 
         return [
             'total_amount' => (float) $result->total_amount,
@@ -630,8 +637,7 @@ class OrderService
 
     private function getTotalsOrderOther(?string $statusCode): array
     {
-
-
+        $authUser = Auth::user();
 
         $query = DB::table('orders')
             ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
@@ -646,6 +652,11 @@ class OrderService
             $statusId = StatusService::findByCode($statusCode);
             $query->where('orders.status_id', $statusId->id);
         }
+
+        if (!$authUser->isAdmin()) {
+            $query->where('orders.user_id', $authUser->id);
+        }
+
         $result = $query->first();
 
         return [

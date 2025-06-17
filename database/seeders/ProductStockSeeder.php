@@ -15,7 +15,7 @@ class ProductStockSeeder extends Seeder
     {
         ProductStock::create([
             'product_id' => 1,
-            "name" => "Sklad 1",
+            "polka_id" => 1,
             "amount_type_id" => 1,
             "amount" => 673
         ]);
