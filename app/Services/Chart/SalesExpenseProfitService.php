@@ -14,7 +14,7 @@ class SalesExpenseProfitService
   {
     $year = $queryParams['year'] ?? now()->format('Y');
 
-    // O'zbekcha oy nomlari
+    // Uzbek month names
     $uzMonths = DateFormatter::uzbekMonths();
 
     $dates = collect(range(1, 12))->map(function ($month) use ($year, $uzMonths) {
@@ -30,19 +30,19 @@ class SalesExpenseProfitService
     $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear();
     $endDate = \Carbon\Carbon::createFromDate($year, 12, 31)->endOfYear();
 
-    // Sotuv (Sales)
+    // Sales
     $sales = Order::select(DB::raw("DATE_FORMAT(created_at, '$dateFormat') as $groupBy"), DB::raw('SUM(total_sale_price) as total'))
         ->whereBetween('created_at', [$startDate, $endDate])
         ->groupBy($groupBy)
         ->pluck('total', $groupBy);
 
-    // Xarajat (Expenses)
+    // Expenses
     $expenses = Expense::select(DB::raw("DATE_FORMAT(created_at, '$dateFormat') as $groupBy"), DB::raw('SUM(amount) as total'))
         ->whereBetween('created_at', [$startDate, $endDate])
         ->groupBy($groupBy)
         ->pluck('total', $groupBy);
 
-    // Massivni frontend uchun tayyorlash
+    // Prepare array for frontend
     $result = [];
     foreach ($dates as $date) {
         $sotuv = (float)($sales[$date['key']] ?? 0);
