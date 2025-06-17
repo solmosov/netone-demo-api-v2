@@ -6,6 +6,7 @@ namespace App\Services\Chart;
 use App\Models\Order;
 use App\Models\Expense;
 use Illuminate\Support\Facades\DB;
+use App\Services\Utils\DateFormatter;
 
 class SalesExpenseProfitService
 {
@@ -13,12 +14,14 @@ class SalesExpenseProfitService
   {
     $year = $queryParams['year'] ?? now()->format('Y');
 
-    // 12 ta oy uchun label va keylar
-    $dates = collect(range(1, 12))->map(function ($month) use ($year) {
+    // O'zbekcha oy nomlari
+    $uzMonths = DateFormatter::uzbekMonths();
+
+    $dates = collect(range(1, 12))->map(function ($month) use ($year, $uzMonths) {
         $date = \Carbon\Carbon::createFromDate($year, $month, 1);
         return [
-            'label' => $date->format('M'), // Masalan: Jan, Feb, ...
-            'key' => $date->format('Y-m'), // Masalan: 2023-01, 2023-02, ...
+            'label' => $uzMonths[$month],
+            'key' => $date->format('Y-m'),
         ];
     });
 
