@@ -32,12 +32,12 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             CustomerSeeder::class,
+            PolkaSeeder::class,
             ProductStockSeeder::class,
             ExpenseSeeder::class,
             WalletSeeder::class,
             OrderSeeder::class,
-            CompletedOrderSeeder::class,
-            PolkaSeeder::class
+            CompletedOrderSeeder::class
         ]);
     }
 }
