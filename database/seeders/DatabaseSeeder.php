@@ -29,14 +29,16 @@ class DatabaseSeeder extends Seeder
             StatusProducerProductTransSeeder::class,
 
             // Optional
+            // CategorySeeder::class,
             // ProductSeeder::class,
             // CustomerSeeder::class,
+            // PolkaSeeder::class,
             // ProductStockSeeder::class,
             // ExpenseSeeder::class,
             // WalletSeeder::class,
             // OrderSeeder::class,
             // CompletedOrderSeeder::class,
-            // PolkaSeeder::class
+            // PaymentExpenseSeeder::class,
         ]);
     }
 }
