@@ -37,7 +37,8 @@ class DatabaseSeeder extends Seeder
             ExpenseSeeder::class,
             WalletSeeder::class,
             OrderSeeder::class,
-            CompletedOrderSeeder::class
+            CompletedOrderSeeder::class,
+            PaymentExpenseSeeder::class,
         ]);
     }
 }
