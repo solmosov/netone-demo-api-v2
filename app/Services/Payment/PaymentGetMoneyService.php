@@ -8,6 +8,7 @@ use App\Models\GetMoneyAction;
 use App\Models\Payment;
 use App\Models\Status;
 use App\Models\UserWallet;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +16,9 @@ class PaymentGetMoneyService
 {
     private $authUser;
 
-    public function __construct()
+    public function __construct(
+        protected readonly UserWalletService $userWalletService
+    )
     {
         $this->authUser = Auth::user();
     }
@@ -109,7 +112,7 @@ class PaymentGetMoneyService
             ]);
 
             // Decrement From User Wallet
-            $userWallet->wallet->decrement('amount', $amount);
+            $this->userWalletService->decrement($userWallet->id, $amount);
 
             // Change New Money Action
             $newGetMoneyAction->sum_amount = $sumPrice;

@@ -7,11 +7,21 @@ use App\Models\Payment;
 use App\Models\Status;
 use App\Models\User;
 use App\Models\UserWallet;
+use App\Services\Wallet\UserWalletService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use function Laravel\Prompts\select;
 
 class PaymentSetMoneyService
 {
+    private $authUser;
+
+    public function __construct(
+        protected readonly UserWalletService $userWalletService
+    ) {
+        $this->authUser = Auth::user();
+    }
+
     public static function getStatus()
     {
         return Status::where('code', 'paymentSetMoney')->firstOrFail();
@@ -61,7 +71,7 @@ class PaymentSetMoneyService
         try {
             // New Payment
             $newPayment = new Payment([
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'status_id' => self::getStatus()->id,
                 'comment' => $comment,
             ]);
@@ -78,7 +88,7 @@ class PaymentSetMoneyService
             ]);
 
             // Update Wallet Balance
-            $userWallet->wallet->increment('amount', $amount);
+            $this->userWalletService->increment($userWallet->id, $amount);
 
             // Finish
             DB::commit();
