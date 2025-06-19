@@ -62,6 +62,13 @@ class UserWalletService
     ];
   }
 
-  public function increment(int $userId, $walletId, $amount) {}
+  public function increment($userWalletId, $amount)
+  {
+    $userId = Auth::user()->id;
+    $userWallet = UserWallet::where('user_id', $userId)
+      ->findOrFail($userWalletId);
+
+    $userWallet->wallet->increment('amount', $amount);
+  }
   public function decrement() {}
 }
