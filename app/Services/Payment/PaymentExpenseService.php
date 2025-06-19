@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentExpenseService
 {
+    public function __construct(
+        private $authUser = Auth::user()
+    ){}
+    
     public function findAll(array $data): array
     {
         $startDate = DateFormatter::format($data['startDate']);
@@ -25,8 +29,8 @@ class PaymentExpenseService
             ->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         // All data
@@ -120,8 +124,8 @@ class PaymentExpenseService
             ->where('paymentable_type', 'App\Models\Expense')
             ->orderBy('created_at', 'desc');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         $data = $query->findOrFail($expenseId);
