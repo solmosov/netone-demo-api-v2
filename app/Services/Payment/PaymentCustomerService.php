@@ -5,6 +5,7 @@ namespace App\Services\Payment;
 use App\Exceptions\ServerErrorException;
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use App\Services\Wallet\UserWalletService;
@@ -13,10 +14,14 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentCustomerService
 {
+    private $authUser;
+
     public function __construct(
         protected readonly UserWalletService $userWalletService,
-        private $authUser = Auth::user()
-    ) {}
+
+    ) {
+        $this->authUser = Auth::user();
+    }
 
     public function findAll(array $data): array
     {
@@ -93,9 +98,12 @@ class PaymentCustomerService
                 $amount = $item['amount'];
                 $rateAmount = $item['rate_amount'];
 
+                // User wallet
+                $userWallet = UserWallet::findOrFail($userWalletId);
+
                 $sumPrice = $amount * $rateAmount;
 
-                $walletAttachList[$userWalletId] = [
+                $walletAttachList[$userWallet->id] = [
                     'amount' => $amount,
                     'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,

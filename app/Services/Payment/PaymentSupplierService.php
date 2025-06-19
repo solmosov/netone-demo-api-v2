@@ -4,16 +4,26 @@ namespace App\Services\Payment;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
+use App\Http\Resources\UserWalletResource;
 use App\Models\Payment;
 use App\Models\Supplier;
 use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentSupplierService
 {
+    private $authUser;
+
+    public function __construct(
+        protected UserWalletService $userWalletService
+    ) {
+        $this->authUser = Auth::user();
+    }
+
     public function findAll(array $data): array
     {
         $startDate = DateFormatter::format($data['startDate'], 'start');
@@ -32,8 +42,8 @@ class PaymentSupplierService
             $query->where('payments.paymentable_id', $supplierId);
         }
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         // Data
@@ -70,7 +80,7 @@ class PaymentSupplierService
         try {
             // New Payment
             $newPayment = new Payment([
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'status_id' => $statusSupplierPayment->id,
                 'comment' => $comment,
             ]);
@@ -83,12 +93,16 @@ class PaymentSupplierService
             // Attach to Wallet
             $walletAttachList = [];
             foreach ($reqWalletList as $wallet) {
-                $walletId = $wallet['wallet_id'];
+                $userWalletId = $wallet['user_wallet_id'];
                 $amount = $wallet['amount'];
                 $rateAmount = $wallet['rate_amount'];
 
+                // User wallet
+                $userWallet = UserWallet::findOrFail($userWalletId);
+                
                 $sumPrice = $amount * $rateAmount;
-                $walletAttachList[$wallet['wallet_id']] = [
+
+                $walletAttachList[$userWallet->id] = [
                     'amount' => $amount,
                     'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,
@@ -97,7 +111,7 @@ class PaymentSupplierService
                 ];
 
                 // Decrement User Wallet
-                $this->decrementUserWallet($walletId, $amount);
+                $this->userWalletService->decrement($userWalletId, $amount);
 
                 // Increment Sum Amount
                 $sumAmount += $sumPrice;
@@ -131,8 +145,8 @@ class PaymentSupplierService
             ->orderBy('payments.created_at', 'desc');
 
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         $data = $query->findOrFail($supplierId);
@@ -165,15 +179,5 @@ class PaymentSupplierService
             "total_amount" => (float)$data->total_amount,
             "total_count" => (int)$data->total_count,
         ];
-    }
-
-    private function decrementUserWallet($walletId, $amount): void
-    {
-        $userId = Auth::user()->id;
-        $userWallet = UserWallet::where('user_id', $userId)
-            ->where('wallet_id', $walletId)
-            ->firstOrFail();
-
-        $userWallet->wallet->decrement('amount', $amount);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\UserWallet;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Validator;
 
 class StorePaymentSupplierRequest extends FormRequest
@@ -20,10 +21,10 @@ class StorePaymentSupplierRequest extends FormRequest
         return [
             'supplier_id' => 'required|numeric|exists:suppliers,id',
             'wallet_list' => 'required|array|min:1',
-            'wallet_list.*.wallet_id' => [
+            'wallet_list.*.user_wallet_id' => [
                 'required',
                 'numeric',
-                'exists:user_wallet,wallet_id,user_id,' . auth()->id()
+                'exists:user_wallet,id,user_id,' . Auth::id()
             ],
             'wallet_list.*.amount' => 'required|numeric|min:0.01',
             'wallet_list.*.rate_amount' => 'required|numeric|min:0.01',
@@ -37,10 +38,10 @@ class StorePaymentSupplierRequest extends FormRequest
             $walletList = $this->input('wallet_list');
 
             foreach ($walletList as $key => $item) {
-                $walletId = $item['wallet_id'];
+                $userWalletId = $item['user_wallet_id'];
                 $amount = $item['amount'];
 
-                $userWallet = UserWallet::with('wallet')->findOrFail($walletId);
+                $userWallet = UserWallet::with('wallet')->findOrFail($userWalletId);
 
                 if ($userWallet->wallet->amount < $amount) {
                     $walletName = $userWallet->wallet->name;
