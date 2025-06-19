@@ -14,7 +14,8 @@ use Illuminate\Support\Facades\DB;
 class PaymentCustomerService
 {
     public function __construct(
-        protected readonly UserWalletService $userWalletService
+        protected readonly UserWalletService $userWalletService,
+        private $authUser = Auth::user()
     ) {}
 
     public function findAll(array $data): array
@@ -36,8 +37,8 @@ class PaymentCustomerService
         }
 
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         //  Data
@@ -137,8 +138,8 @@ class PaymentCustomerService
             ->groupBy('payments.id', 'payments.paymentable_type', 'payments.created_at')
             ->orderBy('payments.created_at', 'desc');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         $data = $query->findOrFail($id);
