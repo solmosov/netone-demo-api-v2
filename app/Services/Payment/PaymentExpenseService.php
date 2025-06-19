@@ -91,7 +91,7 @@ class PaymentExpenseService
             $expense->payments()->save($payment);
 
             // Attach Amount To Wallet
-            $payment->wallets()->attach($userWallet->wallet->id, [
+            $payment->wallets()->attach($userWallet->wallet_id, [
                 'amount' => $amount,
                 'rate_amount' => $rateAmount,
                 'sum_price' => $amount * $rateAmount,

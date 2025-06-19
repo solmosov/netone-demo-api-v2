@@ -99,10 +99,10 @@ class PaymentSupplierService
 
                 // User wallet
                 $userWallet = UserWallet::findOrFail($userWalletId);
-                
+
                 $sumPrice = $amount * $rateAmount;
 
-                $walletAttachList[$userWallet->id] = [
+                $walletAttachList[$userWallet->wallet_id] = [
                     'amount' => $amount,
                     'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,
@@ -111,7 +111,7 @@ class PaymentSupplierService
                 ];
 
                 // Decrement User Wallet
-                $this->userWalletService->decrement($userWalletId, $amount);
+                $this->userWalletService->decrement($userWallet->id, $amount);
 
                 // Increment Sum Amount
                 $sumAmount += $sumPrice;

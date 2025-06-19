@@ -8,10 +8,18 @@ use App\Models\GetMoneyAction;
 use App\Models\Payment;
 use App\Models\Status;
 use App\Models\UserWallet;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentGetMoneyService
 {
+    private $authUser;
+
+    public function __construct()
+    {
+        $this->authUser = Auth::user();
+    }
+
     public static function getStatus()
     {
         return Status::where('code', 'paymentGetMoney')->firstOrFail();
@@ -77,13 +85,13 @@ class PaymentGetMoneyService
             $newGetMoneyAction = GetMoneyAction::create([
                 'get_money_id' => $getMoneyId,
                 'user_wallet_id' => $userWalletId,
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'sum_amount' => 0,
             ]);
 
             // New Payment
             $newPayment = new Payment([
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'status_id' => $status->id,
                 'comment' => $comment
             ]);

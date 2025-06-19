@@ -103,7 +103,7 @@ class PaymentCustomerService
 
                 $sumPrice = $amount * $rateAmount;
 
-                $walletAttachList[$userWallet->id] = [
+                $walletAttachList[$userWallet->wallet_id] = [
                     'amount' => $amount,
                     'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,
