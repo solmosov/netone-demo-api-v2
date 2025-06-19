@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentSupplierService
@@ -61,17 +62,6 @@ class PaymentSupplierService
         // Supplier
         $supplier = Supplier::findOrFail($supplierId);
 
-        // Validation User Wallet
-        $userAllWallets = UserWallet::where('user_id', auth()->id())->get();
-        $pluckWalletAmount = $userAllWallets->pluck('amount', 'wallet_id')->toArray();
-        $pluckWalletName = $userAllWallets->pluck('wallet', 'wallet_id')->toArray();
-        foreach ($reqWalletList as $item) {
-            if ($pluckWalletAmount[$item['wallet_id']] && $pluckWalletAmount[$item['wallet_id']] < $item['amount']) {
-                $walletName = $pluckWalletName[$item['wallet_id']]['name'];
-                throw new InvalidDataException("`$walletName` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
-            }
-        }
-
         // Status Supplier Payment
         $statusSupplierPayment = StatusService::findByCode('paymentSupplier');
 
@@ -93,17 +83,21 @@ class PaymentSupplierService
             // Attach to Wallet
             $walletAttachList = [];
             foreach ($reqWalletList as $wallet) {
-                $sumPrice = $wallet['amount'] * $wallet['rate_amount'];
+                $walletId = $wallet['wallet_id'];
+                $amount = $wallet['amount'];
+                $rateAmount = $wallet['rate_amount'];
+
+                $sumPrice = $amount * $rateAmount;
                 $walletAttachList[$wallet['wallet_id']] = [
-                    'amount' => $wallet['amount'],
-                    'rate_amount' => $wallet['rate_amount'],
+                    'amount' => $amount,
+                    'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ];
 
                 // Decrement User Wallet
-                $this->decrementUserWallet($wallet['wallet_id'], $wallet['amount']);
+                $this->decrementUserWallet($walletId, $amount);
 
                 // Increment Sum Amount
                 $sumAmount += $sumPrice;
@@ -175,11 +169,11 @@ class PaymentSupplierService
 
     private function decrementUserWallet($walletId, $amount): void
     {
-        $userId = auth()->id();
+        $userId = Auth::user()->id;
         $userWallet = UserWallet::where('user_id', $userId)
             ->where('wallet_id', $walletId)
             ->firstOrFail();
 
-        $userWallet->decrement('amount', $amount);
+        $userWallet->wallet->decrement('amount', $amount);
     }
 }

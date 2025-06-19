@@ -122,10 +122,10 @@ class PaymentRentalPropertiesService
 
             if($rentalPropertyCategory->is_income){
                 // Update User Wallet
-                $userWallet->increment('amount', $reqAmount);
+                $userWallet->wallet->increment('amount', $reqAmount);
             }else {
                 // Update User Wallet
-                $userWallet->decrement('amount', $reqAmount);
+                $userWallet->wallet->decrement('amount', $reqAmount);
             }
 
             DB::commit();

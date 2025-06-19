@@ -61,4 +61,7 @@ class UserWalletService
       'data' => $user
     ];
   }
+
+  public function increment(int $userId, $walletId, $amount) {}
+  public function decrement() {}
 }

@@ -78,7 +78,7 @@ class PaymentSetMoneyService
             ]);
 
             // Update Wallet Balance
-            $userWallet->increment('amount', $amount);
+            $userWallet->wallet->increment('amount', $amount);
 
             // Finish
             DB::commit();

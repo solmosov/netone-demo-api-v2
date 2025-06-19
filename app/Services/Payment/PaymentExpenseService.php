@@ -64,7 +64,7 @@ class PaymentExpenseService
             ->where('wallet_id', $walletId)
             ->firstOrFail();
 
-        if ($userWallet->amount < $amount) {
+        if ($userWallet->wallet->amount < $amount) {
             throw new InvalidDataException("`{$userWallet->wallet->name}` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
         }
 
@@ -95,7 +95,7 @@ class PaymentExpenseService
             ]);
 
             // Decrement from User Wallet
-            $userWallet->decrement('amount', $amount);
+            $userWallet->wallet->decrement('amount', $amount);
 
             // Finish
             DB::commit();

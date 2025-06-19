@@ -164,10 +164,11 @@ class PaymentCustomerService
     private function incrementUserWallet($walletId, $amount): void
     {
         $userId = auth()->id();
-        $userWallet = UserWallet::where('wallet_id', $walletId)
+        $userWallet = UserWallet::with('wallet')
+            ->where('wallet_id', $walletId)
             ->where('user_id', $userId)
             ->firstOrFail();
 
-        $userWallet->increment('amount', $amount);
+        $userWallet->wallet->increment('amount', $amount);
     }
 }

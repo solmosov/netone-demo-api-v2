@@ -101,7 +101,7 @@ class PaymentGetMoneyService
             ]);
 
             // Decrement From User Wallet
-            $userWallet->decrement('amount', $amount);
+            $userWallet->wallet->decrement('amount', $amount);
 
             // Change New Money Action
             $newGetMoneyAction->sum_amount = $sumPrice;
