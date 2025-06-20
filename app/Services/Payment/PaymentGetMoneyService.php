@@ -8,10 +8,21 @@ use App\Models\GetMoneyAction;
 use App\Models\Payment;
 use App\Models\Status;
 use App\Models\UserWallet;
+use App\Services\Wallet\UserWalletService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentGetMoneyService
 {
+    private $authUser;
+
+    public function __construct(
+        protected readonly UserWalletService $userWalletService
+    )
+    {
+        $this->authUser = Auth::user();
+    }
+
     public static function getStatus()
     {
         return Status::where('code', 'paymentGetMoney')->firstOrFail();
@@ -66,7 +77,7 @@ class PaymentGetMoneyService
         $userName = $userWallet->user->name;
         $userWalletName = $userWallet->wallet->name;
 
-        if ($userWallet->amount < $amount) {
+        if ($userWallet->wallet->amount < $amount) {
             throw new InvalidDataException($userName . "ning `$userWalletName` hisobida mablag' yetarli emas!");
         }
 
@@ -77,13 +88,13 @@ class PaymentGetMoneyService
             $newGetMoneyAction = GetMoneyAction::create([
                 'get_money_id' => $getMoneyId,
                 'user_wallet_id' => $userWalletId,
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'sum_amount' => 0,
             ]);
 
             // New Payment
             $newPayment = new Payment([
-                'user_id' => auth()->id(),
+                'user_id' => $this->authUser->id,
                 'status_id' => $status->id,
                 'comment' => $comment
             ]);
@@ -101,7 +112,7 @@ class PaymentGetMoneyService
             ]);
 
             // Decrement From User Wallet
-            $userWallet->decrement('amount', $amount);
+            $this->userWalletService->decrement($userWallet->id, $amount);
 
             // Change New Money Action
             $newGetMoneyAction->sum_amount = $sumPrice;

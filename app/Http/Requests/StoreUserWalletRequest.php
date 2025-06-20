@@ -29,7 +29,6 @@ class StoreUserWalletRequest extends FormRequest
         return [
             'user_id' => 'required|integer|exists:users,id',
             'wallet_id' => 'required|integer|exists:wallets,id',
-            'wallet_amount' => 'nullable|numeric|min:0',
         ];
     }
 

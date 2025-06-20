@@ -45,13 +45,11 @@ class UserWalletService
     // Req body
     $userId = $data['user_id'];
     $walletId = $data['wallet_id'];
-    $walletAmount = $data['wallet_amount'] ?? 0;
 
     $user = User::findOrFail($userId);
     $wallet = Wallet::findOrFail($walletId);
 
     $user->wallets()->attach([$walletId], [
-      'amount' => $walletAmount,
       'created_at' => now(),
       'updated_at' => now()
     ]);
@@ -60,5 +58,34 @@ class UserWalletService
       'message' => "$user->name uchun yangi `{$wallet->name}` hisob ochildi",
       'data' => $user
     ];
+  }
+
+  public function increment($userWalletId, $amount)
+  {
+    $authUser = Auth::user();
+
+    $query = UserWallet::with('wallet');
+
+    if (!$authUser->isAdmin()) {
+      $query->where('user_id', $authUser->id);
+    }
+
+    $userWallet = $query->findOrFail($userWalletId);
+
+    $userWallet->wallet->increment('amount', $amount);
+  }
+  public function decrement($userWalletId, $amount)
+  {
+    $authUser = Auth::user();
+
+    $query = UserWallet::with('wallet');
+
+    if (!$authUser->isAdmin()) {
+      $query->where('user_id', $authUser->id);
+    }
+
+    $userWallet = $query->findOrFail($userWalletId);
+
+    $userWallet->wallet->decrement('amount', $amount);
   }
 }
