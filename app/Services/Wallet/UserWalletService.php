@@ -66,7 +66,7 @@ class UserWalletService
 
     $query = UserWallet::with('wallet');
 
-    if (!$authUser->isAdmin) {
+    if (!$authUser->isAdmin()) {
       $query->where('user_id', $authUser->id);
     }
 
@@ -80,7 +80,7 @@ class UserWalletService
 
     $query = UserWallet::with('wallet');
 
-    if (!$authUser->isAdmin) {
+    if (!$authUser->isAdmin()) {
       $query->where('user_id', $authUser->id);
     }
 
