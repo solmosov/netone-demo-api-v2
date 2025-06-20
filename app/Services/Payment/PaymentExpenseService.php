@@ -9,11 +9,21 @@ use App\Models\Payment;
 use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentExpenseService
 {
+
+    private $authUser;
+
+    public function __construct(
+        protected readonly UserWalletService $userWalletService,
+    ) {
+        $this->authUser = Auth::user();
+    }
+
     public function findAll(array $data): array
     {
         $startDate = DateFormatter::format($data['startDate']);
@@ -25,8 +35,8 @@ class PaymentExpenseService
             ->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         // All data
@@ -52,7 +62,7 @@ class PaymentExpenseService
         $authUser = Auth::user();
 
         $expenseId = $data['expense_id'];
-        $walletId = $data['wallet_id'];
+        $userWalletId = $data['user_wallet_id'];
         $amount = $data['amount'];
         $rateAmount = $data['rate_amount'];
         $comment = $data['comment'] ?? null;
@@ -61,12 +71,7 @@ class PaymentExpenseService
         // Validation User Wallet
         $userWallet = UserWallet::with('wallet.currency')
             ->where('user_id', $authUser->id)
-            ->where('wallet_id', $walletId)
-            ->firstOrFail();
-
-        if ($userWallet->amount < $amount) {
-            throw new InvalidDataException("`{$userWallet->wallet->name}` bu hisobingizda mablag' yetarli emas! Hisobingizni tekshiring");
-        }
+            ->findOrFail($userWalletId);
 
         // Expense
         $expense = Expense::findOrFail($expenseId);
@@ -86,7 +91,7 @@ class PaymentExpenseService
             $expense->payments()->save($payment);
 
             // Attach Amount To Wallet
-            $payment->wallets()->attach($walletId, [
+            $payment->wallets()->attach($userWallet->wallet_id, [
                 'amount' => $amount,
                 'rate_amount' => $rateAmount,
                 'sum_price' => $amount * $rateAmount,
@@ -95,7 +100,7 @@ class PaymentExpenseService
             ]);
 
             // Decrement from User Wallet
-            $userWallet->decrement('amount', $amount);
+            $this->userWalletService->decrement($userWallet->id, $amount);
 
             // Finish
             DB::commit();
@@ -120,8 +125,8 @@ class PaymentExpenseService
             ->where('paymentable_type', 'App\Models\Expense')
             ->orderBy('created_at', 'desc');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         $data = $query->findOrFail($expenseId);

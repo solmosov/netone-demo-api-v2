@@ -31,7 +31,6 @@ class PaymentExpenseController extends Controller
      */
     public function store(StorePaymentExpenseRequest $request): JsonResponse
     {
-
         $result = $this->paymentExpenseService->create($request->validated());
 
         return response()->json([

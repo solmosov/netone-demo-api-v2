@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 class Wallet extends Model
 {
     protected $fillable = [
-        'currency_id',
         'name',
+        'amount',
+        'currency_id',
         'is_active'
     ];
 
