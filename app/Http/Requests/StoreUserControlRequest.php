@@ -30,4 +30,11 @@ class StoreUserControlRequest extends FormRequest
             'roles.*' => 'required|exists:roles,id',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'login.unique' => 'Bu login boshqa userga tegishli'
+        ];
+    }
 }
