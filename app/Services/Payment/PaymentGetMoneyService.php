@@ -77,7 +77,7 @@ class PaymentGetMoneyService
         $userName = $userWallet->user->name;
         $userWalletName = $userWallet->wallet->name;
 
-        if ($userWallet->amount < $amount) {
+        if ($userWallet->wallet->amount < $amount) {
             throw new InvalidDataException($userName . "ning `$userWalletName` hisobida mablag' yetarli emas!");
         }
 
