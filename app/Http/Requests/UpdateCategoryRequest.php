@@ -43,6 +43,7 @@ class UpdateCategoryRequest extends FormRequest
         return [
             "name.unique" => "Bu nomli kategoriya allaqachon mavjud",
             "parent_id.exists" => "Ota kategoriyani noto'g'ri tanladingiz",
+            "parent_id.not_in" => "Ota kategoriyani noto'g'ri tanladingiz",
         ];
     }
 
