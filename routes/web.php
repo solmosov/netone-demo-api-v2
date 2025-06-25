@@ -11,3 +11,17 @@ Route::get('/test-pusher', function(){
 
     return "Event '".$message."' xabari bilan 'test-channel'ga yuborildi!";
 });
+
+Route::get('/test-private-pusher', function(){
+    $user = \App\Models\User::find(1);
+
+    if(!$user){
+        return 'User not found';
+    }
+
+    $message = "Salom, ".$user->name."! Sizga maxsus, shaxsiy bildirishnoma keldi";
+
+    event(new \App\Events\PrivateNotificationEvent($user,$message));
+
+    return "Maxfiy event '".$message."' xabari bilan `user.".$user->id."' kanaliga yuborildi!";
+});
