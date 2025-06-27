@@ -59,7 +59,7 @@ class ProductionPlanCreated implements ShouldBroadcastNow
             'id' => Str::uuid()->toString(),
             'production_pan' => $this->productionPlan,
             'producer' => $this->producer,
-            'message' => "New production plan '{$this->productionPlan->title}' created by {$this->producer->name}",
+            'message' => "Sizga '{$this->producer->name}'dan yangi '{$this->productionPlan->title}' topshiriq keldi",
             'type' => 'production_plan_created',
             'created_at' => now()->toISOString(),
         ];
