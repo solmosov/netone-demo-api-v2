@@ -24,7 +24,7 @@ class ProductionPlanCreated implements ShouldBroadcastNow
      */
     public function __construct(ProductionPlan $productionPlan, User $producer, $departmentUsers)
     {
-        $this->productionPlan = $productionPlan;
+        $this->productionPlan = $productionPlan->load('amountType');
         $this->producer = $producer;
         $this->departmentUsers = $departmentUsers;
     }
@@ -52,6 +52,8 @@ class ProductionPlanCreated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        $planAmount = number_format($this->productionPlan->amount);
+
         return [
             'id' => Str::uuid()->toString(),
             'data' => [
@@ -60,7 +62,7 @@ class ProductionPlanCreated implements ShouldBroadcastNow
                 'type' => 'production_plan_created',
             ],
 
-            'message' => "Sizga '{$this->producer->name}'dan yangi '{$this->productionPlan->title}' topshiriq keldi",
+            'message' => "Sizga '{$this->producer->name}'dan yangi '{$this->productionPlan->name}' {$planAmount}{$this->productionPlan->amountType->name} topshiriq keldi",
             'created_at' => now()->toISOString(),
         ];
     }
