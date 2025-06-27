@@ -4,11 +4,8 @@ namespace App\Events;
 
 use App\Models\ProductionPlan;
 use App\Models\User;
-use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -57,10 +54,13 @@ class ProductionPlanCreated implements ShouldBroadcastNow
     {
         return [
             'id' => Str::uuid()->toString(),
-            'production_pan' => $this->productionPlan,
-            'producer' => $this->producer,
+            'data' => [
+                'production_plan' => $this->productionPlan,
+                'producer' => $this->producer,
+                'type' => 'production_plan_created',
+            ],
+
             'message' => "Sizga '{$this->producer->name}'dan yangi '{$this->productionPlan->title}' topshiriq keldi",
-            'type' => 'production_plan_created',
             'created_at' => now()->toISOString(),
         ];
     }
