@@ -2,14 +2,17 @@
 
 namespace App\Services\Production;
 
+use App\Events\ProductionPlanCreated;
 use App\Exceptions\ServerErrorException;
 use App\Models\Department\DepartStatus;
 use App\Models\ProductionPlan;
 use App\Models\ProductionPlanItem;
 use App\Models\ProductionRecipe;
 use App\Models\Status;
+use App\Models\User;
 use App\Services\Status\StatusService;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\CssSelector\Exception\InternalErrorException;
 
@@ -105,6 +108,19 @@ class ProductionPlanService
             }
 
             $newProductionPlan->planItems()->createMany($itemsList);
+
+            // Send Notifications
+            $departsIds = array_column($planItemList, 'depart_id');
+
+            $departmentUsers = User::whereHas('departs', function($query) use ($departsIds) {
+                $query->whereIn('depart_id',$departsIds);
+            })->get();
+
+            if($departmentUsers->isNotEmpty()){
+                $producer = User::findOrFail(Auth::id());
+
+                broadcast(new ProductionPlanCreated($newProductionPlan, $producer, $departmentUsers));
+            }
 
             // Finish
             DB::commit();
