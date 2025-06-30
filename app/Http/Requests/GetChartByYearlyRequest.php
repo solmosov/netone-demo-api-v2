@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class GetChartRequest extends FormRequest
+class GetChartByYearlyRequest extends FormRequest
 {
 
     public function authorize(): bool
