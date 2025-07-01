@@ -8,13 +8,12 @@ use Illuminate\Support\Facades\DB;
 
 class ChartExpenseService
 {
-    public function findAll(array $data): array
+    public function findAll(array $queryParams): array
     {
-        $startDate = DateFormatter::format($data['start_date']);
-        $endDate = DateFormatter::format($data['end_date'], 'end');
+        $startDate = DateFormatter::format($queryParams['start_date']);
+        $endDate = DateFormatter::format($queryParams['end_date'], 'end');
 
         $groupBy = 'expense';
-        $dateFormat = '%Y-%m-%d';
 
         $expense = Payment::join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
             ->join('expenses', 'payments.paymentable_id', '=', 'expenses.id')
@@ -24,7 +23,7 @@ class ChartExpenseService
             )
             ->where('payments.paymentable_type', 'App\Models\Expense')
             ->whereBetween('payments.payment_date', [$startDate, $endDate])
-            ->groupBy('expense')
+            ->groupBy($groupBy)
             ->get();
 
         // Totals
@@ -32,12 +31,12 @@ class ChartExpenseService
             $expense[$key]->amount = (float) $value->amount;
         }
 
-        $data = [
+        $queryParams = [
             'list' => $expense,
             'total_amount' => $expense->sum('amount'),
             'total_count' => $expense->count(),
         ];
 
-        return $data;
+        return $queryParams;
     }
 }

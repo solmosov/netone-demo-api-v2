@@ -60,7 +60,7 @@ class PaymentExpenseService
         $totalsQuery->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id');
 
         $totalsResult = $totalsQuery->reorder()
-        ->selectRaw('COUNT(DISTINCT payments.id) as total_count, SUM(payment_wallet.sum_price) as total_amount')
+            ->selectRaw('COUNT(DISTINCT payments.id) as total_count, SUM(payment_wallet.sum_price) as total_amount')
             ->first();
 
         $data = $query->get();
