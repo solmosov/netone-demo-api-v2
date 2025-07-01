@@ -20,6 +20,7 @@ use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,13 @@ class OrderService
 {
     private string|null $startDate = null;
     private string|null $endDate = null;
+
+    public function __construct(
+        protected UserWalletService $userWalletService
+    )
+    {
+
+    }
 
     public function setDate(string $start, string $end): void
     {
@@ -272,7 +280,7 @@ class OrderService
             // Sum Amount
             $sumAmount = $payment['amount'] * $payment['currency_amount'];
 
-            // Wallet Attach 
+            // Wallet Attach
             $newPayment->wallets()->attach($userWallet->wallet_id, [
                 'amount' => $payment['amount'],
                 'rate_amount' => $payment['currency_amount'],
@@ -282,8 +290,7 @@ class OrderService
             ]);
 
             // Change User wallet amount
-            $userWallet->increment('amount', $payment['amount']);
-
+            $this->userWalletService->increment($userWallet->id, $payment['amount']);
 
             // Change Customer Balance
             $customer->increment('balance', $sumAmount);
@@ -300,7 +307,7 @@ class OrderService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new ServerErrorException($e->getMessage(), $e->getCode(), $e);
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
 
@@ -748,7 +755,7 @@ class OrderService
                 'updated_at' => now(),
                 'created_at' => now(),
             ]);
-            $userWallet->increment('amount', $payment['amount']);
+            $this->userWalletService->increment($userWallet->id, $payment['amount']);
             $customer->increment('balance', $sumAmount);
 
             // Create completed order record
