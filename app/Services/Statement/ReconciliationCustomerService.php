@@ -23,14 +23,11 @@ class ReconciliationCustomerService
         $this->endDate = DateFormatter::today('end');
     }
 
-    public function setDateInterVal($start, $end): void
+    public function getByCustomer(array $queryParams,string $customerId): array
     {
-        $this->startDate = DateFormatter::format($start, 'start');
-        $this->endDate = DateFormatter::format($end, 'end');
-    }
+        // Set Date
+        $this->setDateInterVal($queryParams['start_date'], $queryParams['end_date']);
 
-    public function getByCustomer(string $customerId): array
-    {
         // Status
         $statusSubmittedOrder = Status::where('code', "orderSubmitted")->firstOrFail();
         $statusPaymentCustomer = Status::where('code', 'paymentCustomer')->firstOrFail();
@@ -105,6 +102,12 @@ class ReconciliationCustomerService
                 "total_amount_difference" => (float)$totalOrders->total_amount_orders - (float)$totalReturns->total_amount_returns - (float)$totalPayments->total_amount_payments
             ],
         ];
+    }
+
+    private function setDateInterVal($start, $end): void
+    {
+        $this->startDate = DateFormatter::format($start, 'start');
+        $this->endDate = DateFormatter::format($end, 'end');
     }
 
     private function getCompletedOrdersQuery($statusSubmittedOrder, $customerId): Builder

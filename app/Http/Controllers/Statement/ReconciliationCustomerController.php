@@ -17,17 +17,11 @@ class ReconciliationCustomerController extends Controller
     {
     }
 
-    public function show(Request $request, int $customerId): JsonResponse
+    public function show(GetDateInternalRequest $request, int $customerId): JsonResponse
     {
-        $validated = $request->validate([
-            'startDate' => 'required|date|date_format:d-m-Y|before_or_equal:endDate',
-            'endDate' => 'required|date|date_format:d-m-Y|after_or_equal:startDate',
-        ]);
-
         if (!Customer::findOrFail($customerId)) abort(404);
 
-        $this->reconciliationService->setDateInterVal($validated['startDate'], $validated['endDate']);
-        $data = $this->reconciliationService->getByCustomer($customerId);
+        $data = $this->reconciliationService->getByCustomer($request->validated(), $customerId);
 
         return response()->json($data);
     }
@@ -37,6 +31,7 @@ class ReconciliationCustomerController extends Controller
     }
     public function detailsDebit(GetDateInternalRequest $request, int $customerId)
     {
+        $this->reconciliationService->detailsDebit($request->validated(), $customerId);
     }
 
     public function detailsReturn(GetDateInternalRequest $request, int $customerId)
