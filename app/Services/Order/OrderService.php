@@ -293,7 +293,7 @@ class OrderService
             $this->userWalletService->increment($userWallet->id, $payment['amount']);
 
             // Change Customer Balance
-            $customer->increment('balance', $sumAmount);
+            $customer->increment('balance', $sumAmount - $totalSalePrice);
 
             DB::commit();
 
@@ -427,9 +427,9 @@ class OrderService
 
             // Event
             OrderAddedNewProductEvent::dispatch($order, $product, [
-                "price" => (float) $productSalePrice,
-                "amount" => (float) $amount,
-                "sum_sale_price" => (float) $sumSalePrice,
+                "price" => (float)$productSalePrice,
+                "amount" => (float)$amount,
+                "sum_sale_price" => (float)$sumSalePrice,
             ]);
 
             return [
@@ -637,7 +637,7 @@ class OrderService
         $result = $query->first();
 
         return [
-            'total_amount' => (float) $result->total_amount,
+            'total_amount' => (float)$result->total_amount,
             'total_count' => $result->total_count,
         ];
     }
@@ -667,7 +667,7 @@ class OrderService
         $result = $query->first();
 
         return [
-            'total_amount' => (float) $result->total_amount,
+            'total_amount' => (float)$result->total_amount,
             'total_count' => $result->total_count,
         ];
     }
@@ -756,7 +756,7 @@ class OrderService
                 'created_at' => now(),
             ]);
             $this->userWalletService->increment($userWallet->id, $payment['amount']);
-            $customer->increment('balance', $sumAmount);
+            $customer->increment('balance', $sumAmount - $totalSalePrice);
 
             // Create completed order record
             CompletedOrder::create([
