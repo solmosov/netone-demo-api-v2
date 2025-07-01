@@ -32,8 +32,6 @@ class ReconciliationCustomerService
         $statusSubmittedOrder = Status::where('code', "orderSubmitted")->firstOrFail();
         $statusPaymentCustomer = Status::where('code', 'paymentCustomer')->firstOrFail();
 
-
-
         $completedOrders = $this->getCompletedOrdersQuery($statusSubmittedOrder, $customerId);
         $payments = $this->getPaymentsQuery($statusPaymentCustomer, $customerId);
         $returnOrders = $this->getOrderReturnsQuery($customerId);
@@ -103,6 +101,13 @@ class ReconciliationCustomerService
             ],
         ];
     }
+
+    public function detailsDebit(array $queryParams, string $customerId)
+    {
+
+    }
+
+    /* PRIVATE */
 
     private function setDateInterVal($start, $end): void
     {
