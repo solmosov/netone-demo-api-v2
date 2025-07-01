@@ -293,7 +293,7 @@ class OrderService
             $this->userWalletService->increment($userWallet->id, $payment['amount']);
 
             // Change Customer Balance
-            $customer->increment('balance', $sumAmount - $totalSalePrice);
+            $customer->increment('balance', $sumAmount);
 
             DB::commit();
 
