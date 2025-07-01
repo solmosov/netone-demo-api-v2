@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Chart;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\GetChartByDateInternalRequest;
 use App\Http\Requests\GetChartByYearlyRequest;
 use App\Http\Requests\GetChartExpenseRequest;
 use App\Services\Chart\ChartExpenseService;

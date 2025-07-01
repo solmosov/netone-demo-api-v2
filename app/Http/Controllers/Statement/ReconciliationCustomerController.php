@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Statement;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetDateInternalRequest;
 use App\Models\Customer;
 use App\Services\Statement\ReconciliationCustomerService;
 use Illuminate\Http\JsonResponse;
@@ -29,5 +30,20 @@ class ReconciliationCustomerController extends Controller
         $data = $this->reconciliationService->getByCustomer($customerId);
 
         return response()->json($data);
+    }
+
+    public function details(GetDateInternalRequest $request, int $customerId)
+    {
+    }
+    public function detailsDebit(GetDateInternalRequest $request, int $customerId)
+    {
+    }
+
+    public function detailsReturn(GetDateInternalRequest $request, int $customerId)
+    {
+    }
+
+    public function detailsCredit(GetDateInternalRequest $request, int $customerId)
+    {
     }
 }
