@@ -109,20 +109,16 @@ class ReconciliationCustomerService
         ];
     }
 
-    public function detailsDebit(array $queryParams, string $customerId)
+    public function detailsDebit(array $queryParams, string $customerId): \Illuminate\Database\Eloquent\Collection
     {
         $statusSubmitted = $this->orderService->getStatusSubmitted();
         $startDate = DateFormatter::format($queryParams['start_date']);
         $endDate = DateFormatter::format($queryParams['end_date']);
 
-        $result = CompletedOrder::with(['user', 'order.orderDetails', 'status'])
+        return CompletedOrder::with(['user', 'order.orderDetails', 'status'])
             ->where('status_id', $statusSubmitted->id)
             ->whereBetween('updated_at', [$startDate, $endDate])
             ->get();
-
-        return response()->json([
-            'data' => ReconciliationCustomerDetailsDebitResource::collection($result),
-        ]);
     }
 
     /* PRIVATE */
