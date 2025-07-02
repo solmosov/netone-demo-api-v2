@@ -2,6 +2,7 @@
 
 namespace App\Services\Statement;
 
+use App\Http\Resources\ReconciliationCustomerDetailsDebitResource;
 use App\Models\CompletedOrder;
 use App\Models\Customer;
 use App\Models\Status;
@@ -119,7 +120,9 @@ class ReconciliationCustomerService
             ->whereBetween('updated_at', [$startDate, $endDate])
             ->get();
 
-        return $result;
+        return response()->json([
+            'data' => ReconciliationCustomerDetailsDebitResource::collection($result),
+        ]);
     }
 
     /* PRIVATE */
