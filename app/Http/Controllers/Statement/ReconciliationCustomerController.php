@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\GetDateInternalRequest;
 use App\Http\Resources\OrderReturnResource;
 use App\Http\Resources\OrderReturnShowResource;
+use App\Http\Resources\PaymentCustomerResource;
+use App\Http\Resources\ReconciliationCustomerCreditResource;
 use App\Http\Resources\ReconciliationCustomerDetailsDebitResource;
 use App\Models\Customer;
 use App\Services\Statement\ReconciliationCustomerService;
@@ -53,6 +55,10 @@ class ReconciliationCustomerController extends Controller
 
     public function detailsCredit(GetDateInternalRequest $request, int $customerId)
     {
-//        $this->
+        $result = $this->reconciliationService->detailsCredit($request->validated(), $customerId);
+
+        return response()->json([
+            'data' => ReconciliationCustomerCreditResource::collection($result),
+        ]);
     }
 }

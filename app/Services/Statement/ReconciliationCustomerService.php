@@ -6,6 +6,7 @@ use App\Http\Resources\ReconciliationCustomerDetailsDebitResource;
 use App\Models\CompletedOrder;
 use App\Models\Customer;
 use App\Models\OrderReturn;
+use App\Models\Payment;
 use App\Models\Status;
 use App\Services\Order\OrderService;
 use App\Services\Status\StatusService;
@@ -113,12 +114,12 @@ class ReconciliationCustomerService
     public function detailsDebit(array $queryParams, string $customerId): \Illuminate\Database\Eloquent\Collection
     {
         $statusSubmitted = $this->orderService->getStatusSubmitted();
-        $startDate = DateFormatter::format($queryParams['start_date']);
-        $endDate = DateFormatter::format($queryParams['end_date']);
+        // Set Date
+        $this->setDateInterVal($queryParams['start_date'], $queryParams['end_date']);
 
         return CompletedOrder::with(['user', 'order.orderDetails', 'status'])
             ->where('status_id', $statusSubmitted->id)
-            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->whereBetween('updated_at', [$this->startDate, $this->endDate])
             ->whereHas('order', function ($query) use ($customerId) {
                 return $query->where('customer_id', $customerId);
             })
@@ -127,16 +128,26 @@ class ReconciliationCustomerService
 
     public function detailsReturn(array $queryParams, string $customerId): \Illuminate\Database\Eloquent\Collection
     {
-        $startDate = DateFormatter::format($queryParams['start_date']);
-        $endDate = DateFormatter::format($queryParams['end_date']);
+        // Set Date
+        $this->setDateInterVal($queryParams['start_date'], $queryParams['end_date']);
 
         return OrderReturn::with(['user', 'customer', 'orderReturnDetails'])
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
             ->where('customer_id', $customerId)
             ->get();
     }
 
-    public function detailsCredit(){}
+    public function detailsCredit(array $queryParams, string $customerId): \Illuminate\Database\Eloquent\Collection
+    {
+        // Set Date
+        $this->setDateInterVal($queryParams['start_date'], $queryParams['end_date']);
+
+        return Payment::with(['paymentable', 'user', 'wallets', 'status'])
+            ->withSum('wallets as total_price', 'payment_wallet.sum_price')
+            ->where('paymentable_type', 'App\Models\Customer')
+            ->where('paymentable_id', $customerId)
+            ->get();
+    }
 
     /* PRIVATE */
 
