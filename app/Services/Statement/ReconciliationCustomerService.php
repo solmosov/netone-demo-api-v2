@@ -2,7 +2,11 @@
 
 namespace App\Services\Statement;
 
+use App\Models\CompletedOrder;
+use App\Models\Customer;
 use App\Models\Status;
+use App\Services\Order\OrderService;
+use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
@@ -17,13 +21,15 @@ class ReconciliationCustomerService
     private string|null $startDate = null;
     private string|null $endDate = null;
 
-    public function __construct()
+    public function __construct(
+        protected OrderService $orderService,
+    )
     {
         $this->startDate = DateFormatter::today('start');
         $this->endDate = DateFormatter::today('end');
     }
 
-    public function getByCustomer(array $queryParams,string $customerId): array
+    public function getByCustomer(array $queryParams, string $customerId): array
     {
         // Set Date
         $this->setDateInterVal($queryParams['start_date'], $queryParams['end_date']);
@@ -104,7 +110,16 @@ class ReconciliationCustomerService
 
     public function detailsDebit(array $queryParams, string $customerId)
     {
+        $statusSubmitted = $this->orderService->getStatusSubmitted();
+        $startDate = DateFormatter::format($queryParams['start_date']);
+        $endDate = DateFormatter::format($queryParams['end_date']);
 
+        $result = CompletedOrder::with(['user', 'order.orderDetails', 'status'])
+            ->where('status_id', $statusSubmitted->id)
+            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->get();
+
+        return $result;
     }
 
     /* PRIVATE */

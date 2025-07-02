@@ -31,7 +31,9 @@ class ReconciliationCustomerController extends Controller
     }
     public function detailsDebit(GetDateInternalRequest $request, int $customerId)
     {
-        $this->reconciliationService->detailsDebit($request->validated(), $customerId);
+        $result = $this->reconciliationService->detailsDebit($request->validated(), $customerId);
+
+        return $result;
     }
 
     public function detailsReturn(GetDateInternalRequest $request, int $customerId)

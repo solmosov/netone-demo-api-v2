@@ -811,4 +811,14 @@ class OrderService
             $stock->decrement('amount', $item['amount']);
         }
     }
+
+    public function getStatusCompleted()
+    {
+        return StatusService::findByCode('orderCompleted');
+    }
+
+    public function getStatusSubmitted()
+    {
+        return StatusService::findByCode('orderSubmitted');
+    }
 }

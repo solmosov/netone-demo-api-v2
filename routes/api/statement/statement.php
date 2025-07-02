@@ -17,6 +17,7 @@ Route::group(['prefix' => 'statements', 'middleware' => ['auth:sanctum']], funct
     Route::group(['prefix' => '/reconciliations'], function () {
         // Route::get('/customers/', [StatementReconciliationCustomerController::class, 'index']);
         Route::get('/customers/{customerId}', [ReconciliationCustomerController::class, 'show']);
+        Route::get('/customers/{customerId}/debit', [ReconciliationCustomerController::class, 'detailsDebit']);
         Route::get('/suppliers/{supplierId}', [ReconciliationSupplierController::class, 'show']);
     });
 
