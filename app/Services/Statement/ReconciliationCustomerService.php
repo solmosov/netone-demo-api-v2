@@ -5,6 +5,7 @@ namespace App\Services\Statement;
 use App\Http\Resources\ReconciliationCustomerDetailsDebitResource;
 use App\Models\CompletedOrder;
 use App\Models\Customer;
+use App\Models\OrderReturn;
 use App\Models\Status;
 use App\Services\Order\OrderService;
 use App\Services\Status\StatusService;
@@ -118,6 +119,20 @@ class ReconciliationCustomerService
         return CompletedOrder::with(['user', 'order.orderDetails', 'status'])
             ->where('status_id', $statusSubmitted->id)
             ->whereBetween('updated_at', [$startDate, $endDate])
+            ->whereHas('order', function ($query) use ($customerId) {
+                return $query->where('customer_id', $customerId);
+            })
+            ->get();
+    }
+
+    public function detailsReturn(array $queryParams, string $customerId): \Illuminate\Database\Eloquent\Collection
+    {
+        $startDate = DateFormatter::format($queryParams['start_date']);
+        $endDate = DateFormatter::format($queryParams['end_date']);
+
+        return OrderReturn::with(['user', 'customer', 'orderReturnDetails'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('customer_id', $customerId)
             ->get();
     }
 
