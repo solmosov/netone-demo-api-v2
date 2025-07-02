@@ -136,6 +136,8 @@ class ReconciliationCustomerService
             ->get();
     }
 
+    public function detailsCredit(){}
+
     /* PRIVATE */
 
     private function setDateInterVal($start, $end): void

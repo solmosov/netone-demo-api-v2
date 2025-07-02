@@ -42,7 +42,7 @@ class ReconciliationCustomerController extends Controller
         ]);
     }
 
-    public function detailsReturn(GetDateInternalRequest $request, int $customerId)
+    public function detailsReturn(GetDateInternalRequest $request, int $customerId): JsonResponse
     {
         $result = $this->reconciliationService->detailsReturn($request->validated(), $customerId);
 
@@ -53,5 +53,6 @@ class ReconciliationCustomerController extends Controller
 
     public function detailsCredit(GetDateInternalRequest $request, int $customerId)
     {
+//        $this->
     }
 }
