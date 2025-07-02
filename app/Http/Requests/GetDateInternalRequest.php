@@ -18,8 +18,8 @@ class GetDateInternalRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_date' => 'nullable|date|date_format:d-m-Y|before_or_equal:end_date',
-            'end_date' => 'nullable|date|date_format:d-m-Y|after_or_equal:start_date',
+            'start_date' => 'required|date|date_format:d-m-Y|before_or_equal:end_date',
+            'end_date' => 'required|date|date_format:d-m-Y|after_or_equal:start_date',
         ];
     }
 }
