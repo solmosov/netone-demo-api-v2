@@ -12,6 +12,7 @@ class ReconciliationCustomerDetailsDebitResource extends JsonResource
     {
         $authUser =Auth::user();
         return [
+            'id' => $this->id,
             'user' => UserResource::make($this->user),
             'total_cost_price' => $authUser->isAdmin()?(float)$this->total_cost_price:0,
             'total_sale_price' => (float) $this->total_sale_price,
