@@ -41,16 +41,7 @@ class PaymentExpenseService
         }
 
         if ($expenseId) {
-            $recursiveQuery = "
-                WITH RECURSIVE expense_hierarchy AS (
-                    SELECT id FROM expenses WHERE id = ?
-                    UNION ALL
-                    SELECT e.id FROM expenses e INNER JOIN expense_hierarchy eh ON e.parent_id = eh.id
-                )
-                SELECT id FROM expense_hierarchy
-            ";
-            $expenseIds = DB::select($recursiveQuery, [$expenseId]);
-            $allDescendantIds = collect($expenseIds)->pluck('id')->all();
+            $allDescendantIds = $this->getAllExpenseDescendantIds($expenseId);
             $query->whereIn('payments.paymentable_id', $allDescendantIds);
         }
 
@@ -182,5 +173,20 @@ class PaymentExpenseService
             "total_amount" => (float)$data->total_amount,
             "total_count" => (int)$data->total_count,
         ];
+    }
+
+    private function getAllExpenseDescendantIds(int $parentId): array
+    {
+        $allIds = [$parentId];
+
+        $childIds = DB::table('expenses')
+            ->where('parent_id', $parentId)
+            ->pluck('id');
+
+        foreach ($childIds as $childId) {
+            $allIds = array_merge($allIds, $this->getAllExpenseDescendantIds($childId));
+        }
+
+        return $allIds;
     }
 }
