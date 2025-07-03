@@ -20,6 +20,7 @@ use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,13 @@ class OrderService
 {
     private string|null $startDate = null;
     private string|null $endDate = null;
+
+    public function __construct(
+        protected UserWalletService $userWalletService
+    )
+    {
+
+    }
 
     public function setDate(string $start, string $end): void
     {
@@ -233,7 +241,7 @@ class OrderService
 
                 // Prices
                 $costPrice = $pluckedCostPrice[$productId];
-                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $salePrice = ($pluckIsChangePrice[$productId] && $salePriceAmount) ? $salePriceAmount : $pluckedSalePrice[$productId];
                 $sumCostPrice = $costPrice * $amount;
                 $sumSalePrice = $salePrice * $amount;
 
@@ -261,32 +269,35 @@ class OrderService
 
             $newOrder->save();
 
-            // Payment
-            $newPayment = new Payment([
-                'user_id' => $authUser->id,
-                'status_id' => $statusDebtCustomer->id,
-            ]);
+            $sumAmount = 0;
 
-            $customer->payments()->save($newPayment);
+            if ($payment['amount'] > 0) {
+                // Payment
+                $newPayment = new Payment([
+                    'user_id' => $authUser->id,
+                    'status_id' => $statusDebtCustomer->id,
+                ]);
 
-            // Sum Amount
-            $sumAmount = $payment['amount'] * $payment['currency_amount'];
+                $customer->payments()->save($newPayment);
 
-            // Wallet Attach 
-            $newPayment->wallets()->attach($userWallet->wallet_id, [
-                'amount' => $payment['amount'],
-                'rate_amount' => $payment['currency_amount'],
-                'sum_price' => $sumAmount,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]);
+                // Sum Amount
+                $sumAmount = $payment['amount'] * $payment['currency_amount'];
 
-            // Change User wallet amount
-            $userWallet->increment('amount', $payment['amount']);
+                // Wallet Attach
+                $newPayment->wallets()->attach($userWallet->wallet_id, [
+                    'amount' => $payment['amount'],
+                    'rate_amount' => $payment['currency_amount'],
+                    'sum_price' => $sumAmount,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
 
+                // Change User wallet amount
+                $this->userWalletService->increment($userWallet->id, $payment['amount']);
 
-            // Change Customer Balance
-            $customer->increment('balance', $sumAmount);
+                // Change Customer Balance
+                $customer->increment('balance', $sumAmount);
+            }
 
             DB::commit();
 
@@ -300,7 +311,7 @@ class OrderService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new ServerErrorException($e->getMessage(), $e->getCode(), $e);
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
 
@@ -420,9 +431,9 @@ class OrderService
 
             // Event
             OrderAddedNewProductEvent::dispatch($order, $product, [
-                "price" => (float) $productSalePrice,
-                "amount" => (float) $amount,
-                "sum_sale_price" => (float) $sumSalePrice,
+                "price" => (float)$productSalePrice,
+                "amount" => (float)$amount,
+                "sum_sale_price" => (float)$sumSalePrice,
             ]);
 
             return [
@@ -510,7 +521,7 @@ class OrderService
                 $orderItem->cost_price = $orderItemCostPrice;
                 $orderItem->sale_price = $orderItemSalePrice;
                 $orderItem->sum_cost_price = $sumCost;
-                $orderItem->sum_sale_price = $sumCost;
+                $orderItem->sum_sale_price = $sumPrice;
                 $orderItem->save();
             }
 
@@ -630,7 +641,7 @@ class OrderService
         $result = $query->first();
 
         return [
-            'total_amount' => (float) $result->total_amount,
+            'total_amount' => (float)$result->total_amount,
             'total_count' => $result->total_count,
         ];
     }
@@ -660,7 +671,7 @@ class OrderService
         $result = $query->first();
 
         return [
-            'total_amount' => (float) $result->total_amount,
+            'total_amount' => (float)$result->total_amount,
             'total_count' => $result->total_count,
         ];
     }
@@ -748,8 +759,8 @@ class OrderService
                 'updated_at' => now(),
                 'created_at' => now(),
             ]);
-            $userWallet->increment('amount', $payment['amount']);
-            $customer->increment('balance', $sumAmount);
+            $this->userWalletService->increment($userWallet->id, $payment['amount']);
+            $customer->increment('balance', $sumAmount - $totalSalePrice);
 
             // Create completed order record
             CompletedOrder::create([
@@ -803,5 +814,15 @@ class OrderService
             }
             $stock->decrement('amount', $item['amount']);
         }
+    }
+
+    public function getStatusCompleted()
+    {
+        return StatusService::findByCode('orderCompleted');
+    }
+
+    public function getStatusSubmitted()
+    {
+        return StatusService::findByCode('orderSubmitted');
     }
 }

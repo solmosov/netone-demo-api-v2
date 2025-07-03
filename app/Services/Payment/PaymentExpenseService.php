@@ -20,7 +20,8 @@ class PaymentExpenseService
 
     public function __construct(
         protected readonly UserWalletService $userWalletService,
-    ) {
+    )
+    {
         $this->authUser = Auth::user();
     }
 
@@ -31,23 +32,45 @@ class PaymentExpenseService
         $expenseId = $data['expense_id'] ?? null;
 
         $query = Payment::with('paymentable', 'user', 'wallets', 'status')
-            ->where('paymentable_type', 'App\Models\Expense')
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->orderBy('created_at', 'desc');
+            ->where('payments.paymentable_type', 'App\Models\Expense')
+            ->whereBetween('payments.created_at', [$startDate, $endDate])
+            ->orderBy('payments.created_at', 'desc');
 
         if (!$this->authUser->isAdmin()) {
-            $query->where('user_id', $this->authUser->id);
+            $query->where('payments.user_id', $this->authUser->id);
         }
 
-        // All data
-        $data = $query->get();
+        if ($expenseId) {
+            $recursiveQuery = "
+                WITH RECURSIVE expense_hierarchy AS (
+                    SELECT id FROM expenses WHERE id = ?
+                    UNION ALL
+                    SELECT e.id FROM expenses e INNER JOIN expense_hierarchy eh ON e.parent_id = eh.id
+                )
+                SELECT id FROM expense_hierarchy
+            ";
+            $expenseIds = DB::select($recursiveQuery, [$expenseId]);
+            $allDescendantIds = collect($expenseIds)->pluck('id')->all();
+            $query->whereIn('payments.paymentable_id', $allDescendantIds);
+        }
 
-        // Totals
-        $totals = $this->getTotals($expenseId, [$startDate, $endDate]);
+        // --- CALC TOTALS ---
+        $totalsQuery = $query->clone();
+
+        $totalsQuery->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id');
+
+        $totalsResult = $totalsQuery->reorder()
+            ->selectRaw('COUNT(DISTINCT payments.id) as total_count, SUM(payment_wallet.sum_price) as total_amount')
+            ->first();
+
+        $data = $query->get();
 
         return [
             'data' => $data,
-            'totals' => $totals,
+            'totals' => [
+                'total_count' => (int)($totalsResult->total_count ?? 0),
+                'total_amount' => (float)($totalsResult->total_amount ?? 0),
+            ],
         ];
     }
 
