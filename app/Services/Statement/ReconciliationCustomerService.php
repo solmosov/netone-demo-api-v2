@@ -146,6 +146,7 @@ class ReconciliationCustomerService
             ->withSum('wallets as total_price', 'payment_wallet.sum_price')
             ->where('paymentable_type', 'App\Models\Customer')
             ->where('paymentable_id', $customerId)
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
             ->get();
     }
 
