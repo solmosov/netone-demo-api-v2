@@ -241,7 +241,7 @@ class OrderService
 
                 // Prices
                 $costPrice = $pluckedCostPrice[$productId];
-                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $salePrice = ($pluckIsChangePrice[$productId] && $salePriceAmount) ? $salePriceAmount : $pluckedSalePrice[$productId];
                 $sumCostPrice = $costPrice * $amount;
                 $sumSalePrice = $salePrice * $amount;
 
