@@ -269,31 +269,35 @@ class OrderService
 
             $newOrder->save();
 
-            // Payment
-            $newPayment = new Payment([
-                'user_id' => $authUser->id,
-                'status_id' => $statusDebtCustomer->id,
-            ]);
+            $sumAmount = 0;
 
-            $customer->payments()->save($newPayment);
+            if ($payment['amount'] > 0) {
+                // Payment
+                $newPayment = new Payment([
+                    'user_id' => $authUser->id,
+                    'status_id' => $statusDebtCustomer->id,
+                ]);
 
-            // Sum Amount
-            $sumAmount = $payment['amount'] * $payment['currency_amount'];
+                $customer->payments()->save($newPayment);
 
-            // Wallet Attach
-            $newPayment->wallets()->attach($userWallet->wallet_id, [
-                'amount' => $payment['amount'],
-                'rate_amount' => $payment['currency_amount'],
-                'sum_price' => $sumAmount,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]);
+                // Sum Amount
+                $sumAmount = $payment['amount'] * $payment['currency_amount'];
 
-            // Change User wallet amount
-            $this->userWalletService->increment($userWallet->id, $payment['amount']);
+                // Wallet Attach
+                $newPayment->wallets()->attach($userWallet->wallet_id, [
+                    'amount' => $payment['amount'],
+                    'rate_amount' => $payment['currency_amount'],
+                    'sum_price' => $sumAmount,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
 
-            // Change Customer Balance
-            $customer->increment('balance', $sumAmount);
+                // Change User wallet amount
+                $this->userWalletService->increment($userWallet->id, $payment['amount']);
+
+                // Change Customer Balance
+                $customer->increment('balance', $sumAmount);
+            }
 
             DB::commit();
 
