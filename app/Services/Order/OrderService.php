@@ -517,7 +517,7 @@ class OrderService
                 $orderItem->cost_price = $orderItemCostPrice;
                 $orderItem->sale_price = $orderItemSalePrice;
                 $orderItem->sum_cost_price = $sumCost;
-                $orderItem->sum_sale_price = $sumCost;
+                $orderItem->sum_sale_price = $sumPrice;
                 $orderItem->save();
             }
 
