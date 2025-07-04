@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Customer;
+use App\Models\Status;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,10 +20,24 @@ class OrderFactory extends Factory
     {
         $date = fake()->dateTimeBetween('-1 years', 'now');
 
+        $allOrderStatusCodes = [
+            'orderNew',
+            'orderInProgress',
+            'orderCancel',
+            'orderCompleted',
+            'orderSubmitted',
+            'orderReturned',
+        ];
+
+
+
+
+
+
         return [
             'user_id' => 2,
             'customer_id' => Customer::inRandomOrder()->value('id'),
-            'status_id' => 5,
+            'status_id' => Status::whereIn('code',$allOrderStatusCodes)->inRandomOrder()->value('id'),
             'total_cost_price' => fake()->numberBetween(100000, 10000000),
             'total_sale_price' => fake()->numberBetween(100000, 10000000),
             'ord_code' => 'ORD-' . fake()->unique()->numberBetween(1000, 9999),
