@@ -33,8 +33,8 @@ class PaymentExpenseService
 
         $query = Payment::with('paymentable', 'user', 'wallets', 'status')
             ->where('payments.paymentable_type', 'App\Models\Expense')
-            ->whereBetween('payments.created_at', [$startDate, $endDate])
-            ->orderBy('payments.created_at', 'desc');
+            ->whereBetween('payments.payment_date', [$startDate, $endDate])
+            ->orderBy('payments.payment_date', 'desc');
 
         if (!$this->authUser->isAdmin()) {
             $query->where('payments.user_id', $this->authUser->id);
