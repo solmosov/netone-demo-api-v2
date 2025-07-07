@@ -66,7 +66,7 @@ class ProducerDashboardService
             ->selectRaw('DATE(payments.created_at) as date, SUM(payment_wallet.sum_price) as amount')
             ->where('payments.paymentable_type', 'App\Models\Expense')
             ->where('user_id', $this->authUser->id)
-            ->whereBetween('payments.created_at', $this->weeklyInterval)
+            ->whereBetween('payments.payment_date', $this->weeklyInterval)
             ->groupBy('date')
             ->get();
 
@@ -89,7 +89,7 @@ class ProducerDashboardService
     }
 
 
-    /* 
+    /*
         1. Sale Price
         2. Cost Price
         2. Return Sale Price
