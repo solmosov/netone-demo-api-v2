@@ -40,7 +40,7 @@ class SalesExpenseProfitService
     $expenses = Payment::join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
         ->select(DB::raw("DATE_FORMAT(payments.created_at, '$dateFormat') as $groupBy"), DB::raw('SUM(payment_wallet.sum_price) as total'))
         ->where('payments.paymentable_type', 'App\Models\Expense')
-        ->whereBetween('payments.created_at', [$startDate, $endDate])
+        ->whereBetween('payments.payment_date', [$startDate, $endDate])
         ->groupBy($groupBy)
         ->pluck('total', $groupBy);
 
