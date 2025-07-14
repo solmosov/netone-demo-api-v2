@@ -20,6 +20,8 @@ class ProductStockResource extends JsonResource
             'product' => ProductResource::make($this->whenLoaded('product')),
             'amount_type' => $this->amountType,
             'amount' => (float)$this->amount,
+            'min_amount' => (float) $this->min_amount,
+            'max_amount' => (float) $this->max_amount,
             'percentage' => $this->percentage ? (float)$this->percentage : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
