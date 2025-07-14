@@ -22,7 +22,7 @@ class ProductStockResource extends JsonResource
             'amount' => (float)$this->amount,
             'min_amount' => (float) $this->min_amount,
             'max_amount' => (float) $this->max_amount,
-            'percentage' => $this->percentage ? (float)$this->percentage : null,
+            'percentage' => $this->percentage != null ? (float)$this->percentage : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

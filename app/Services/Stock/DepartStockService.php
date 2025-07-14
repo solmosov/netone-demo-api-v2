@@ -17,6 +17,8 @@ class DepartStockService
         $departId = $data['depart_id'];
         $polkaId = $data['polka_id'];
         $productId = $data['product_id'];
+        $minAmount = $data['min_amount'] ?? null;
+        $maxAmount = $data['max_amount'] ?? null;
 
         // Product
         $product = Product::findOrFail($productId);
@@ -35,6 +37,8 @@ class DepartStockService
                 'polka_id' => $polkaId,
                 'product_id' => $productId,
                 'amount_type_id' => $amountTypeId,
+                'min_amount' => $minAmount,
+                'max_amount' => $maxAmount
             ]);
 
             // Change of Polka Owner
