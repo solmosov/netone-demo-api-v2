@@ -60,9 +60,17 @@ class DepartStockService
         $departId = $queryParams['depart_id'] ?? null;
 
         $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
-            ->selectRaw('depart_stocks.*, SUM(amount * products.sale_price) as total_price')
+            ->selectRaw('*,
+                depart_stocks.*, 
+                SUM(amount * products.sale_price) as total_price,
+                CASE
+                    WHEN max_amount=0 AND min_amount=0 THEN NULL
+                    WHEN max_amount = min_amount THEN 0
+                    ELSE ((amount - min_amount) / (max_amount - min_amount) * 100)
+                END as percentage
+            ')
             ->leftJoin('products', 'depart_stocks.product_id', '=', 'products.id')
-            ->groupBy('depart_stocks.id');;
+            ->groupBy('depart_stocks.id');
 
         if ($departId) {
             $query->where('depart_id', $departId);
