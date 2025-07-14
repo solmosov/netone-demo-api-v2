@@ -17,6 +17,8 @@ class ProductStock extends Model
         'polka_id',
         'amount_type_id',
         'amount',
+        'min_amount',
+        'max_amount',
     ];
 
     public function product(): BelongsTo

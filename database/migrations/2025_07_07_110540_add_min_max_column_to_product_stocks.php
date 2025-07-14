@@ -11,8 +11,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('product_stocks', function (Blueprint $table) {
-            $table->decimal('min_amount');
-            $table->decimal('max_amount');
+            $table->decimal('min_amount')->default(0);
+            $table->decimal('max_amount')->default(0);
         });
     }
 

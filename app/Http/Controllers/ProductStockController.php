@@ -36,7 +36,7 @@ class ProductStockController extends Controller
         // Gate
         Gate::authorize('create', ProductStock::class);
 
-        $newStock = ProductStock::create($request->validated());
+        $newStock = $this->productStockService->create($request->validated());
 
         return response()->json([
             'message' => "Mahsulot zahira polkasi muvaffaqiyatli qo'shildi",
@@ -58,12 +58,12 @@ class ProductStockController extends Controller
     }
 
 
-    public function update(UpdateProductStockRequest $request, ProductStock $productStock)
+    public function update(UpdateProductStockRequest $request, string $id): JsonResponse
     {
         // Gate
         Gate::authorize('update', ProductStock::class);
 
-        $productStock->update($request->validated());
+        $productStock = $this->productStockService->update($request->validated(), (int)$id);
 
         return response()->json([
             'message' => "Mahsulot zahira polkasi muvaffaqiyatli tahrirlandi",
@@ -72,12 +72,12 @@ class ProductStockController extends Controller
     }
 
 
-    public function destroy(ProductStock $productStock): JsonResponse
+    public function destroy(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('delete', ProductStock::class);
 
-        $productStock->delete();
+        $productStock = $this->productStockService->delete((int)$id);
 
         return response()->json([
             'message' => "Mahsulot zahira polkasi muvaffaqiyatli o'chirildi",
