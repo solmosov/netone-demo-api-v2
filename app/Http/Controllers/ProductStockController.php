@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetProductRequest;
+use App\Http\Requests\GetProductStockRequest;
 use App\Models\ProductStock;
 use App\Http\Requests\StoreProductStockRequest;
 use App\Http\Requests\UpdateProductStockRequest;
@@ -14,16 +16,14 @@ class ProductStockController extends Controller
 {
     public function __construct(
         protected ProductStockService $productStockService
-    )
-    {
-    }
+    ) {}
 
-    public function index(): JsonResponse
+    public function index(GetProductStockRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', ProductStock::class);
 
-        $data = $this->productStockService->findAll();
+        $data = $this->productStockService->findAll($request->validated());
 
         return response()->json([
             "data" => ProductStockResource::collection($data),
