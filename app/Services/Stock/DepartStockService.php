@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Department;
+namespace App\Services\Stock;
 
 use App\Exceptions\ServerErrorException;
 use App\Models\DepartStock;
