@@ -19,7 +19,8 @@ class ProductStockResource extends JsonResource
             'polka' => PolkaResource::make($this->whenLoaded('polka')),
             'product' => ProductResource::make($this->whenLoaded('product')),
             'amount_type' => $this->amountType,
-            'amount' => (float) $this->amount,
+            'amount' => (float)$this->amount,
+            'percentage' => $this->percentage ? (float)$this->percentage : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

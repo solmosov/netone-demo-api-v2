@@ -16,7 +16,14 @@ class ProductStockController extends Controller
         // Gate
         Gate::authorize('viewAny', ProductStock::class);
 
-        $data = ProductStock::with('polka', 'product', 'amountType')->get();
+        $data = ProductStock::with('polka', 'product', 'amountType')
+            ->selectRaw('*,
+                CASE
+                    WHEN max_amount=0 AND min_amount=0 THEN NULL
+                    WHEN max_amount = min_amount THEN 0
+                    ELSE ((amount - min_amount) / (max_amount - min_amount) * 100)
+                END as percentage')
+            ->get();
 
         return response()->json([
             "data" => ProductStockResource::collection($data),
@@ -38,7 +45,7 @@ class ProductStockController extends Controller
     }
 
 
-    public function show(string $id)
+    public function show(string $id): JsonResponse
     {
         // Gate
         Gate::authorize('view', ProductStock::class);
