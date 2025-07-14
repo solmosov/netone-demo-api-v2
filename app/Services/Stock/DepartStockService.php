@@ -61,7 +61,6 @@ class DepartStockService
 
         $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
             ->selectRaw('*,
-                depart_stocks.*, 
                 SUM(amount * products.sale_price) as total_price,
                 CASE
                     WHEN max_amount=0 AND min_amount=0 THEN NULL
@@ -81,7 +80,18 @@ class DepartStockService
 
     public function findOne(int $id): DepartStock
     {
-        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])->findOrFail($id);
+        return DepartStock::with(['depart', 'polka', 'amountType', 'product'])
+            ->selectRaw('*,
+                SUM(amount * products.sale_price) as total_price,
+                CASE
+                    WHEN max_amount=0 AND min_amount=0 THEN NULL
+                    WHEN max_amount = min_amount THEN 0
+                    ELSE ((amount - min_amount) / (max_amount - min_amount) * 100)
+                END as percentage
+            ')
+            ->leftJoin('products', 'depart_stocks.product_id', "=", 'products.id')
+            ->groupBy('depart_stocks.id')
+            ->findOrFail($id);
     }
 
     public function delete(int $id): DepartStock
