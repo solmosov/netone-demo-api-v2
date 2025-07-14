@@ -26,6 +26,8 @@ class UpdateProductStockRequest extends FormRequest
     {
         return [
             'polka_id' => 'nullable|numeric|exists:polkas,id',
+            'min_amount' => 'nullable|numeric|min:0|lte:max_amount',
+            'max_amount' => 'nullable|numeric|min:0|gte:min_amount',
         ];
     }
 
