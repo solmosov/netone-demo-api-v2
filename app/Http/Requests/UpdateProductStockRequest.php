@@ -39,13 +39,14 @@ class UpdateProductStockRequest extends FormRequest
 
             $exists = Polka::whereNull('owner_id')->find($polka_id);
 
-            if ($exists) {
+            if (!$exists) {
                 $validator->errors()->add('polka_id', "Bu `$exists->name` polka bo'limga tegishli");
             } else {
                 $productStock = ProductStock::findOrFail($productStockId);
 
                 $exists = ProductStock::where('product_id', $productStock->product_id)
                     ->where('polka_id', $polka_id)
+                    ->whereNot('id', $productStock->id)
                     ->exists();
                 if ($exists) {
                     $validator->errors()->add('polka_id', 'Bu mahsulot va polka zaxirasi allaqachon mavjud. Boshqa polkani tanlang');
