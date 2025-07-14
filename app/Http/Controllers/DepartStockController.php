@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetDepartStockRequest;
 use App\Http\Requests\StoreDepartStockRequest;
 use App\Http\Resources\DepartStockResource;
 use App\Models\DepartStock;
@@ -16,16 +17,12 @@ class DepartStockController extends Controller
         protected DepartStockService $departStockService
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(GetDepartStockRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', DepartStock::class);
 
-        $validated = $request->validate([
-            'depart_id' => 'nullable|integer|exists:departs,id',
-        ]);
-
-        $data = $this->departStockService->findAll($validated);
+        $data = $this->departStockService->findAll($request->validated());  
 
         return response()->json([
             'data' => DepartStockResource::collection($data),

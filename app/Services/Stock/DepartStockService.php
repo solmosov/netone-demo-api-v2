@@ -58,6 +58,8 @@ class DepartStockService
     {
         // Query Params
         $departId = $queryParams['depart_id'] ?? null;
+        $isMin = $queryParams['is_min'] ?? null;
+        $isMax = $queryParams['is_max'] ?? null;
 
         $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
             ->selectRaw('*,
@@ -73,6 +75,14 @@ class DepartStockService
 
         if ($departId) {
             $query->where('depart_id', $departId);
+        }
+
+        if ($isMin) {
+            $query->where('amount', '<=', 'min_amount');
+        }
+
+        if ($isMax) {
+            $query->where('amount', '>=', 'max_amount');
         }
 
         return $query->get();
