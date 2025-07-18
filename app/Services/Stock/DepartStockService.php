@@ -17,8 +17,8 @@ class DepartStockService
         $departId = $data['depart_id'];
         $polkaId = $data['polka_id'];
         $productId = $data['product_id'];
-        $minAmount = $data['min_amount'] ?? null;
-        $maxAmount = $data['max_amount'] ?? null;
+        $minAmount = $data['min_amount'] ?? 0;
+        $maxAmount = $data['max_amount'] ?? 0;
 
         // Product
         $product = Product::findOrFail($productId);
