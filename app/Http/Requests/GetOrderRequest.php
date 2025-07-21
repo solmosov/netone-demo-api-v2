@@ -24,7 +24,7 @@ class GetOrderRequest extends FormRequest
         ];
 
         return [
-            'status' => ['nullable', 'string', 'in:' . implode(',', $allowedStatuses)],
+            'status_code' => ['nullable', 'string', 'in:' . implode(',', $allowedStatuses)],
             'start_date' => 'required|date|date_format:d-m-Y|before_or_equal:endDate',
             'end_date' => 'required|date|date_format:d-m-Y|after_or_equal:startDate',
             'product_category_id' => 'nullable|integer|exists:categories,id',
