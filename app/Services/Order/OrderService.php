@@ -76,17 +76,17 @@ class OrderService
             });
         }
         // Product 
-        if($productId){
+        if ($productId) {
             $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
                 $query->where('id', $productId);
             });
         }
         // Customer
-        if($customerId){
+        if ($customerId) {
             $query->where('customer_id', $customerId);
         }
         // Seller
-        if($sellerId){
+        if ($sellerId) {
             $query->where('user_id', $sellerId);
         }
 
@@ -849,5 +849,71 @@ class OrderService
     public function getStatusSubmitted()
     {
         return StatusService::findByCode('orderSubmitted');
+    }
+
+    // --- PRIVATE HELPER METHODS ---
+    private function calculateOrderTotals($baseQuery, string $startDate, string $endDate)
+    {
+        $totalsQuery = clone $baseQuery;
+
+        $mainTotals = $totalsQuery
+            ->selectRaw('
+            COUNT(*) as total_orders,
+            IFNULL(SUM(total_cost_price), 0) as total_cost_price,
+            IFNULL(SUM(total_sale_price), 0) as total_sale_price,
+            IFNULL(SUM(total_sale_price - total_cost_price), 0) as total_profit
+        ')
+            ->first();
+
+        $statusTotals = $this->getStatusTotals($baseQuery);
+
+        $monthlyTotals = $this->getMonthlyTotals($baseQuery, $startDate, $endDate);
+
+        return [
+            'summary' => [
+                'total_orders' => (int) $mainTotals->total_orders,
+                'total_cost_price' => (float) $mainTotals->total_cost_price,
+                'total_sale_price' => (float) $mainTotals->total_sale_price,
+                'total_profit' => (float) $mainTotals->total_profit,
+                'average_order_value' => $mainTotals->total_orders > 0 ? round($mainTotals->total_sale_price / $mainTotals->total_orders, 2) : 0,
+                'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($mainTotals->total_profit / $mainTotals->total_sale_price) * 100, 2) : 0,
+            ],
+            'by_status' => $statusTotals,
+            'monthly_breakdown' => $monthlyTotals
+        ];
+    }
+
+    private function getStatusTotals($baseQuery)
+    {
+        $statusQuery = clone $baseQuery;
+
+        return $statusQuery->join('status', 'order.status_id', '=', 'statuses.id')
+            ->selectRaw('
+            statuses.name as status_name,
+            statuses.code as statuses_code,
+            COUNT(*) as count,
+            IFNULL(SUM(orders.total_cost_price), 0) as total_cost,
+            IFNULL(SUM(orders.total_sale_price), 0) as total_sales,
+            IFNULL(SUM(orders.total_sale_price - orders.total_cost_price), 0) as total_profit,
+        ')
+            ->groupBy('orders.status_id')
+            ->groupBy('statuses.name')
+            ->groupBy('statuses.code')
+            ->orderBy('total_sales', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'status_name' => $item->status_name,
+                    'status_code' => $item->status_code,
+                    'count' => (int) $item->count,
+                    'total_cost' => (float) $item->total_cost,
+                    'total_sales' => (float) $item->total_sales,
+                    'total_profit' => (float) $item->total_profit,
+                    'average_order_value' => $item->count > 0
+                        ? round($item->total_sales / $item->count, 2)
+                        : 0
+                ];
+            })
+            ->toArray();
     }
 }
