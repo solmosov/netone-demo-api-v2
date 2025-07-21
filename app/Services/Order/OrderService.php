@@ -23,7 +23,6 @@ use App\Services\Utils\DateFormatter;
 use App\Services\Wallet\UserWalletService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
@@ -101,7 +100,7 @@ class OrderService
             ->get();
 
         // Totals
-        $totals = $this->calculateOrderTotals($query, $startDate, $endDate);
+        $totals = $this->calculateOrderTotals($query);
 
         return [
             'data' => $data,
@@ -630,72 +629,6 @@ class OrderService
         }
     }
 
-    private function getTotalsByStatusCode(?string $statusCode, array $dateRange): array
-    {
-        switch ($statusCode) {
-            case 'orderCompleted':
-            case 'orderSubmitted':
-                return $this->getTotalsOrderCompleted($statusCode, $dateRange);
-            default:
-                return $this->getTotalsOrderOther($statusCode, $dateRange);
-        }
-    }
-
-    private function getTotalsOrderCompleted(string $statusCode, array $dateRange): array
-    {
-        $authUser = Auth::user();
-
-        $status = StatusService::findByCode($statusCode);
-
-        $query = DB::table('completed_orders')
-            ->select(
-                DB::raw('SUM(completed_orders.total_sale_price) as total_amount'),
-                DB::raw('COUNT(completed_orders.id) as total_count')
-            )
-            ->whereBetween('completed_orders.updated_at', [$dateRange['start_date'], $dateRange['end_date']])
-            ->where('completed_orders.status_id', $status->id);
-
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float)$result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
-
-    private function getTotalsOrderOther(?string $statusCode, array $dateRange): array
-    {
-        $authUser = Auth::user();
-
-        $query = DB::table('orders')
-            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
-            ->select(
-                DB::raw('SUM(IF(completed_orders.order_id IS NULL, orders.total_sale_price, completed_orders.total_sale_price)) as total_amount'),
-                DB::raw('COUNT(orders.id) as total_count')
-            )
-            ->whereBetween('orders.updated_at', [$dateRange['start_date'], $dateRange['end_date']]);
-
-        // Status When Exist
-        if ($statusCode) {
-            $statusId = StatusService::findByCode($statusCode);
-            $query->where('orders.status_id', $statusId->id);
-        }
-
-        if (!$authUser->isAdmin()) {
-            $query->where('orders.user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float)$result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
 
     /**
      * Create and instantly deliver a POS order (for /pos-order endpoint).
@@ -848,7 +781,7 @@ class OrderService
     }
 
     // --- PRIVATE HELPER METHODS ---
-    private function calculateOrderTotals($baseQuery, string $startDate, string $endDate)
+    private function calculateOrderTotals($baseQuery)
     {
         $totalsQuery = clone $baseQuery;
 
