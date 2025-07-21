@@ -21,6 +21,7 @@ use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use App\Services\Wallet\UserWalletService;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,10 @@ class OrderService
         $statusCode = $queryParams['status'] ?? null;
         $startDate = DateFormatter::format($queryParams['start_date'], 'start');
         $endDate = DateFormatter::format($queryParams['end_date'], 'end');
+        $productCategoryId = $queryParams['product_category_id'] ?? null;
+        $productId = $queryParams['product_id'] ?? null;
+        $customerId = $queryParams['customer_id'] ?? null;
+        $sellerId = $queryParams['seller_id'] ?? null;
 
         // Auth User
         $authUser = Auth::user();
@@ -50,6 +55,7 @@ class OrderService
         );
 
 
+        // Status
         if ($statusCode) {
             $status = StatusService::findByCode($statusCode);
 
@@ -63,6 +69,28 @@ class OrderService
             $query->where('status_id', $status->id);
         }
 
+        // Product Category
+        if ($productCategoryId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productCategoryId) {
+                $query->where('category_id', '=', $productCategoryId);
+            });
+        }
+        // Product 
+        if($productId){
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
+                $query->where('id', $productId);
+            });
+        }
+        // Customer
+        if($customerId){
+            $query->where('customer_id', $customerId);
+        }
+        // Seller
+        if($sellerId){
+            $query->where('user_id', $sellerId);
+        }
+
+        // Only admin
         if (!$authUser->isAdmin()) {
             $query->where('user_id', $authUser->id);
         }
