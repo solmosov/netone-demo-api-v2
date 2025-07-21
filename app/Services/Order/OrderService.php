@@ -35,7 +35,7 @@ class OrderService
     public function findAll(array $queryParams): array
     {
         // Query Params
-        $statusCode = $queryParams['status'] ?? null;
+        $statusCode = $queryParams['status_code'] ?? null;
         $startDate = DateFormatter::format($queryParams['start_date'], 'start');
         $endDate = DateFormatter::format($queryParams['end_date'], 'end');
         $productCategoryId = $queryParams['product_category_id'] ?? null;
@@ -65,38 +65,39 @@ class OrderService
                 $query->with('cancelOrder');
             }
 
-            $query->where('status_id', $status->id);
+            $query->where('orders.status_id', $status->id);
         }
 
         // Product Category
         if ($productCategoryId) {
-            $query->whereHas('orderDetails.product', function (Builder $query) use ($productCategoryId) {
+            $query->whereHas('orders.orderDetails.product', function (Builder $query) use ($productCategoryId) {
                 $query->where('category_id', '=', $productCategoryId);
             });
         }
         // Product 
         if ($productId) {
-            $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
+            $query->whereHas('orders.orderDetails.product', function (Builder $query) use ($productId) {
                 $query->where('id', $productId);
             });
         }
         // Customer
         if ($customerId) {
-            $query->where('customer_id', $customerId);
+            $query->where('orders.customer_id', $customerId);
         }
         // Seller
         if ($sellerId) {
-            $query->where('user_id', $sellerId);
+            $query->where('orders.user_id', $sellerId);
         }
 
         // Only admin
         if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+            $query->where('orders.user_id', $authUser->id);
         }
 
+        $query->whereBetween('orders.created_at', [$startDate, $endDate]);
+
         $data = $query
-            ->orderByDesc('created_at')
-            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderByDesc('orders.created_at')
             ->get();
 
         // Totals
@@ -786,63 +787,39 @@ class OrderService
         $totalsQuery = clone $baseQuery;
 
         $mainTotals = $totalsQuery
+            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
+            ->leftJoin('statuses', 'orders.status_id', '=', 'statuses.id')
             ->selectRaw('
             COUNT(*) as total_orders,
-            IFNULL(SUM(total_cost_price), 0) as total_cost_price,
-            IFNULL(SUM(total_sale_price), 0) as total_sale_price,
-            IFNULL(SUM(total_sale_price - total_cost_price), 0) as total_profit
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_cost_price, 0)
+                    ELSE orders.total_cost_price
+                END
+            ), 0) as total_cost_price,
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_sale_price, 0)
+                    ELSE orders.total_sale_price
+                END
+            ), 0) as total_sale_price
         ')
             ->first();
 
-        $statusTotals = $this->getStatusTotals($baseQuery);
+        // Calculate profit from the retrieved values
+        $totalProfit = $mainTotals->total_sale_price - $mainTotals->total_cost_price;
 
         return [
             'summary' => [
                 'total_orders' => (int) $mainTotals->total_orders,
                 'total_cost_price' => (float) $mainTotals->total_cost_price,
                 'total_sale_price' => (float) $mainTotals->total_sale_price,
-                'total_profit' => (float) $mainTotals->total_profit,
+                'total_profit' => (float) $totalProfit,
                 'average_order_value' => $mainTotals->total_orders > 0 ? round($mainTotals->total_sale_price / $mainTotals->total_orders, 2) : 0,
-                'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($mainTotals->total_profit / $mainTotals->total_sale_price) * 100, 2) : 0,
+                'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($totalProfit / $mainTotals->total_sale_price) * 100, 2) : 0,
             ],
-            'by_status' => $statusTotals,
         ];
-    }
-
-    private function getStatusTotals($baseQuery)
-    {
-        // Get the base conditions from the original query
-        $statusQuery = clone $baseQuery;
-
-        // Clear existing selects and orders
-        $statusQuery->getQuery()->orders = null;
-
-        return $statusQuery
-            ->join('statuses', 'orders.status_id', '=', 'statuses.id')
-            ->select([
-                'statuses.name as status_name',
-                'statuses.code as status_code',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('IFNULL(SUM(orders.total_cost_price), 0) as total_cost'),
-                DB::raw('IFNULL(SUM(orders.total_sale_price), 0) as total_sales'),
-                DB::raw('IFNULL(SUM(orders.total_sale_price - orders.total_cost_price), 0) as total_profit')
-            ])
-            ->groupBy('orders.status_id', 'statuses.name', 'statuses.code')
-            ->orderByDesc(DB::raw('IFNULL(SUM(orders.total_sale_price), 0)'))
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'status_name' => $item->status_name,
-                    'status_code' => $item->status_code,
-                    'count' => (int) $item->count,
-                    'total_cost' => (float) $item->total_cost,
-                    'total_sales' => (float) $item->total_sales,
-                    'total_profit' => (float) $item->total_profit,
-                    'average_order_value' => $item->count > 0
-                        ? round($item->total_sales / $item->count, 2)
-                        : 0
-                ];
-            })
-            ->toArray();
     }
 }
