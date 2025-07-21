@@ -27,26 +27,20 @@ use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    private string|null $startDate = null;
-    private string|null $endDate = null;
-
     public function __construct(
         protected UserWalletService $userWalletService
-    )
-    {
+    ) {}
 
-    }
 
-    public function setDate(string $start, string $end): void
+    public function findAll(array $queryParams): array
     {
-        $this->startDate = DateFormatter::format($start, 'start');
-        $this->endDate = DateFormatter::format($end, 'end');
-    }
+        // Query Params
+        $statusCode = $queryParams['status'] ?? null;
+        $startDate = DateFormatter::format($queryParams['start_date'], 'start');
+        $endDate = DateFormatter::format($queryParams['end_date'], 'end');
 
-    public function findAll($statusCode): array
-    {
         // Auth User
-        $authUser = FacadesAuth::user();
+        $authUser = Auth::user();
 
         // Query
         $query = Order::with(
@@ -75,11 +69,14 @@ class OrderService
 
         $data = $query
             ->orderByDesc('created_at')
-            ->whereBetween('updated_at', [$this->startDate, $this->endDate])
+            ->whereBetween('updated_at', [$startDate, $endDate])
             ->get();
 
         // Totals
-        $totals = $this->getTotalsByStatusCode($statusCode);
+        $totals = $this->getTotalsByStatusCode($statusCode, [
+            "start_date" => $startDate,
+            "end_date" => $endDate
+        ]);
 
         return [
             'data' => $data,
@@ -609,18 +606,18 @@ class OrderService
         }
     }
 
-    private function getTotalsByStatusCode(?string $statusCode): array
+    private function getTotalsByStatusCode(?string $statusCode, array $dateRange): array
     {
         switch ($statusCode) {
             case 'orderCompleted':
             case 'orderSubmitted':
-                return $this->getTotalsOrderCompleted($statusCode);
+                return $this->getTotalsOrderCompleted($statusCode, $dateRange);
             default:
-                return $this->getTotalsOrderOther($statusCode);
+                return $this->getTotalsOrderOther($statusCode, $dateRange);
         }
     }
 
-    private function getTotalsOrderCompleted(string $statusCode): array
+    private function getTotalsOrderCompleted(string $statusCode, array $dateRange): array
     {
         $authUser = Auth::user();
 
@@ -631,7 +628,7 @@ class OrderService
                 DB::raw('SUM(completed_orders.total_sale_price) as total_amount'),
                 DB::raw('COUNT(completed_orders.id) as total_count')
             )
-            ->whereBetween('completed_orders.updated_at', [$this->startDate, $this->endDate])
+            ->whereBetween('completed_orders.updated_at', [$dateRange['start_date'], $dateRange['end_date']])
             ->where('completed_orders.status_id', $status->id);
 
         if (!$authUser->isAdmin()) {
@@ -646,7 +643,7 @@ class OrderService
         ];
     }
 
-    private function getTotalsOrderOther(?string $statusCode): array
+    private function getTotalsOrderOther(?string $statusCode, array $dateRange): array
     {
         $authUser = Auth::user();
 
@@ -656,7 +653,7 @@ class OrderService
                 DB::raw('SUM(IF(completed_orders.order_id IS NULL, orders.total_sale_price, completed_orders.total_sale_price)) as total_amount'),
                 DB::raw('COUNT(orders.id) as total_count')
             )
-            ->whereBetween('orders.updated_at', [$this->startDate, $this->endDate]);
+            ->whereBetween('orders.updated_at', [$dateRange['start_date'], $dateRange['end_date']]);
 
         // Status When Exist
         if ($statusCode) {
