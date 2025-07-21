@@ -101,15 +101,11 @@ class OrderService
             ->get();
 
         // Totals
-        $totals = $this->getTotalsByStatusCode($statusCode, [
-            "start_date" => $startDate,
-            "end_date" => $endDate
-        ]);
+        $totals = $this->calculateOrderTotals($query, $startDate, $endDate);
 
         return [
             'data' => $data,
-            'total_sale_price' => $totals['total_amount'],
-            'total_count' => $totals['total_count'],
+            'totals' => $totals
         ];
     }
 
@@ -867,8 +863,6 @@ class OrderService
 
         $statusTotals = $this->getStatusTotals($baseQuery);
 
-        $monthlyTotals = $this->getMonthlyTotals($baseQuery, $startDate, $endDate);
-
         return [
             'summary' => [
                 'total_orders' => (int) $mainTotals->total_orders,
@@ -879,27 +873,29 @@ class OrderService
                 'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($mainTotals->total_profit / $mainTotals->total_sale_price) * 100, 2) : 0,
             ],
             'by_status' => $statusTotals,
-            'monthly_breakdown' => $monthlyTotals
         ];
     }
 
     private function getStatusTotals($baseQuery)
     {
+        // Get the base conditions from the original query
         $statusQuery = clone $baseQuery;
 
-        return $statusQuery->join('status', 'order.status_id', '=', 'statuses.id')
-            ->selectRaw('
-            statuses.name as status_name,
-            statuses.code as statuses_code,
-            COUNT(*) as count,
-            IFNULL(SUM(orders.total_cost_price), 0) as total_cost,
-            IFNULL(SUM(orders.total_sale_price), 0) as total_sales,
-            IFNULL(SUM(orders.total_sale_price - orders.total_cost_price), 0) as total_profit,
-        ')
-            ->groupBy('orders.status_id')
-            ->groupBy('statuses.name')
-            ->groupBy('statuses.code')
-            ->orderBy('total_sales', 'desc')
+        // Clear existing selects and orders
+        $statusQuery->getQuery()->orders = null;
+
+        return $statusQuery
+            ->join('statuses', 'orders.status_id', '=', 'statuses.id')
+            ->select([
+                'statuses.name as status_name',
+                'statuses.code as status_code',
+                DB::raw('COUNT(*) as count'),
+                DB::raw('IFNULL(SUM(orders.total_cost_price), 0) as total_cost'),
+                DB::raw('IFNULL(SUM(orders.total_sale_price), 0) as total_sales'),
+                DB::raw('IFNULL(SUM(orders.total_sale_price - orders.total_cost_price), 0) as total_profit')
+            ])
+            ->groupBy('orders.status_id', 'statuses.name', 'statuses.code')
+            ->orderByDesc(DB::raw('IFNULL(SUM(orders.total_sale_price), 0)'))
             ->get()
             ->map(function ($item) {
                 return [
