@@ -96,7 +96,7 @@ class OrderService
 
         $data = $query
             ->orderByDesc('created_at')
-            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->whereBetween('created_at', [$startDate, $endDate])
             ->get();
 
         // Totals
