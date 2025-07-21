@@ -70,13 +70,13 @@ class OrderService
 
         // Product Category
         if ($productCategoryId) {
-            $query->whereHas('orders.orderDetails.product', function (Builder $query) use ($productCategoryId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productCategoryId) {
                 $query->where('category_id', '=', $productCategoryId);
             });
         }
         // Product 
         if ($productId) {
-            $query->whereHas('orders.orderDetails.product', function (Builder $query) use ($productId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
                 $query->where('id', $productId);
             });
         }
