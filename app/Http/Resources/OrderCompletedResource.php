@@ -22,7 +22,7 @@ class OrderCompletedResource extends JsonResource
         return [
             'id' => $this->id,
             'total_sale_price' => $totalSalePrice,
-            'total_const_price' => auth()->user()->isAdmin() ? (float)$this->total_cost_price : 0,
+            'total_cost_price' => auth()->user()->isAdmin() ? (float)$this->total_cost_price : 0,
             'customer_old_balance' => $oldBalance,
             'current_debt' => -$totalSalePrice + $oldBalance,
             'comment' => $this->comment,

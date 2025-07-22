@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
+use App\Http\Requests\GetOrderRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreSalePosOrderRequest;
 use App\Http\Requests\UpdateOrderAddProductRequest;
@@ -23,38 +24,18 @@ class OrderController extends Controller
         protected OrderService $orderService
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(GetOrderRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', Order::class);
 
-        // Status
-        $allowedStatuses = [
-            'orderNew',
-            'orderInProgress',
-            'orderCancel',
-            'orderCompleted',
-            'orderSubmitted',
-        ];
-        $validated = $request->validate([
-            'status' => ['nullable', 'string', 'in:' . implode(',', $allowedStatuses)],
-            'startDate' => 'required|date|date_format:d-m-Y|before_or_equal:endDate',
-            'endDate' => 'required|date|date_format:d-m-Y|after_or_equal:startDate',
-        ]);
-
-        $status = $validated['status'] ?? null;
-
-        // Date
-        $this->orderService->setDate($validated['startDate'], $validated['endDate']);
-
         // Fetch Date
-        $result = $this->orderService->findAll($status);
+        $result = $this->orderService->findAll($request->validated());
 
         // Response
         return response()->json([
             'data' => OrderResource::collection($result['data']),
-            'total_sale_price' => $result['total_sale_price'],
-            'total_count' => $result['total_count'],
+            'totals' => $result['totals']
         ]);
     }
 
