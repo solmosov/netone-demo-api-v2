@@ -7,20 +7,19 @@ use App\Events\Customer\CustomerDeletedEvent;
 use App\Events\Customer\CustomerTelegramAddedEvent;
 use App\Events\Customer\CustomerTelegramRemoveEvent;
 use App\Models\Customer;
+use Illuminate\Database\Eloquent\Collection;
 
 class CustomerService
 {
 
-  public function findAll(): array
+  public function findAll(): Collection
   {
-    $data = Customer::all();
+    $data = Customer::with('personCategory')->get();
 
-    return [
-      "data" => $data,
-    ];
+    return $data;
   }
 
-  public function create(array $data)
+  public function create(array $data): Customer
   {
     // New Customer
     $newCustomer = Customer::create($data);
@@ -29,29 +28,24 @@ class CustomerService
     CustomerCreatedEvent::dispatch($newCustomer);
 
     // Finish
-    return [
-      'message' => "Yangi mijoz muvaffaqiyatli qo'shildi!",
-      'data' => $newCustomer,
-    ];
+    return $newCustomer;
   }
 
-  public function findOne(int $id): array
+  public function findOne(int $id): Customer
   {
-    $customer = Customer::findOrFail($id);
+    $customer = Customer::with('personCategory')->findOrFail($id);
 
-    return [
-      'data' => $customer
-    ];
+    return $customer;
   }
 
-  public function update(int $id, array $data)
+  public function update(int $id, array $data): Customer
   {
     // Data
     $phone = $data['phone'] ?? null;
     $telegram = $data['telegram'] ?? null;
 
     // Customer
-    $customer = Customer::findOrFail($id);
+    $customer = Customer::with('personCategory')->findOrFail($id);
 
 
     // Check if Phone and Telegram already exist
@@ -75,15 +69,12 @@ class CustomerService
     // Update
     $customer->update($data);
 
-    return [
-      'message' => "Mijoz muvaffaqiyatli tahrirlandi!",
-      'data' => $customer,
-    ];
+    return $customer;
   }
 
-  public function delete(int $id)
+  public function delete(int $id): Customer
   {
-    $customer = Customer::findOrFail($id);
+    $customer = $this->findOne($id);
 
 
     // Delete Customer
@@ -92,9 +83,6 @@ class CustomerService
     // Event
     CustomerDeletedEvent::dispatch($customer);
 
-    return [
-      'message' => "Mijoz muvaffaqiyatli o'chirildi!",
-      'data' => $customer,
-    ];
+    return $customer;
   }
 }
