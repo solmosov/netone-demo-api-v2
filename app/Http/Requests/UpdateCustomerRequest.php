@@ -36,6 +36,7 @@ class UpdateCustomerRequest extends FormRequest
                 'max:255',
                 Rule::unique('customers', 'telegram')->ignore($this->customer),
             ],
+            'person_category_id' => 'nullable|integer|exists:person_categories,id',
         ];
     }
 

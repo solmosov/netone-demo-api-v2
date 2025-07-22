@@ -75,8 +75,6 @@ class CustomerService
     // Update
     $customer->update($data);
 
-
-
     return [
       'message' => "Mijoz muvaffaqiyatli tahrirlandi!",
       'data' => $customer,
