@@ -19,7 +19,7 @@ class PersonCategoryController extends Controller
     {
         // Gate
         Gate::authorize('viewAny', PersonCategory::class);
-        
+
         $result = $this->personCategoryService->findAll();
 
         return response()->json([
@@ -38,7 +38,7 @@ class PersonCategoryController extends Controller
         return response()->json([
             'message' => "{$result->name} - kategoriya yaratildi",
             'data' => PersonCategoryResource::make($result)
-        ]);
+        ], 201);
     }
 
 
@@ -61,6 +61,7 @@ class PersonCategoryController extends Controller
         Gate::authorize('update', PersonCategory::class);
 
         $result = $this->personCategoryService->update($request->validated(), $id);
+
 
         return response()->json([
             'message' => "{$result->name} - kategoriya yangilandi",

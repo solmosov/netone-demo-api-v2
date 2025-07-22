@@ -3,6 +3,7 @@
 namespace App\Services\Category;
 
 use App\Models\PersonCategory;
+use Illuminate\Database\Eloquent\Collection;
 
 class PersonCategoryService
 {
@@ -10,11 +11,11 @@ class PersonCategoryService
     protected PersonCategory $personCategory
   ) {}
 
-  public function findAll()
+  public function findAll(): Collection
   {
     return $this->personCategory->all();
   }
-  public function findOne($id)
+  public function findOne($id): PersonCategory
   {
     return $this->personCategory->findOrFail($id);
   }
@@ -22,13 +23,16 @@ class PersonCategoryService
   {
     return $this->personCategory->create($data);
   }
-  public function update(array $data, $id)
+  public function update(array $data, $id): PersonCategory
   {
     $personToUpdate = $this->findById($id);
 
-    return $personToUpdate->update($data);
+    $personToUpdate->update($data);
+
+
+    return $personToUpdate;
   }
-  public function delete($id)
+  public function delete($id): PersonCategory
   {
     $personToDelete = $this->findById($id);
 
