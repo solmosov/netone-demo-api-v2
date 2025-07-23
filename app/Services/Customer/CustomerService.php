@@ -12,9 +12,24 @@ use Illuminate\Database\Eloquent\Collection;
 class CustomerService
 {
 
-  public function findAll(): Collection
+  public function findAll(array $queryParams): Collection
   {
-    $data = Customer::with('personCategory')->get();
+    // Query Params
+    $personCategoryId = $queryParams['person_category_id'] ?? null;
+    $startBalance = $queryParams['start_balance'] ?? null;
+    $endBalance = $queryParams['end_balance'] ?? null;
+
+    $query =  Customer::with('personCategory');
+
+    if ($personCategoryId) {
+      $query->where('person_category_id', $personCategoryId);
+    }
+
+    if ($startBalance && $endBalance) {
+      $query->whereBetween('balance', [(float)$startBalance, (float)$endBalance]);
+    }
+
+    $data = $query->get();
 
     return $data;
   }

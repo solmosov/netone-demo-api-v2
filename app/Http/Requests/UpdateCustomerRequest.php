@@ -28,13 +28,13 @@ class UpdateCustomerRequest extends FormRequest
             'phone' => [
                 'nullable',
                 'numeric',
-                Rule::unique('customers', 'phone')->ignore($this->customer),
+                Rule::unique('customers', 'phone')->ignore($this->route('customer')),
             ],
             'telegram' => [
                 'nullable',
                 'string',
                 'max:255',
-                Rule::unique('customers', 'telegram')->ignore($this->customer),
+                Rule::unique('customers', 'telegram')->ignore($this->route('customer')),
             ],
             'person_category_id' => 'nullable|integer|exists:person_categories,id',
         ];

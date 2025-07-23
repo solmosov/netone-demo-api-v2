@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetCustomerRequest;
 use App\Models\Customer;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
@@ -15,12 +16,12 @@ class CustomerController extends Controller
         protected CustomerService $customerService
     ) {}
 
-    public function index()
+    public function index(GetCustomerRequest $request)
     {
         // Gate
         Gate::authorize('viewAny', Customer::class);
 
-        $result = $this->customerService->findAll();
+        $result = $this->customerService->findAll($request->validated());
 
         return response()->json([
             "data" => CustomerResource::collection($result),
