@@ -21,6 +21,7 @@ class CustomerResource extends JsonResource
             "phone" => $this->phone,
             "telegram" => $this->telegram,
             "balance" => (float) $this->balance,
+            "person_category" => PersonCategoryResource::make($this->personCategory),
             "updated_at" => $this->updated_at,
             "created_at" => $this->created_at,
         ];
