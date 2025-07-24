@@ -63,6 +63,11 @@ class OrderController extends Controller
         return response()->json($result);
     }
 
+    public function storePrintingOrder()
+    {
+
+    }
+
 
     public function show(string $id): JsonResponse
     {
