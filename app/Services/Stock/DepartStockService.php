@@ -62,27 +62,28 @@ class DepartStockService
         $isMax = $queryParams['is_max'] ?? null;
 
         $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
-            ->selectRaw('*,
-                SUM(amount * products.sale_price) as total_price,
+        ->select('depart_stocks.*')
+            ->selectRaw('
+                SUM(depart_stocks.amount * products.sale_price) as total_price,
                 CASE
-                    WHEN max_amount=0 AND min_amount=0 THEN NULL
-                    WHEN max_amount = min_amount THEN 0
-                    ELSE ((amount - min_amount) / (max_amount - min_amount) * 100)
+                    WHEN depart_stocks.max_amount=0 AND depart_stocks.min_amount=0 THEN NULL
+                    WHEN depart_stocks.max_amount = depart_stocks.min_amount THEN 0
+                    ELSE ((depart_stocks.amount - depart_stocks.min_amount) / (depart_stocks.max_amount - depart_stocks.min_amount) * 100)
                 END as percentage
             ')
             ->leftJoin('products', 'depart_stocks.product_id', '=', 'products.id')
             ->groupBy('depart_stocks.id');
 
         if ($departId) {
-            $query->where('depart_id', $departId);
+            $query->where('depart_stocks.depart_id', $departId);
         }
 
         if ($isMin) {
-            $query->where('amount', '<=', 'min_amount');
+            $query->where('depart_stocks.amount', '<=', 'depart_stocks.min_amount');
         }
 
         if ($isMax) {
-            $query->where('amount', '>=', 'max_amount');
+            $query->where('depart_stocks.amount', '>=', 'depart_stocks.max_amount');
         }
 
         return $query->get();
