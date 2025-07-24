@@ -27,6 +27,7 @@ require __DIR__ . "/api/common/departStock.php";
 require __DIR__ . "/api/common/depart.php";
 require __DIR__ . "/api/common/producerProductTrans.php";
 require __DIR__ . "/api/common/producerDepartProductTrans.php";
+require __DIR__ . "/api/common/personCategory.php";
 
 // Production
 require __DIR__ . "/api/production/recipe.php";

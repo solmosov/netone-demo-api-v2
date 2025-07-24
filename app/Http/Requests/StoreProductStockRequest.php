@@ -28,7 +28,9 @@ class StoreProductStockRequest extends FormRequest
             'product_id' => 'required|numeric|exists:products,id',
             'polka_id' => 'required|numeric|exists:polkas,id',
             'amount_type_id' => 'required|numeric|exists:amount_types,id',
-            'amount' => 'required|numeric|min:0'
+            'amount' => 'required|numeric|min:0',
+            'min_amount' => 'nullable|numeric|min:0|lte:max_amount',
+            'max_amount' => 'nullable|numeric|min:0|gte:min_amount',
         ];
     }
 

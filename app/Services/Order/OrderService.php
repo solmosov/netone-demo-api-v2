@@ -21,32 +21,30 @@ use App\Services\GenerateOrderCode;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use App\Services\Wallet\UserWalletService;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    private string|null $startDate = null;
-    private string|null $endDate = null;
-
     public function __construct(
         protected UserWalletService $userWalletService
-    )
-    {
+    ) {}
 
-    }
 
-    public function setDate(string $start, string $end): void
+    public function findAll(array $queryParams): array
     {
-        $this->startDate = DateFormatter::format($start, 'start');
-        $this->endDate = DateFormatter::format($end, 'end');
-    }
+        // Query Params
+        $statusCode = $queryParams['status_code'] ?? null;
+        $startDate = DateFormatter::format($queryParams['start_date'], 'start');
+        $endDate = DateFormatter::format($queryParams['end_date'], 'end');
+        $productCategoryId = $queryParams['product_category_id'] ?? null;
+        $productId = $queryParams['product_id'] ?? null;
+        $customerId = $queryParams['customer_id'] ?? null;
+        $sellerId = $queryParams['seller_id'] ?? null;
 
-    public function findAll($statusCode): array
-    {
         // Auth User
-        $authUser = FacadesAuth::user();
+        $authUser = Auth::user();
 
         // Query
         $query = Order::with(
@@ -56,6 +54,7 @@ class OrderService
         );
 
 
+        // Status
         if ($statusCode) {
             $status = StatusService::findByCode($statusCode);
 
@@ -66,25 +65,47 @@ class OrderService
                 $query->with('cancelOrder');
             }
 
-            $query->where('status_id', $status->id);
+            $query->where('orders.status_id', $status->id);
         }
 
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+        // Product Category
+        if ($productCategoryId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productCategoryId) {
+                $query->where('category_id', '=', $productCategoryId);
+            });
         }
+        // Product 
+        if ($productId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
+                $query->where('id', $productId);
+            });
+        }
+        // Customer
+        if ($customerId) {
+            $query->where('orders.customer_id', $customerId);
+        }
+        // Seller
+        if ($sellerId) {
+            $query->where('orders.user_id', $sellerId);
+        }
+
+        // Only admin
+        if (!$authUser->isAdmin()) {
+            $query->where('orders.user_id', $authUser->id);
+        }
+
+        $query->whereBetween('orders.created_at', [$startDate, $endDate]);
 
         $data = $query
-            ->orderByDesc('created_at')
-            ->whereBetween('updated_at', [$this->startDate, $this->endDate])
+            ->orderByDesc('orders.created_at')
             ->get();
 
         // Totals
-        $totals = $this->getTotalsByStatusCode($statusCode);
+        $totals = $this->calculateOrderTotals($query);
 
         return [
             'data' => $data,
-            'total_sale_price' => $totals['total_amount'],
-            'total_count' => $totals['total_count'],
+            'totals' => $totals
         ];
     }
 
@@ -609,72 +630,6 @@ class OrderService
         }
     }
 
-    private function getTotalsByStatusCode(?string $statusCode): array
-    {
-        switch ($statusCode) {
-            case 'orderCompleted':
-            case 'orderSubmitted':
-                return $this->getTotalsOrderCompleted($statusCode);
-            default:
-                return $this->getTotalsOrderOther($statusCode);
-        }
-    }
-
-    private function getTotalsOrderCompleted(string $statusCode): array
-    {
-        $authUser = Auth::user();
-
-        $status = StatusService::findByCode($statusCode);
-
-        $query = DB::table('completed_orders')
-            ->select(
-                DB::raw('SUM(completed_orders.total_sale_price) as total_amount'),
-                DB::raw('COUNT(completed_orders.id) as total_count')
-            )
-            ->whereBetween('completed_orders.updated_at', [$this->startDate, $this->endDate])
-            ->where('completed_orders.status_id', $status->id);
-
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float)$result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
-
-    private function getTotalsOrderOther(?string $statusCode): array
-    {
-        $authUser = Auth::user();
-
-        $query = DB::table('orders')
-            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
-            ->select(
-                DB::raw('SUM(IF(completed_orders.order_id IS NULL, orders.total_sale_price, completed_orders.total_sale_price)) as total_amount'),
-                DB::raw('COUNT(orders.id) as total_count')
-            )
-            ->whereBetween('orders.updated_at', [$this->startDate, $this->endDate]);
-
-        // Status When Exist
-        if ($statusCode) {
-            $statusId = StatusService::findByCode($statusCode);
-            $query->where('orders.status_id', $statusId->id);
-        }
-
-        if (!$authUser->isAdmin()) {
-            $query->where('orders.user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float)$result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
 
     /**
      * Create and instantly deliver a POS order (for /pos-order endpoint).
@@ -824,5 +779,47 @@ class OrderService
     public function getStatusSubmitted()
     {
         return StatusService::findByCode('orderSubmitted');
+    }
+
+    // --- PRIVATE HELPER METHODS ---
+    private function calculateOrderTotals($baseQuery)
+    {
+        $totalsQuery = clone $baseQuery;
+
+        $mainTotals = $totalsQuery
+            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
+            ->leftJoin('statuses', 'orders.status_id', '=', 'statuses.id')
+            ->selectRaw('
+            COUNT(*) as total_orders,
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_cost_price, 0)
+                    ELSE orders.total_cost_price
+                END
+            ), 0) as total_cost_price,
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_sale_price, 0)
+                    ELSE orders.total_sale_price
+                END
+            ), 0) as total_sale_price
+        ')
+            ->first();
+
+        // Calculate profit from the retrieved values
+        $totalProfit = $mainTotals->total_sale_price - $mainTotals->total_cost_price;
+
+        return [
+            'summary' => [
+                'total_orders' => (int) $mainTotals->total_orders,
+                'total_cost_price' => (float) $mainTotals->total_cost_price,
+                'total_sale_price' => (float) $mainTotals->total_sale_price,
+                'total_profit' => (float) $totalProfit,
+                'average_order_value' => $mainTotals->total_orders > 0 ? round($mainTotals->total_sale_price / $mainTotals->total_orders, 2) : 0,
+                'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($totalProfit / $mainTotals->total_sale_price) * 100, 2) : 0,
+            ],
+        ];
     }
 }
