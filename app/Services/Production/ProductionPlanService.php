@@ -49,81 +49,26 @@ class ProductionPlanService
     public function create(array $data): array
     {
         // Req Data
-        $recipeId = $data['recipe_id'];
-        $name = $data['name'];
-        $amount = $data['amount'];
-        $amountTypeId = $data['amount_type_id'];
-        $comment = $data['comment'] ?? null;
+        // $recipeId = $data['recipe_id'];
+        // $name = $data['name'];
+        // $amount = $data['amount'];
+        // $amountTypeId = $data['amount_type_id'];
+        // $comment = $data['comment'] ?? null;
         $planItemList = $data['plan_item_list'];
-
-        // Recipe
-        $recipe = ProductionRecipe::with('recipeItems')->findOrFail($recipeId);
-        $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient', 'id');
-        $pluckRecipeItemProduct = $recipe->recipeItems->pluck('product', 'id');
-
-        // Plan item status
-        $planItemStatus = self::getPlanItemNewStatus();
 
         DB::beginTransaction();
         try {
             // New Production Plan
-            $newProductionPlan = ProductionPlan::create([
-                'recipe_id' => $recipeId,
-                'amount_type_id' => $amountTypeId,
-                'status_id' => self::getNewStatus()->id,
-                'name' => $name,
-                'amount' => $amount,
-                'comment' => $comment
-            ]);
-
-
-            // Plan Items
-            $itemsList = [];
-
-            foreach ($planItemList as $item) {
-                $departId = $item['depart_id'];
-                $recipeItemId = $item['recipe_item_id'];
-
-                $productId = $pluckRecipeItemProduct[$recipeItemId]->id;
-                $itemAmountTypeId = $pluckRecipeItemProduct[$recipeItemId]->price_amount_type_id;
-
-
-                // Recipe
-                $coefficient = $pluckRecipeItemCoefficient[$recipeItemId];
-                $calcAmount = $amount * $coefficient;
-
-                // Depart
-                $departStatus = DepartStatus::where('depart_id', $departId)->firstOrFail();
-
-                $itemsList[] = [
-                    'plan_id' => $newProductionPlan->id,
-                    'depart_id' => $departId,
-                    'recipe_item_id' => $recipeItemId,
-                    'depart_status_id' => $departStatus->id,
-                    'status_id' => $planItemStatus->id,
-                    'product_id' => $productId,
-                    'amount' => $calcAmount,
-                    'amount_type_id' => $itemAmountTypeId,
-                ];
-            }
-
-            $newProductionPlan->planItems()->createMany($itemsList);
-
-            // Send Notifications
-            $departsIds = array_column($planItemList, 'depart_id');
-
-            $departmentUsers = User::whereHas('departs', function($query) use ($departsIds) {
-                $query->whereIn('depart_id',$departsIds);
-            })->get();
-
-            if($departmentUsers->isNotEmpty()){
-                $producer = User::findOrFail(Auth::id());
-
-                broadcast(new ProductionPlanCreated($newProductionPlan, $producer, $departmentUsers));
-            }
+            $newProductionPlan = $this->createWithoutTransaction($data);
 
             // Finish
             DB::commit();
+
+
+            $departsIds = array_column($planItemList, 'depart_id');
+
+            // Send Notifications
+            $this->sendNotificationsToDepartments($newProductionPlan, $departsIds);
 
             return [
                 'message' => "Yangi `$newProductionPlan->name` qo'shildi",
@@ -136,6 +81,71 @@ class ProductionPlanService
                 'code' => 422
             ];
         }
+    }
+
+    public function createWithoutTransaction(array $data)
+    {
+        // Data
+        $recipeId = $data['recipe_id'];
+        $name = $data['name'];
+        $amount = $data['amount'];
+        $amountTypeId = $data['amount_type_id'];
+        $comment = $data['comment'] ?? null;
+        $planItemList = $data['plan_item_list']; // [recipe_item_id, depart_id]
+
+        // Recipe
+        $recipe = ProductionRecipe::with('recipeItems')->findOrFail($recipeId);
+        $pluckRecipeItemCoefficient = $recipe->recipeItems->pluck('coefficient', 'id');
+        $pluckRecipeItemProduct = $recipe->recipeItems->pluck('product', 'id');
+
+
+        // Plan item status
+        $planItemStatus = self::getPlanItemNewStatus();
+
+        // New Production Plan
+        $newProductionPlan = ProductionPlan::create([
+            'recipe_id' => $recipeId,
+            'amount_type_id' => $amountTypeId,
+            'status_id' => self::getNewStatus()->id,
+            'name' => $name,
+            'amount' => $amount,
+            'comment' => $comment
+        ]);
+
+
+        // Plan Items
+        $itemsList = [];
+
+        foreach ($planItemList as $item) {
+            $departId = $item['depart_id'];
+            $recipeItemId = $item['recipe_item_id'];
+
+            $productId = $pluckRecipeItemProduct[$recipeItemId]->id;
+            $itemAmountTypeId = $pluckRecipeItemProduct[$recipeItemId]->price_amount_type_id;
+
+
+            // Recipe
+            $coefficient = $pluckRecipeItemCoefficient[$recipeItemId];
+            $calcAmount = $amount * $coefficient;
+
+            // Depart
+            $departStatus = DepartStatus::where('depart_id', $departId)->firstOrFail();
+
+            $itemsList[] = [
+                'plan_id' => $newProductionPlan->id,
+                'depart_id' => $departId,
+                'recipe_item_id' => $recipeItemId,
+                'depart_status_id' => $departStatus->id,
+                'status_id' => $planItemStatus->id,
+                'product_id' => $productId,
+                'amount' => $calcAmount,
+                'amount_type_id' => $itemAmountTypeId,
+            ];
+        }
+
+        $newProductionPlan->planItems()->createMany($itemsList);
+
+        return $newProductionPlan;
     }
 
     public function findOne(int $id): array
@@ -293,5 +303,18 @@ class ProductionPlanService
     public static function getPlanItemCompletedStatus()
     {
         return StatusService::findByCode('productionPlanDepartCompleted');
+    }
+
+    public function sendNotificationsToDepartments(ProductionPlan $newProductionPlan, array $departsIds): void
+    {
+        $departmentUsers = User::whereHas('departs', function ($query) use ($departsIds) {
+            $query->whereIn('depart_id', $departsIds);
+        })->get();
+
+        if ($departmentUsers->isNotEmpty()) {
+            $producer = User::findOrFail(Auth::id());
+
+            broadcast(new ProductionPlanCreated($newProductionPlan, $producer, $departmentUsers));
+        }
     }
 }
