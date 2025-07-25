@@ -64,18 +64,11 @@ class ProductionPlanService
             // Finish
             DB::commit();
 
-            // Send Notifications
+
             $departsIds = array_column($planItemList, 'depart_id');
 
-            $departmentUsers = User::whereHas('departs', function ($query) use ($departsIds) {
-                $query->whereIn('depart_id', $departsIds);
-            })->get();
-
-            if ($departmentUsers->isNotEmpty()) {
-                $producer = User::findOrFail(Auth::id());
-
-                broadcast(new ProductionPlanCreated($newProductionPlan, $producer, $departmentUsers));
-            }
+            // Send Notifications
+            $this->sendNotificationsToDepartments($newProductionPlan, $departsIds);
 
             return [
                 'message' => "Yangi `$newProductionPlan->name` qo'shildi",
@@ -310,5 +303,18 @@ class ProductionPlanService
     public static function getPlanItemCompletedStatus()
     {
         return StatusService::findByCode('productionPlanDepartCompleted');
+    }
+
+    public function sendNotificationsToDepartments(ProductionPlan $newProductionPlan, array $departsIds): void
+    {
+        $departmentUsers = User::whereHas('departs', function ($query) use ($departsIds) {
+            $query->whereIn('depart_id', $departsIds);
+        })->get();
+
+        if ($departmentUsers->isNotEmpty()) {
+            $producer = User::findOrFail(Auth::id());
+
+            broadcast(new ProductionPlanCreated($newProductionPlan, $producer, $departmentUsers));
+        }
     }
 }
