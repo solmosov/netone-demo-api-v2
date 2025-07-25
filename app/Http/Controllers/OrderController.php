@@ -69,7 +69,7 @@ class OrderController extends Controller
         // Gate
         Gate::authorize('create', Order::class);
 
-        $result = $this->orderService->createSalePrintingOrder($request->validated());
+        $result = $this->orderService->createPrintingOrder($request->validated());
 
         return response()->json([
             'message' => "Yangi retsept va yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",

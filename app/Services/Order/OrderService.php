@@ -272,7 +272,7 @@ class OrderService
         }
     }
 
-    public function createSalePrintingOrder(array $data)
+    public function createPrintingOrder(array $data)
     {
         // Data
         $customerId = $data['customer_id'];
