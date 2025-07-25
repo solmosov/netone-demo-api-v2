@@ -7,7 +7,7 @@ use App\Exceptions\ServerErrorException;
 use App\Http\Requests\GetOrderRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreSalePosOrderRequest;
-use App\Http\Requests\StoreSalesPrintingOrderRequest;
+use App\Http\Requests\StoreOrderPrintingOrderRequest;
 use App\Http\Requests\UpdateOrderAddProductRequest;
 use App\Http\Requests\UpdateOrderCompletedRequest;
 use App\Http\Requests\UpdateOrderSubmittedRequest;
@@ -64,7 +64,7 @@ class OrderController extends Controller
         return response()->json($result);
     }
 
-    public function storePrintingOrder(StoreSalesPrintingOrderRequest $request)
+    public function storePrintingOrder(StoreOrderPrintingOrderRequest $request)
     {
         // Gate
         Gate::authorize('create', Order::class);

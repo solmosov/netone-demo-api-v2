@@ -30,43 +30,17 @@ class ProductionRecipeService
   public function create(array $data)
   {
     // Req Data
-    $name = $data['name'];
-    $out_product_id = $data['out_product_id'];
-    $out_amount_type_id = $data['out_amount_type_id'];
-    $out_amount = $data['out_amount'];
-    $items_list = $data['items_list'];
+    // $name = $data['name'];
+    // $out_product_id = $data['out_product_id'];
+    // $out_amount_type_id = $data['out_amount_type_id'];
+    // $out_amount = $data['out_amount'];
+    // $items_list = $data['items_list'];
 
     DB::beginTransaction();
 
     try {
 
-      // New Recipe
-      $newRecipe = ProductionRecipe::create([
-        "name" => $name,
-        'out_product_id' => $out_product_id,
-        'out_amount_type_id' => $out_amount_type_id,
-        'out_amount' => $out_amount
-      ]);
-
-
-      // Create Recipe Items
-      $list = [];
-      foreach ($items_list as $item) {
-        $product_id = $item['product_id'];
-        $amount = $item['amount'];
-        $amount_type_id = $item['amount_type_id'];
-        $is_change = (bool) $item['is_change'];
-
-        $list[] = [
-          'production_recipe_id' => $newRecipe->id,
-          "product_id" => $product_id,
-          "amount" => $amount,
-          "amount_type_id" => $amount_type_id,
-          'coefficient' => $amount / $out_amount,
-          'is_change' => $is_change,
-        ];
-      }
-      $newRecipe->recipeItems()->createMany($list);
+      $newRecipe = $this->createWithoutTransaction($data);
 
       DB::commit();
 
@@ -174,5 +148,47 @@ class ProductionRecipeService
     $recipe->delete();
 
     return $recipe;
+  }
+
+  // --- HELPER METHODS ---
+  public function createWithoutTransaction(array $data): ProductionRecipe
+  {
+    // Req Data
+    $name = $data['name'];
+    $out_product_id = $data['out_product_id'];
+    $out_amount_type_id = $data['out_amount_type_id'];
+    $out_amount = $data['out_amount'];
+    $items_list = $data['items_list']; // [product_id, amount, amount_type_id, is_change]
+
+    // New Recipe
+    $newRecipe = ProductionRecipe::create([
+      "name" => $name,
+      'out_product_id' => $out_product_id,
+      'out_amount_type_id' => $out_amount_type_id,
+      'out_amount' => $out_amount
+    ]);
+
+
+    // Create Recipe Items
+    $list = [];
+    foreach ($items_list as $item) {
+      $product_id = $item['product_id'];
+      $amount = $item['amount'];
+      $amount_type_id = $item['amount_type_id'];
+      $is_change = (bool) $item['is_change'];
+
+      $list[] = [
+        'production_recipe_id' => $newRecipe->id,
+        "product_id" => $product_id,
+        "amount" => $amount,
+        "amount_type_id" => $amount_type_id,
+        'coefficient' => $amount / $out_amount,
+        'is_change' => $is_change,
+      ];
+    }
+    $newRecipe->recipeItems()->createMany($list);
+
+    // Finish
+    return $newRecipe;
   }
 }

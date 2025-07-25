@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreSalesPrintingOrderRequest extends FormRequest
+class StoreOrderPrintingOrderRequest extends FormRequest
 {
 
     public function authorize(): bool
@@ -17,7 +17,7 @@ class StoreSalesPrintingOrderRequest extends FormRequest
     {
         return [
             'customer_id' => 'required|integer|exists:customers,id',
-            'name' => 'required|string|max:255|unique:production_recipes,name',
+            'recipe_name' => 'required|string|max:255|unique:production_recipes,name',
             'out_product_id' => 'required|integer|exists:products,id',
             'out_amount_type_id' => 'required|integer|exists:amount_types,id',
             'out_amount' => 'required|numeric|min:0.01',

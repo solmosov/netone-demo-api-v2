@@ -18,6 +18,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
+use App\Services\Production\ProductionRecipeService;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
 use App\Services\Wallet\UserWalletService;
@@ -28,7 +29,8 @@ use Illuminate\Support\Facades\DB;
 class OrderService
 {
     public function __construct(
-        protected UserWalletService $userWalletService
+        protected UserWalletService $userWalletService,
+        protected ProductionRecipeService $productionRecipeService
     ) {}
 
 
@@ -337,9 +339,47 @@ class OrderService
     }
 
     public function createSalePrintingOrder(array $data)
-    {   
+    {
         // Data
-        return [];
+        $customerId = $data['customer_id'];
+        $recipeName = $data['recipe_name'];
+        $outProductId = $data['out_product_id'];
+        $outAmountTypeId = $data['out_amount_type_id'];
+        $outAmount = $data['out_amount'];
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id]
+        $description = $data['description'];
+
+        // Recipe Items
+        $recipeItems = [];
+        foreach ($itemsList as $item) {
+            $recipeItems[] = [
+                'product_id' => $item['product_id'],
+                'amount' => $item['amount'],
+                'amount_type_id' => $item['amount_type_id'],
+                'is_change' => $item['is_change'] ?? false,
+            ];
+        }
+
+        // Transaction
+        DB::beginTransaction();
+
+        try {
+            // Create Recipe
+            $this->productionRecipeService->createWithoutTransaction([
+                'name' => $recipeName,
+                'out_product_id' => $outProductId,
+                'out_amount_type_id' => $outAmountTypeId,
+                'out_amount' => $outAmount,
+                'items_list' => $recipeItems
+            ]);
+
+            // Create Order
+            // Create Production Planning
+            // Finish
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+        }
     }
 
     public function findOne(int $id): array
