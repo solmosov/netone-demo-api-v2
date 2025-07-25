@@ -278,7 +278,7 @@ class OrderService
         $outProductId = $data['out_product_id'];
         $outAmountTypeId = $data['out_amount_type_id'];
         $outAmount = $data['out_amount'];
-        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id]
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,sale_price_amount]
         $description = $data['description'];
 
         // Recipe Items
@@ -292,12 +292,23 @@ class OrderService
             ];
         }
 
+        // Order Items
+        $orderItems = [];
+        foreach ($itemsList as $item) {
+            $orderItems[] = [
+                'product_id' => $item['product_id'],
+                'amount_type_id' => $item['amount_type_id'],
+                'amount' => $item['amount'],
+                'sale_price_amount' => $item['sale_price_amount'],
+            ];
+        }
+
         // Transaction
         DB::beginTransaction();
 
         try {
-            // Create Recipe
-            $this->productionRecipeService->createWithoutTransaction([
+            // Create Production Recipe
+            $newProductionRecipe = $this->productionRecipeService->createWithoutTransaction([
                 'name' => $recipeName,
                 'out_product_id' => $outProductId,
                 'out_amount_type_id' => $outAmountTypeId,
@@ -306,7 +317,10 @@ class OrderService
             ]);
 
             // Create Order
+            $createOrder = $this->createWithoutTransaction($orderItems);
+
             // Create Production Planning
+            
             // Finish
         } catch (\Exception $e) {
             DB::rollBack();
@@ -767,7 +781,7 @@ class OrderService
 
         // Req Body
         $customerId = $data['customer_id'];
-        $productList = $data['product_list'];
+        $productList = $data['product_list']; //[product_id, amount_type_id, amount, sale_price_amount]
 
         // New Order status
         $newOrderStatus = StatusService::findByCode('orderNew');

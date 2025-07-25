@@ -27,6 +27,7 @@ class StoreOrderPrintingOrderRequest extends FormRequest
             'items_list.*.amount_type_id' => 'required|integer|exists:amount_types,id',
             'items_list.*.is_change' => 'nullable|boolean',
             'items_list.*.depart_id' => 'required|integer|exists:departs,id',
+            'items_list.*.sale_price_amount' => 'nullable|numeric|min:0',
             'description' => 'nullable|string|max:255'
         ];
     }
