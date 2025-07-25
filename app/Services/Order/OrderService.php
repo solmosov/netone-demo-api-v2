@@ -350,6 +350,10 @@ class OrderService
             // Event
             OrderCreatedEvent::dispatch($newOrder);
 
+            // Send Notifications
+            $departsIds = array_column($itemsList, 'depart_id');
+            $this->productionPlanService->sendNotificationsToDepartments($newProductionPlan, $departsIds);
+
             return [
                 'production_recipe' => $newProductionRecipe,
                 'order' => $newOrder,
