@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
 use App\Http\Requests\GetOrderRequest;
+use App\Http\Requests\StoreOrderPrintingWithExistsRecipe;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreSalePosOrderRequest;
 use App\Http\Requests\StoreOrderPrintingOrderRequest;
@@ -75,6 +76,11 @@ class OrderController extends Controller
             'message' => "Yangi retsept va yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",
             'data' => $result
         ]);
+    }
+
+    public function storePrintingWithExistsRecipe(StoreOrderPrintingWithExistsRecipe $request)
+    {
+        //
     }
 
 

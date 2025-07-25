@@ -365,6 +365,11 @@ class OrderService
         }
     }
 
+    public function createPrintingWithExistsRecipe(array $data)
+    {
+        
+    }
+    
     public function findOne(int $id): array
     {
         // Auth User
