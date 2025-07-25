@@ -18,6 +18,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
+use App\Services\Production\ProductionPlanService;
 use App\Services\Production\ProductionRecipeService;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
@@ -30,7 +31,8 @@ class OrderService
 {
     public function __construct(
         protected UserWalletService $userWalletService,
-        protected ProductionRecipeService $productionRecipeService
+        protected ProductionRecipeService $productionRecipeService,
+        protected ProductionPlanService $productionPlanService
     ) {}
 
 
@@ -283,23 +285,23 @@ class OrderService
 
         // Recipe Items
         $recipeItems = [];
-        foreach ($itemsList as $item) {
+        foreach ($itemsList as $recipeItem) {
             $recipeItems[] = [
-                'product_id' => $item['product_id'],
-                'amount' => $item['amount'],
-                'amount_type_id' => $item['amount_type_id'],
-                'is_change' => $item['is_change'] ?? false,
+                'product_id' => $recipeItem['product_id'],
+                'amount' => $recipeItem['amount'],
+                'amount_type_id' => $recipeItem['amount_type_id'],
+                'is_change' => $recipeItem['is_change'] ?? false,
             ];
         }
 
         // Order Items
         $orderItems = [];
-        foreach ($itemsList as $item) {
+        foreach ($itemsList as $recipeItem) {
             $orderItems[] = [
-                'product_id' => $item['product_id'],
-                'amount_type_id' => $item['amount_type_id'],
-                'amount' => $item['amount'],
-                'sale_price_amount' => $item['sale_price_amount'],
+                'product_id' => $recipeItem['product_id'],
+                'amount_type_id' => $recipeItem['amount_type_id'],
+                'amount' => $recipeItem['amount'],
+                'sale_price_amount' => $recipeItem['sale_price_amount'],
             ];
         }
 
@@ -317,11 +319,42 @@ class OrderService
             ]);
 
             // Create Order
-            $createOrder = $this->createWithoutTransaction($orderItems);
+            $newOrder = $this->createWithoutTransaction([
+                'customer_id'  => $customerId,
+                'product_list' => $orderItems
+            ]);
 
             // Create Production Planning
-            
+            $productionPlanItems = [];
+            foreach ($newProductionRecipe->recipeItems as $index => $recipeItem) {
+                $departId = $itemsList[$index]['depart_id'];
+
+                $productionPlanItems[] = [
+                    'recipe_item_id' => $recipeItem->id,
+                    'depart_id' => $departId
+                ];
+            }
+            $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
+                'recipe_id' => $newProductionRecipe->id,
+                'name' => $recipeName,
+                'amount' => $outAmount,
+                'amount_type_id' => $outAmountTypeId,
+                'comment' => $description,
+                'plan_item_list' => $productionPlanItems,
+            ]);
+
+
             // Finish
+            DB::commit();
+
+            // Event
+            OrderCreatedEvent::dispatch($newOrder);
+
+            return [
+                'production_recipe' => $newProductionRecipe,
+                'order' => $newOrder,
+                'production_pan' => $newProductionPlan,
+            ];
         } catch (\Exception $e) {
             DB::rollBack();
             throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
