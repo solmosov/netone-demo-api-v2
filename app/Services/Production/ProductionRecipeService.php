@@ -188,6 +188,10 @@ class ProductionRecipeService
     }
     $newRecipe->recipeItems()->createMany($list);
 
+
+    // Load items
+    $newRecipe->load('recipeItems');
+
     // Finish
     return $newRecipe;
   }
