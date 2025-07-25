@@ -336,6 +336,12 @@ class OrderService
         }
     }
 
+    public function createSalePrintingOrder(array $data)
+    {   
+        // Data
+        return [];
+    }
+
     public function findOne(int $id): array
     {
         // Auth User

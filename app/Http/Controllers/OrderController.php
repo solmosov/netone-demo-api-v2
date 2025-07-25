@@ -7,6 +7,7 @@ use App\Exceptions\ServerErrorException;
 use App\Http\Requests\GetOrderRequest;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreSalePosOrderRequest;
+use App\Http\Requests\StoreSalesPrintingOrderRequest;
 use App\Http\Requests\UpdateOrderAddProductRequest;
 use App\Http\Requests\UpdateOrderCompletedRequest;
 use App\Http\Requests\UpdateOrderSubmittedRequest;
@@ -63,9 +64,17 @@ class OrderController extends Controller
         return response()->json($result);
     }
 
-    public function storePrintingOrder()
+    public function storePrintingOrder(StoreSalesPrintingOrderRequest $request)
     {
+        // Gate
+        Gate::authorize('create', Order::class);
 
+        $result = $this->orderService->createSalePrintingOrder($request->validated());
+
+        return response()->json([
+            'message' => "Yangi retsept va yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",
+            'data' => $result
+        ]);
     }
 
 
