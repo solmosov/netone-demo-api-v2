@@ -17,7 +17,6 @@ use App\Http\Resources\OrderShowResource;
 use App\Models\Order;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller

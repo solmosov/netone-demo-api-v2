@@ -18,6 +18,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
+use App\Services\Product\ProductService;
 use App\Services\Production\ProductionPlanService;
 use App\Services\Production\ProductionRecipeService;
 use App\Services\Status\StatusService;
@@ -32,7 +33,8 @@ class OrderService
     public function __construct(
         protected UserWalletService $userWalletService,
         protected ProductionRecipeService $productionRecipeService,
-        protected ProductionPlanService $productionPlanService
+        protected ProductionPlanService $productionPlanService,
+        protected ProductService $productService
     ) {}
 
 
@@ -280,28 +282,31 @@ class OrderService
         $outProductId = $data['out_product_id'];
         $outAmountTypeId = $data['out_amount_type_id'];
         $outAmount = $data['out_amount'];
-        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,sale_price_amount]
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,?sale_price_amount]
         $description = $data['description'];
 
         // Recipe Items
         $recipeItems = [];
-        foreach ($itemsList as $recipeItem) {
+        foreach ($itemsList as $item) {
             $recipeItems[] = [
-                'product_id' => $recipeItem['product_id'],
-                'amount' => $recipeItem['amount'],
-                'amount_type_id' => $recipeItem['amount_type_id'],
-                'is_change' => $recipeItem['is_change'] ?? false,
+                'product_id' => $item['product_id'],
+                'amount' => $item['amount'],
+                'amount_type_id' => $item['amount_type_id'],
+                'is_change' => $item['is_change'] ?? false,
             ];
         }
 
         // Order Items
         $orderItems = [];
-        foreach ($itemsList as $recipeItem) {
+        foreach ($itemsList as $item) {
+            $product = $this->productService->findOne($item['product_id']);
+            $salePriceAmount = $item['sale_price_amount'] ?? $product->sale_price;
+
             $orderItems[] = [
-                'product_id' => $recipeItem['product_id'],
-                'amount_type_id' => $recipeItem['amount_type_id'],
-                'amount' => $recipeItem['amount'],
-                'sale_price_amount' => $recipeItem['sale_price_amount'],
+                'product_id' => $item['product_id'],
+                'amount_type_id' => $item['amount_type_id'],
+                'amount' => $item['amount'],
+                'sale_price_amount' => $salePriceAmount,
             ];
         }
 
@@ -326,11 +331,11 @@ class OrderService
 
             // Create Production Planning
             $productionPlanItems = [];
-            foreach ($newProductionRecipe->recipeItems as $index => $recipeItem) {
+            foreach ($newProductionRecipe->recipeItems as $index => $item) {
                 $departId = $itemsList[$index]['depart_id'];
 
                 $productionPlanItems[] = [
-                    'recipe_item_id' => $recipeItem->id,
+                    'recipe_item_id' => $item->id,
                     'depart_id' => $departId
                 ];
             }
@@ -367,9 +372,54 @@ class OrderService
 
     public function createPrintingWithExistsRecipe(array $data)
     {
-        
+        // Data
+        $customerId = $data['customer_id'];
+        $recipeId = $data['recipe_id'];
+        $itemsList = $data['items_list']; //[recipe_id,depart_id,?sale_price_amount]
+        $description = $data['description'];
+
+        // Find Production Recipe
+        $currentRecipe = $this->productionRecipeService->findOne($recipeId);
+
+        // Order Items
+        $orderItems = [];
+        foreach ($currentRecipe as $index => $recipeItem) {
+            $salePriceAmount = $itemsList[$index]['recipe_id'] === $recipeItem->id
+                ? $itemsList[$index]['sale_price_amount']
+                : null;
+            if (!$salePriceAmount) {
+                $salePriceAmount =  $recipeItem->product->sale_price;
+            }
+
+            $orderItems[] = [
+                'product_id' => $recipeItem->product_id,
+                'amount_type_id' => $recipeItem->amount_type_id,
+                'amount' => $recipeItem->amount,
+                'sale_price_amount' => $salePriceAmount,
+            ];
+        }
+
+        // Transaction
+        DB::beginTransaction();
+
+
+        try {
+            // Create Order
+            $newOrder = $this->createWithoutTransaction([
+                'customer_id'  => $customerId,
+                'product_list' => $orderItems
+            ]);
+
+            // Create Production Planning
+
+            // Finish
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+        }
     }
-    
+
     public function findOne(int $id): array
     {
         // Auth User
