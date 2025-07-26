@@ -302,6 +302,10 @@ class OrderService
             $product = $this->productService->findOne($item['product_id']);
             $salePriceAmount = $item['sale_price_amount'] ?? $product->sale_price;
 
+            if (!$product->is_change_price) {
+                $salePriceAmount = $product->sale_price;
+            }
+
             $orderItems[] = [
                 'product_id' => $item['product_id'],
                 'amount_type_id' => $item['amount_type_id'],
@@ -375,27 +379,40 @@ class OrderService
         // Data
         $customerId = $data['customer_id'];
         $recipeId = $data['recipe_id'];
+        $planAmount = $data['plan_amount'];
+        $planAmountTypeId = $data['plan_amount_type_id'];
         $itemsList = $data['items_list']; //[recipe_id,depart_id,?sale_price_amount]
         $description = $data['description'];
 
         // Find Production Recipe
-        $currentRecipe = $this->productionRecipeService->findOne($recipeId);
+        $productionRecipe = $this->productionRecipeService->findOne($recipeId);
 
         // Order Items
         $orderItems = [];
-        foreach ($currentRecipe as $index => $recipeItem) {
-            $salePriceAmount = $itemsList[$index]['recipe_id'] === $recipeItem->id
-                ? $itemsList[$index]['sale_price_amount']
-                : null;
-            if (!$salePriceAmount) {
-                $salePriceAmount =  $recipeItem->product->sale_price;
+        foreach ($productionRecipe as $recipeItem) {
+            $departId = null;
+
+            if ($recipeItem->product->is_change_price) {
+                $found_item = null;
+
+                foreach ($itemsList as $item) {
+                    if ($item['recipe_id'] === $recipeItem->id) {
+                        $found_item = $item;
+                        break;
+                    }
+                }
+
+                $departId = $found_item['sale_price_amount'] ?? $recipeItem->product->sale_price;
+            } else {
+                $departId = $recipeItem->product->sale_price;
             }
+
 
             $orderItems[] = [
                 'product_id' => $recipeItem->product_id,
                 'amount_type_id' => $recipeItem->amount_type_id,
                 'amount' => $recipeItem->amount,
-                'sale_price_amount' => $salePriceAmount,
+                'sale_price_amount' => $departId,
             ];
         }
 
@@ -411,9 +428,48 @@ class OrderService
             ]);
 
             // Create Production Planning
+            $productionPlanItems = [];
+            foreach ($productionRecipe->recipeItems as $recipeItem) {
+                $departId = null;
+
+                foreach ($itemsList as $item) {
+                    if ($item['recipe_id'] === $recipeItem->id) {
+                        $departId = $item['depart_id'];
+                        break;
+                    }
+                }
+
+                $productionPlanItems[] = [
+                    'recipe_item_id' => $recipeItem->id,
+                    'depart_id' => $departId,
+                ];
+            }
+
+            $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
+                'recipe_id' => $productionRecipe->id,
+                'name' => $productionRecipe->name,
+                'amount' => $planAmount,
+                'amount_type_id' => $planAmountTypeId,
+                'comment' => $description,
+                'plan_item_list' => $productionPlanItems
+            ]);
 
             // Finish
             DB::commit();
+
+            // Event
+            OrderCreatedEvent::dispatch($newOrder);
+
+            // Send Notifications
+            $departsIds = array_column($itemsList, 'depart_id');
+            $this->productionPlanService->sendNotificationsToDepartments($newProductionPlan, $departsIds);
+
+
+            return [
+                'production_recipe' => $productionRecipe,
+                'order' => $newOrder,
+                'production_pan' => $newProductionPlan,
+            ];
         } catch (\Exception $e) {
             DB::rollBack();
             throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);

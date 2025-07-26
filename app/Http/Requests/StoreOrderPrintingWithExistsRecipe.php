@@ -20,6 +20,8 @@ class StoreOrderPrintingWithExistsRecipe extends FormRequest
         return [
             'customer_id' => 'required|integer|exists:customers,id',
             'recipe_id' => 'required|integer|exists:production_recipes,id',
+            'plan_amount' => 'required|numeric|min:0',
+            'plan_amount_type_id'  => 'required|integer|exists:amount_types,id',
             'items_list' => 'required|array',
             'items_list.*.recipe_item_id' => 'required|integer|exists:products,id',
             'items_list.*.depart_id' => 'required|integer|exists:departs,id',
