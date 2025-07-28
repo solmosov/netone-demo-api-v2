@@ -395,7 +395,7 @@ class OrderService
         // Order Items
         $orderItems = [];
         foreach ($productionRecipe->recipeItems as $recipeItem) {
-            $departId = null;
+            $salePriceAmount = null;
             $amountTypeId = null;
             $amount = null;
 
@@ -411,14 +411,14 @@ class OrderService
                     }
                 }
 
-                $departId = $found_item['sale_price_amount'] ?? $recipeItem->product->sale_price;
+                $salePriceAmount = $found_item['sale_price_amount'] ?? $recipeItem->product->sale_price;
 
                 if ($found_index && $found_item && isset($itemsList[$found_index])) {
                     $amountTypeId = $itemsList[$found_index]['order_amount_type_id'];
                     $amount = $itemsList[$found_index]['order_amount'];
                 }
             } else {
-                $departId = $recipeItem->product->sale_price;
+                $salePriceAmount = $recipeItem->product->sale_price;
             }
 
 
@@ -426,7 +426,7 @@ class OrderService
                 'product_id' => $recipeItem->product_id,
                 'amount_type_id' => $amountTypeId,
                 'amount' => $amount,
-                'sale_price_amount' => $departId,
+                'sale_price_amount' => $salePriceAmount,
             ];
         }
 
@@ -444,18 +444,18 @@ class OrderService
             // Create Production Planning
             $productionPlanItems = [];
             foreach ($productionRecipe->recipeItems as $recipeItem) {
-                $departId = null;
+                $salePriceAmount = null;
 
                 foreach ($itemsList as $item) {
                     if ($item['recipe_item_id'] === $recipeItem->id) {
-                        $departId = $item['depart_id'];
+                        $salePriceAmount = $item['depart_id'];
                         break;
                     }
                 }
 
                 $productionPlanItems[] = [
                     'recipe_item_id' => $recipeItem->id,
-                    'depart_id' => $departId,
+                    'depart_id' => $salePriceAmount,
                 ];
             }
 
