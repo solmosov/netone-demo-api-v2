@@ -286,8 +286,8 @@ class OrderService
         // plan amount
         $planAmount = $data['plan_amount'];
         $planAmountTypeId = $data['plan_amount_type_id'];
-        
-        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,order_amount,order_amount_type_id?sale_price_amount]
+
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id?sale_price_amount]
         $description = $data['description'];
 
         // Recipe Items
@@ -295,8 +295,8 @@ class OrderService
         foreach ($itemsList as $item) {
             $recipeItems[] = [
                 'product_id' => $item['product_id'],
-                'amount' => $item['order_amount'],
-                'amount_type_id' => $item['order_amount_type_id'],
+                'amount' => $item['amount'],
+                'amount_type_id' => $item['amount_type_id'],
                 'is_change' => $item['is_change'] ?? false,
             ];
         }
@@ -386,7 +386,7 @@ class OrderService
         $recipeId = $data['recipe_id'];
         $planAmount = $data['plan_amount'];
         $planAmountTypeId = $data['plan_amount_type_id'];
-        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,?sale_price_amount]
+        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,order_amount,order_amount_type_id?sale_price_amount]
         $description = $data['description'];
 
         // Find Production Recipe
@@ -396,18 +396,27 @@ class OrderService
         $orderItems = [];
         foreach ($productionRecipe->recipeItems as $recipeItem) {
             $departId = null;
+            $amountTypeId = null;
+            $amount = null;
 
             if ($recipeItem->product->is_change_price) {
                 $found_item = null;
+                $found_index = null;
 
-                foreach ($itemsList as $item) {
+                foreach ($itemsList as $index => $item) {
                     if ($item['recipe_item_id'] === $recipeItem->id) {
                         $found_item = $item;
+                        $found_index = $index;
                         break;
                     }
                 }
 
                 $departId = $found_item['sale_price_amount'] ?? $recipeItem->product->sale_price;
+
+                if ($found_index && $found_item && isset($itemsList[$found_index])) {
+                    $amountTypeId = $itemsList[$found_index]['order_amount_type_id'];
+                    $amount = $item[$found_index]['order_amount'];
+                }
             } else {
                 $departId = $recipeItem->product->sale_price;
             }
@@ -415,8 +424,8 @@ class OrderService
 
             $orderItems[] = [
                 'product_id' => $recipeItem->product_id,
-                'amount_type_id' => $recipeItem->amount_type_id,
-                'amount' => $recipeItem->amount,
+                'amount_type_id' => $amountTypeId,
+                'amount' => $amount,
                 'sale_price_amount' => $departId,
             ];
         }
