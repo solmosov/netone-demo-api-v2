@@ -279,9 +279,14 @@ class OrderService
         // Data
         $customerId = $data['customer_id'];
         $recipeName = $data['recipe_name'];
-        $outProductId = $data['out_product_id'];
-        $outAmountTypeId = $data['out_amount_type_id'];
-        $outAmount = $data['out_amount'];
+        $outProductId = $data['recipe_out_product_id'];
+        // out amount
+        $outAmountTypeId = $data['recipe_out_amount_type_id'];
+        $outAmount = $data['recipe_out_amount'];
+        // plan amount
+        $planAmount = $data['plan_amount'];
+        $planAmountTypeId = $data['plan_amount_type_id'];
+        
         $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,?sale_price_amount]
         $description = $data['description'];
 
@@ -346,8 +351,8 @@ class OrderService
             $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
                 'recipe_id' => $newProductionRecipe->id,
                 'name' => $recipeName,
-                'amount' => $outAmount,
-                'amount_type_id' => $outAmountTypeId,
+                'amount' => $planAmount,
+                'amount_type_id' => $planAmountTypeId,
                 'comment' => $description,
                 'plan_item_list' => $productionPlanItems,
             ]);
