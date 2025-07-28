@@ -21,7 +21,7 @@ class StoreOrderPrintingOrderRequest extends FormRequest
             'recipe_out_product_id' => 'required|integer|exists:products,id',
             'recipe_out_amount_type_id' => 'required|integer|exists:amount_types,id',
             'recipe_out_amount' => 'required|numeric|min:0.01',
-            'plan_amount' => 'required|number|min:0.01',
+            'plan_amount' => 'required|numeric|min:0.01',
             'plan_amount_type_id' => 'required|integer|exists:amount_types,id',
             'items_list' => 'required|array',
             'items_list.*.product_id' => 'required|integer|exists:products,id',

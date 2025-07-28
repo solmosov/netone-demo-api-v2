@@ -287,7 +287,7 @@ class OrderService
         $planAmount = $data['plan_amount'];
         $planAmountTypeId = $data['plan_amount_type_id'];
         
-        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,?sale_price_amount]
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id,order_amount,order_amount_type_id?sale_price_amount]
         $description = $data['description'];
 
         // Recipe Items
@@ -295,8 +295,8 @@ class OrderService
         foreach ($itemsList as $item) {
             $recipeItems[] = [
                 'product_id' => $item['product_id'],
-                'amount' => $item['amount'],
-                'amount_type_id' => $item['amount_type_id'],
+                'amount' => $item['order_amount'],
+                'amount_type_id' => $item['order_amount_type_id'],
                 'is_change' => $item['is_change'] ?? false,
             ];
         }

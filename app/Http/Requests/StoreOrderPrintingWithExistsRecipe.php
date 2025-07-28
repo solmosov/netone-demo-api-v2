@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Models\RecipeItems;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreOrderPrintingWithExistsRecipe extends FormRequest
 {
@@ -25,8 +25,25 @@ class StoreOrderPrintingWithExistsRecipe extends FormRequest
             'items_list' => 'required|array',
             'items_list.*.recipe_item_id' => 'required|integer|exists:recipe_items,id',
             'items_list.*.depart_id' => 'required|integer|exists:departs,id',
+            'items_list.*.order_amount' => 'required|numeric|min:0',
+            'items_list.*.order_amount_type_id' => 'required|integer|exists:amount_types,id',
             'items_list.*.sale_price_amount' => 'nullable|numeric|min:0',
             'description' => 'nullable|string|max:255'
         ];
+    }
+
+    public function withValidator(Validator $validator)
+    {
+        $validator->after(function ($validator) {
+            $recipeId = $this->input('recipe_id');
+            $items_list = $this->input('items_list');
+            
+            foreach ($items_list as $index => $item) {
+                $exists = RecipeItems::where('production_recipe_id', $recipeId)->find($item['recipe_item_id']);
+                if (!$exists) {
+                    $validator->errors()->add("items_list.{$index}.recipe_item_id", "Retsept mahsuloti noto'g'ri tanlandi");
+                }
+            }
+        });
     }
 }
