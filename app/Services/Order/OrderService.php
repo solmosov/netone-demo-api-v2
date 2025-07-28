@@ -415,7 +415,7 @@ class OrderService
 
                 if ($found_index && $found_item && isset($itemsList[$found_index])) {
                     $amountTypeId = $itemsList[$found_index]['order_amount_type_id'];
-                    $amount = $item[$found_index]['order_amount'];
+                    $amount = $itemsList[$found_index]['order_amount'];
                 }
             } else {
                 $departId = $recipeItem->product->sale_price;
