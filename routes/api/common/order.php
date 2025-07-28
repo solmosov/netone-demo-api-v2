@@ -8,6 +8,7 @@ Route::group(['prefix' => 'orders', 'middleware' => ['auth:sanctum']], function 
     Route::post('/', action: [OrderController::class, 'store']);
     Route::post('/sale-pos', [OrderController::class, 'storeSalePos']);
     Route::post('/printing-order', [OrderController::class, 'storePrintingOrder']);
+    Route::post('/printing-order-exist-recipe', [OrderController::class, 'storePrintingWithExistsRecipe']);
     Route::get('/{id}', [OrderController::class, 'show']);
     Route::put('/{id}/confirm', [OrderController::class, 'confirm']);
     Route::put('/{id}/add-product', [OrderController::class, 'addProduct']);

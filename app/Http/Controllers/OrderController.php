@@ -79,7 +79,15 @@ class OrderController extends Controller
 
     public function storePrintingWithExistsRecipe(StoreOrderPrintingWithExistsRecipe $request)
     {
-        //
+        // Gate
+        Gate::authorize('create', Order::class);
+
+        $result = $this->orderService->createPrintingWithExistsRecipe($request->validated());
+
+        return response()->json([
+            'message' => "Yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",
+            'data' => $result
+        ]);
     }
 
 

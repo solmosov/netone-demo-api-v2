@@ -381,7 +381,7 @@ class OrderService
         $recipeId = $data['recipe_id'];
         $planAmount = $data['plan_amount'];
         $planAmountTypeId = $data['plan_amount_type_id'];
-        $itemsList = $data['items_list']; //[recipe_id,depart_id,?sale_price_amount]
+        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,?sale_price_amount]
         $description = $data['description'];
 
         // Find Production Recipe
@@ -389,14 +389,14 @@ class OrderService
 
         // Order Items
         $orderItems = [];
-        foreach ($productionRecipe as $recipeItem) {
+        foreach ($productionRecipe->recipeItems as $recipeItem) {
             $departId = null;
 
             if ($recipeItem->product->is_change_price) {
                 $found_item = null;
 
                 foreach ($itemsList as $item) {
-                    if ($item['recipe_id'] === $recipeItem->id) {
+                    if ($item['recipe_item_id'] === $recipeItem->id) {
                         $found_item = $item;
                         break;
                     }
@@ -433,7 +433,7 @@ class OrderService
                 $departId = null;
 
                 foreach ($itemsList as $item) {
-                    if ($item['recipe_id'] === $recipeItem->id) {
+                    if ($item['recipe_item_id'] === $recipeItem->id) {
                         $departId = $item['depart_id'];
                         break;
                     }
