@@ -145,6 +145,8 @@ class ProductionPlanService
 
         $newProductionPlan->planItems()->createMany($itemsList);
 
+        $newProductionPlan->load('planItems');
+        
         return $newProductionPlan;
     }
 

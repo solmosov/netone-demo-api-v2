@@ -386,60 +386,17 @@ class OrderService
         $recipeId = $data['recipe_id'];
         $planAmount = $data['plan_amount'];
         $planAmountTypeId = $data['plan_amount_type_id'];
-        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,order_amount,order_amount_type_id?sale_price_amount]
+        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,?sale_price_amount]
         $description = $data['description'];
 
         // Find Production Recipe
         $productionRecipe = $this->productionRecipeService->findOne($recipeId);
-
-        // Order Items
-        $orderItems = [];
-        foreach ($productionRecipe->recipeItems as $recipeItem) {
-            $salePriceAmount = null;
-            $amountTypeId = null;
-            $amount = null;
-
-            if ($recipeItem->product->is_change_price) {
-                $found_item = null;
-                $found_index = null;
-
-                foreach ($itemsList as $index => $item) {
-                    if ($item['recipe_item_id'] === $recipeItem->id) {
-                        $found_item = $item;
-                        $found_index = $index;
-                        break;
-                    }
-                }
-
-                $salePriceAmount = $found_item['sale_price_amount'] ?? $recipeItem->product->sale_price;
-
-                if ($found_index && $found_item && isset($itemsList[$found_index])) {
-                    $amountTypeId = $itemsList[$found_index]['order_amount_type_id'];
-                    $amount = $itemsList[$found_index]['order_amount'];
-                }
-            } else {
-                $salePriceAmount = $recipeItem->product->sale_price;
-            }
-
-
-            $orderItems[] = [
-                'product_id' => $recipeItem->product_id,
-                'amount_type_id' => $amountTypeId,
-                'amount' => $amount,
-                'sale_price_amount' => $salePriceAmount,
-            ];
-        }
 
         // Transaction
         DB::beginTransaction();
 
 
         try {
-            // Create Order
-            $newOrder = $this->createWithoutTransaction([
-                'customer_id'  => $customerId,
-                'product_list' => $orderItems
-            ]);
 
             // Create Production Planning
             $productionPlanItems = [];
@@ -467,6 +424,25 @@ class OrderService
                 'comment' => $description,
                 'plan_item_list' => $productionPlanItems
             ]);
+
+            // Create Order
+            $orderItems = [];
+
+            foreach ($newProductionPlan->planItems as $index => $planItem) {
+                $salePriceAmount = $itemsList[$index]['sale_price_amount'];
+
+                $orderItems[] = [
+                    'product_id' => $planItem->product_id,
+                    'amount_type_id' => $planItem->amount_type_id,
+                    'amount' => $planItem->amount,
+                    'sale_price_amount' => $salePriceAmount,
+                ];
+            }
+
+            $newOrder = $this->createWithoutTransaction([
+                'customer_id'  => $customerId,
+                'product_list' => $orderItems
+            ], false);
 
             // Finish
             DB::commit();
@@ -936,7 +912,7 @@ class OrderService
     }
 
     // --- PUBLIC HELPER METHODS ---
-    public function createWithoutTransaction(array $data): Order
+    public function createWithoutTransaction(array $data, bool $isNew = true): Order
     {
         // Auth User
         $authUser = Auth::user();
@@ -946,7 +922,7 @@ class OrderService
         $productList = $data['product_list']; //[product_id, amount_type_id, amount, sale_price_amount]
 
         // New Order status
-        $newOrderStatus = StatusService::findByCode('orderNew');
+        $newOrderStatus = $isNew ? StatusService::findByCode('orderNew') : StatusService::findByCode('orderInProgress');
 
         // Get Request Products
         $productsId = array_column($productList ?? [], 'product_id');
