@@ -389,7 +389,7 @@ class OrderService
 
         $reqSalePrice = $data['sale_price_amount'] ?? null;
         $itemsList = $data['items_list']; //[recipe_item_id,depart_id]
-        $description = $data['description'];
+        $description = $data['description'] ?? null;
 
         // Find Production Recipe
         $productionRecipe = $this->productionRecipeService->findOne($recipeId);
