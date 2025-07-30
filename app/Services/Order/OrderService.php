@@ -102,12 +102,13 @@ class OrderService
 
         $query->whereBetween('orders.created_at', [$startDate, $endDate]);
 
+        // Totals
+        $totalQuery = clone $query;
+        $totals = $this->calculateOrderTotals($totalQuery);
+
         $data = $query
             ->orderByDesc('orders.created_at')
             ->get();
-
-        // Totals
-        $totals = $this->calculateOrderTotals($query);
 
         return [
             'data' => $data,
