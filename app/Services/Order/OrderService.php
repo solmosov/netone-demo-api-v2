@@ -384,9 +384,11 @@ class OrderService
         // Data
         $customerId = $data['customer_id'];
         $recipeId = $data['recipe_id'];
-        $planAmount = $data['plan_amount'];
-        $planAmountTypeId = $data['plan_amount_type_id'];
-        $itemsList = $data['items_list']; //[recipe_item_id,depart_id,?sale_price_amount]
+        $reqAmount = $data['amount'];
+        $reqAmountTypeId = $data['amount_type_id'];
+
+        $reqSalePrice = $data['sale_price_amount'] ?? null;
+        $itemsList = $data['items_list']; //[recipe_item_id,depart_id]
         $description = $data['description'];
 
         // Find Production Recipe
@@ -401,43 +403,39 @@ class OrderService
             // Create Production Planning
             $productionPlanItems = [];
             foreach ($productionRecipe->recipeItems as $recipeItem) {
-                $salePriceAmount = null;
+                $departId = null;
 
                 foreach ($itemsList as $item) {
                     if ($item['recipe_item_id'] === $recipeItem->id) {
-                        $salePriceAmount = $item['depart_id'];
+                        $departId = $item['depart_id'];
                         break;
                     }
                 }
 
                 $productionPlanItems[] = [
                     'recipe_item_id' => $recipeItem->id,
-                    'depart_id' => $salePriceAmount,
+                    'depart_id' => $departId,
                 ];
             }
 
             $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
                 'recipe_id' => $productionRecipe->id,
                 'name' => $productionRecipe->name,
-                'amount' => $planAmount,
-                'amount_type_id' => $planAmountTypeId,
+                'amount' => $reqAmount,
+                'amount_type_id' => $reqAmountTypeId,
                 'comment' => $description,
                 'plan_item_list' => $productionPlanItems
             ]);
 
             // Create Order
-            $orderItems = [];
-
-            foreach ($newProductionPlan->planItems as $index => $planItem) {
-                $salePriceAmount = $itemsList[$index]['sale_price_amount'];
-
-                $orderItems[] = [
-                    'product_id' => $planItem->product_id,
-                    'amount_type_id' => $planItem->amount_type_id,
-                    'amount' => $planItem->amount,
-                    'sale_price_amount' => $salePriceAmount,
-                ];
-            }
+            $orderItems = [
+                [
+                    'product_id' => $productionRecipe->out_product_id,
+                    'amount_type_id' => $reqAmountTypeId,
+                    'amount' => $reqAmount,
+                    'sale_price_amount' => $reqSalePrice
+                ]
+            ];
 
             $newOrder = $this->createWithoutTransaction([
                 'customer_id'  => $customerId,

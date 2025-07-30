@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\ProductionRecipe;
 use App\Models\RecipeItems;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -20,12 +21,12 @@ class StoreOrderPrintingWithExistsRecipe extends FormRequest
         return [
             'customer_id' => 'required|integer|exists:customers,id',
             'recipe_id' => 'required|integer|exists:production_recipes,id',
-            'plan_amount' => 'required|numeric|min:0',
-            'plan_amount_type_id'  => 'required|integer|exists:amount_types,id',
+            'amount' => 'required|numeric|min:0',
+            'amount_type_id'  => 'required|integer|exists:amount_types,id',
+            'sale_price_amount' => 'nullable|numeric|min:0',
             'items_list' => 'required|array',
             'items_list.*.recipe_item_id' => 'required|integer|exists:recipe_items,id',
             'items_list.*.depart_id' => 'required|integer|exists:departs,id',
-            'items_list.*.sale_price_amount' => 'nullable|numeric|min:0',
             'description' => 'nullable|string|max:255'
         ];
     }
@@ -34,8 +35,14 @@ class StoreOrderPrintingWithExistsRecipe extends FormRequest
     {
         $validator->after(function ($validator) {
             $recipeId = $this->input('recipe_id');
+            $sale_price_amount = $this->input('sale_price_amount') ?? null;
             $items_list = $this->input('items_list');
-            
+
+            $recipe = ProductionRecipe::with('outProduct')->findOrFail($recipeId);
+            if ($sale_price_amount && !$recipe->outProduct->is_change_price) {
+                $validator->errors()->add('sale_price_amount', "Sotuv narxini o'zgartirish mumkin emas!");
+            }
+
             foreach ($items_list as $index => $item) {
                 $exists = RecipeItems::where('production_recipe_id', $recipeId)->find($item['recipe_item_id']);
                 if (!$exists) {
