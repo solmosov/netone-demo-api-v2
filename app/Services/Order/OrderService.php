@@ -433,7 +433,7 @@ class OrderService
                     'product_id' => $productionRecipe->out_product_id,
                     'amount_type_id' => $reqAmountTypeId,
                     'amount' => $reqAmount,
-                    'sale_price_amount' => $reqSalePrice
+                    'sale_price_amount' => $reqSalePrice ?? $productionRecipe->outProduct->sale_price
                 ]
             ];
 
