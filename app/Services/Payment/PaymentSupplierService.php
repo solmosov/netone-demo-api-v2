@@ -30,12 +30,17 @@ class PaymentSupplierService
         $endDate = DateFormatter::format($data['endDate'], 'end');
         $supplierId = $data['supplier_id'] ?? null;
 
+        $paymentTotalsQuery = DB::table('payment_wallet')
+            ->select('payment_id', DB::raw('SUM(sum_price) as total_price'))
+            ->groupBy('payment_id');
+
         $query = Payment::with(['paymentable', 'user', 'wallets', 'status'])
-            ->select('payments.*', DB::raw("SUM(payment_wallet.sum_price) as total_price"))
-            ->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
+            ->joinSub($paymentTotalsQuery, 'payment_totals', function ($join) {
+                $join->on('payments.id', '=', 'payment_totals.payment_id');
+            })
+            ->select('payments.*', 'payment_totals.total_price')
             ->where('paymentable_type', 'App\Models\Supplier')
             ->whereBetween('payments.created_at', [$startDate, $endDate])
-            ->groupBy('payments.id', 'payments.paymentable_type', 'payments.created_at')
             ->orderBy('payments.created_at', 'desc');
 
         if ($supplierId) {
@@ -137,12 +142,16 @@ class PaymentSupplierService
 
     public function fineOne(int $supplierId): array
     {
+        $paymentTotalsQuery = DB::table('payment_wallet')
+            ->select('payment_id', DB::raw('SUM(sum_price) as total_price'))
+            ->groupBy('payment_id');
+
         $query = Payment::with(['paymentable', 'user', 'wallets', 'status'])
-            ->select('payments.*', DB::raw("SUM(payment_wallet.sum_price) as total_price"))
-            ->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
-            ->where('paymentable_type', 'App\Models\Supplier')
-            ->groupBy('payments.id', 'payments.paymentable_type', 'payments.created_at')
-            ->orderBy('payments.created_at', 'desc');
+            ->joinSub($paymentTotalsQuery, 'payment_totals', function ($join) {
+                $join->on('payments.id', '=', 'payment_totals.payment_id');
+            })
+            ->select('payments.*', 'payment_totals.total_price')
+            ->where('paymentable_type', 'App\Models\Supplier');
 
 
         if (!$this->authUser->isAdmin()) {
