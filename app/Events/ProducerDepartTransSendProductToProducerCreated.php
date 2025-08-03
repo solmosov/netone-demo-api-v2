@@ -10,10 +10,11 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ProducerDepartTransSendProductToProducerCreated
+class ProducerDepartTransSendProductToProducerCreated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -31,7 +32,7 @@ class ProducerDepartTransSendProductToProducerCreated
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user' . $this->producer),
+            new PrivateChannel('user' . $this->producer->id),
         ];
     }
 

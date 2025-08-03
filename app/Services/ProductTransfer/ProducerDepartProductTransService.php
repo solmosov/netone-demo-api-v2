@@ -9,6 +9,7 @@ use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
+use App\Models\User;
 use App\Services\Department\DepartTransProcessService;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
@@ -92,10 +93,10 @@ class ProducerDepartProductTransService
 
     // Department
     $depart = Depart::findOrFail($reqDepartId);
-    
+
     // Producer
-    $producer = Producer::findOrFail($reqProducerId);
-    
+    $producer = User::findOrFail($reqProducerId);
+
     // Status Send
     $statusSend = ProducerProductTransService::getStatusSend();
 
@@ -171,7 +172,6 @@ class ProducerDepartProductTransService
 
         // Depart Stock
         $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
-ProducerProductTrans
         $departStock->increment('amount', $amount);
         $productStock->decrement('amount', $amount);
 
