@@ -64,7 +64,7 @@ class DepartTransProcessCreated implements ShouldBroadcastNow
                 'sender' => $this->senderDepartmentUser,
                 'type' => 'department-transfer-process-created'
             ],
-            'message',
+            'message' => "Sizga boshqa bo'limdan yuk yuborildi",
             'created_at' => now()->toISOString()
         ];
     }
