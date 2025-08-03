@@ -2,7 +2,9 @@
 
 namespace App\Services\ProductTransfer;
 
+use App\Events\ProducerProductTransSendToDepart;
 use App\Exceptions\InvalidDataException;
+use App\Models\Depart;
 use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
@@ -48,7 +50,7 @@ class ProducerProductTransService
     if (!$authUser->isAdmin()) {
       $query->where('producer_id', $authUser->id);
     }
-    
+
     return $query->where('is_sending_depart', false)
       ->latest()
       ->get();
@@ -75,6 +77,9 @@ class ProducerProductTransService
     $reqDepartId = $data['depart_id'];
     $reqItemsList = $data['items_list'];
     $reqComment = $data['comment'] ?? null;
+
+    // Receive Department Users
+    $receiveDepartmentUsersIds = Depart::with('users')->findOrFail($reqDepartId)->users->pluck('id')->toArray();
 
     // Auth User Producer
     $authUser = Auth::user();
@@ -111,6 +116,9 @@ class ProducerProductTransService
       $newTransfer->details()->createMany($details);
 
       DB::commit();
+
+      // Event
+      broadcast(new ProducerProductTransSendToDepart($authUser, $receiveDepartmentUsersIds, $newTransfer));
 
       return $newTransfer;
     } catch (\Exception $e) {
