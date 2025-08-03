@@ -2,6 +2,7 @@
 
 namespace App\Services\ProductTransfer;
 
+use App\Events\ProducerProductTransReceiveFromDepart;
 use App\Events\ProducerProductTransSendToDepart;
 use App\Exceptions\InvalidDataException;
 use App\Models\Depart;
@@ -129,6 +130,9 @@ class ProducerProductTransService
 
   public function receiveProductFromDepart(int $id, array $data)
   {
+    // Auth User
+    $authUser = Auth::user();
+
     // Req Data
     $reqItemsList = $data['items_list'];
 
@@ -136,9 +140,12 @@ class ProducerProductTransService
     $statusSend = self::getStatusSend();
 
     // Transfer
-    $transfer = ProducerProductTrans::where('is_sending_depart', false)
+    $transfer = ProducerProductTrans::with('depart.users')->where('is_sending_depart', false)
       ->where('status_id', $statusSend->id)
       ->findOrFail($id);
+
+    // Department Users
+    $departmentUsersIds = $transfer->depart->users->pluck('id')->toArray();
 
     // Status Received
     $statusReceived = self::getStatusReceive();
@@ -181,6 +188,9 @@ class ProducerProductTransService
 
       // Finish
       DB::commit();
+
+      // Event
+      broadcast(new ProducerProductTransReceiveFromDepart($authUser, $departmentUsersIds, $transfer));
 
       return $transfer;
     } catch (\Exception $e) {
