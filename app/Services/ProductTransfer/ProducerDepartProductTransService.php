@@ -2,6 +2,7 @@
 
 namespace App\Services\ProductTransfer;
 
+use App\Events\ProducerDepartTransReceiveProductFromProducer;
 use App\Events\ProducerDepartTransSendProductToProducerCreated;
 use App\Exceptions\ServerErrorException;
 use App\Models\Depart;
@@ -143,6 +144,9 @@ class ProducerDepartProductTransService
 
   public function receive(int $id, array $data)
   {
+    // Auth User
+    $authUser = Auth::user();
+
     // Req Data
     $itemsList = $data['items_list'];
 
@@ -150,7 +154,8 @@ class ProducerDepartProductTransService
     $statusSendProduct = StatusService::findByCode('producerSendProduct');
 
     // Transfer
-    $transfer = ProducerProductTrans::where('status_id', $statusSendProduct->id)->findOrFail($id);
+    $transfer = ProducerProductTrans::with('depart.users')->where('status_id', $statusSendProduct->id)->findOrFail($id);
+    $departmentUsersIds = $transfer->depart->users->pluck('id')->toArray();
 
     // Status Received
     $statusReceived = DepartTransProcessService::getReceiveProductStatus();
@@ -186,6 +191,9 @@ class ProducerDepartProductTransService
 
       // Finish
       DB::commit();
+
+      // Event
+      broadcast(new ProducerDepartTransReceiveProductFromProducer($authUser, $departmentUsersIds, $transfer));
 
       return $transfer;
     } catch (\Exception $e) {

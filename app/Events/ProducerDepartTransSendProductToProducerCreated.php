@@ -46,7 +46,7 @@ class ProducerDepartTransSendProductToProducerCreated implements ShouldBroadcast
         return [
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'data' => [
-                'send_product_to_producer' => $this->producerProductTrans,
+                'data' => $this->producerProductTrans,
                 'sender' => $this->depart,
                 'type' => 'send-product-to-producer-created'
             ],
