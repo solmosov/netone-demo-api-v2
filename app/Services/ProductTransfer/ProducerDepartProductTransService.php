@@ -2,7 +2,9 @@
 
 namespace App\Services\ProductTransfer;
 
+use App\Events\ProducerDepartTransSendProductToProducerCreated;
 use App\Exceptions\ServerErrorException;
+use App\Models\Depart;
 use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
@@ -88,6 +90,12 @@ class ProducerDepartProductTransService
     $reqItemsList = $data['items_list'];
     $reqComment = $data['comment'];
 
+    // Department
+    $depart = Depart::findOrFail($reqDepartId);
+    
+    // Producer
+    $producer = Producer::findOrFail($reqProducerId);
+    
     // Status Send
     $statusSend = ProducerProductTransService::getStatusSend();
 
@@ -121,6 +129,9 @@ class ProducerDepartProductTransService
       $newTransfer->details()->createMany($details);
 
       DB::commit();
+
+      // Event
+      broadcast(new ProducerDepartTransSendProductToProducerCreated($depart, $producer, $newTransfer));
 
       return $newTransfer;
     } catch (\Exception $e) {
@@ -160,7 +171,7 @@ class ProducerDepartProductTransService
 
         // Depart Stock
         $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
-
+ProducerProductTrans
         $departStock->increment('amount', $amount);
         $productStock->decrement('amount', $amount);
 
