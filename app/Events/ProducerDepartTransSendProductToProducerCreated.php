@@ -38,7 +38,7 @@ class ProducerDepartTransSendProductToProducerCreated implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'send-product-to-producer-created';
+        return 'department-send-product-to-producer';
     }
 
     public function broadcastWith(): array
@@ -50,7 +50,7 @@ class ProducerDepartTransSendProductToProducerCreated implements ShouldBroadcast
                     "id" => $this->producerProductTrans->id,
                 ],
                 'sender' => $this->depart,
-                'type' => 'send-product-to-producer-created'
+                'type' => 'department-send-product-to-producer'
             ],
             'message' => "{$this->depart->name} - bo'limdan sizga yuk yuborildi",
             'created_at' => now()->toISOString()
