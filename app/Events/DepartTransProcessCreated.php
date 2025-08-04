@@ -60,7 +60,9 @@ class DepartTransProcessCreated implements ShouldBroadcastNow
         return [
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'data' => [
-                'department_transfer_process' => $this->departTransProcess,
+                'department_transfer_process' => [
+                    'id' => $this->departTransProcess->id,
+                ],
                 'sender' => $this->senderDepartmentUser,
                 'type' => 'department-transfer-process-created'
             ],

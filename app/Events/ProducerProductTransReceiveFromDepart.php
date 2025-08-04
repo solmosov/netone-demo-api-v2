@@ -51,7 +51,9 @@ class ProducerProductTransReceiveFromDepart implements ShouldBroadcastNow
         return [
             'id' => \Illuminate\Support\Str::uuid()->toString(),
             'data' => [
-                'data' => $this->producerProductTrans,
+                'data' => [
+                    "id" => $this->producerProductTrans->id,
+                ],
                 'receive' => $this->receiveProducerUser,
                 'type' => 'producer-receive-product-from-department'
             ],
