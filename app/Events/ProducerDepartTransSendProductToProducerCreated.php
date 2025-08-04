@@ -32,7 +32,7 @@ class ProducerDepartTransSendProductToProducerCreated implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user' . $this->producer->id),
+            new PrivateChannel("user.{$this->producer->id}"),
         ];
     }
 

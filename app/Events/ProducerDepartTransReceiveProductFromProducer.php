@@ -22,7 +22,7 @@ class ProducerDepartTransReceiveProductFromProducer implements ShouldBroadcastNo
     /**
      * Create a new event instance.
      */
-    public function __construct(public User $senderProducerUser, public array $departmentsUsersId, public ProducerProductTrans $producerProductTrans)
+    public function __construct(public User $senderDepartUser, public User $receiverProducer, public ProducerProductTrans $producerProductTrans)
     {
         //
     }
@@ -34,13 +34,9 @@ class ProducerDepartTransReceiveProductFromProducer implements ShouldBroadcastNo
      */
     public function broadcastOn(): array
     {
-        $channels = [];
-
-        foreach ($this->departmentsUsersId  as $userId) {
-            $channels[] = new PrivateChannel("user.{$userId}");
-        }
-
-        return $channels;
+        return [
+            new PrivateChannel("user.{$this->receiverProducer->id}")
+        ];
     }
 
     public function broadcastAs(): string
@@ -56,10 +52,10 @@ class ProducerDepartTransReceiveProductFromProducer implements ShouldBroadcastNo
                 'data' => [
                     'id' => $this->producerProductTrans->id,
                 ],
-                'sender' => $this->senderProducerUser,
+                'sender' => $this->senderDepartUser,
                 'type' => 'department-received-product-from-producer'
             ],
-            'message' => "{$this->senderProducerUser->name} - foydalanuvchi yuborilgan yukni qabul qildi",
+            'message' => "{$this->senderDepartUser->name} - foydalanuvchi yuborilgan yukni qabul qildi",
             'created_at' => now()->toISOString()
         ];
     }
