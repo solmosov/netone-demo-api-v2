@@ -57,7 +57,9 @@ class ProductionPlanCreated implements ShouldBroadcastNow
         return [
             'id' => Str::uuid()->toString(),
             'data' => [
-                'production_plan' => $this->productionPlan,
+                'production_plan' => [
+                    "id" => $this->productionPlan->id
+                ],
                 'producer' => $this->producer,
                 'type' => 'production_plan_created',
             ],

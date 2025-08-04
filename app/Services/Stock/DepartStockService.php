@@ -62,7 +62,7 @@ class DepartStockService
         $isMax = $queryParams['is_max'] ?? null;
 
         $query = DepartStock::with(['depart', 'polka', 'amountType', 'product'])
-        ->select('depart_stocks.*')
+            ->select('depart_stocks.*')
             ->selectRaw('
                 SUM(depart_stocks.amount * products.sale_price) as total_price,
                 CASE
@@ -72,7 +72,18 @@ class DepartStockService
                 END as percentage
             ')
             ->leftJoin('products', 'depart_stocks.product_id', '=', 'products.id')
-            ->groupBy('depart_stocks.id');
+            ->groupBy([
+                'depart_stocks.id',
+                'depart_stocks.depart_id',
+                'depart_stocks.polka_id',
+                'depart_stocks.amount_type_id',
+                'depart_stocks.product_id',
+                'depart_stocks.amount',
+                'depart_stocks.min_amount',
+                'depart_stocks.max_amount',
+                'depart_stocks.created_at',
+                'depart_stocks.updated_at'
+            ]);
 
         if ($departId) {
             $query->where('depart_stocks.depart_id', $departId);

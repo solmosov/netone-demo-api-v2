@@ -2,11 +2,15 @@
 
 namespace App\Services\ProductTransfer;
 
+use App\Events\ProducerDepartTransReceiveProductFromProducer;
+use App\Events\ProducerDepartTransSendProductToProducerCreated;
 use App\Exceptions\ServerErrorException;
+use App\Models\Depart;
 use App\Models\DepartStock;
 use App\Models\ProducerProductTrans;
 use App\Models\ProducerProductTransDetails;
 use App\Models\ProductStock;
+use App\Models\User;
 use App\Services\Department\DepartTransProcessService;
 use App\Services\Status\StatusService;
 use Illuminate\Support\Facades\Auth;
@@ -88,6 +92,12 @@ class ProducerDepartProductTransService
     $reqItemsList = $data['items_list'];
     $reqComment = $data['comment'];
 
+    // Department
+    $depart = Depart::findOrFail($reqDepartId);
+
+    // Producer
+    $producer = User::findOrFail($reqProducerId);
+
     // Status Send
     $statusSend = ProducerProductTransService::getStatusSend();
 
@@ -122,6 +132,9 @@ class ProducerDepartProductTransService
 
       DB::commit();
 
+      // Event
+      broadcast(new ProducerDepartTransSendProductToProducerCreated($depart, $producer, $newTransfer));
+
       return $newTransfer;
     } catch (\Exception $e) {
       DB::rollBack();
@@ -131,6 +144,9 @@ class ProducerDepartProductTransService
 
   public function receive(int $id, array $data)
   {
+    // Auth User
+    $authUser = Auth::user();
+
     // Req Data
     $itemsList = $data['items_list'];
 
@@ -138,7 +154,8 @@ class ProducerDepartProductTransService
     $statusSendProduct = StatusService::findByCode('producerSendProduct');
 
     // Transfer
-    $transfer = ProducerProductTrans::where('status_id', $statusSendProduct->id)->findOrFail($id);
+    $transfer = ProducerProductTrans::with('depart.users')->where('status_id', $statusSendProduct->id)->findOrFail($id);
+    $departmentUsersIds = $transfer->depart->users->pluck('id')->toArray();
 
     // Status Received
     $statusReceived = DepartTransProcessService::getReceiveProductStatus();
@@ -160,7 +177,6 @@ class ProducerDepartProductTransService
 
         // Depart Stock
         $departStock = DepartStock::where('amount_type_id', $amountTypeId)->findOrFail($departStockId);
-
         $departStock->increment('amount', $amount);
         $productStock->decrement('amount', $amount);
 
@@ -175,6 +191,9 @@ class ProducerDepartProductTransService
 
       // Finish
       DB::commit();
+
+      // Event
+      broadcast(new ProducerDepartTransReceiveProductFromProducer($authUser, $departmentUsersIds, $transfer));
 
       return $transfer;
     } catch (\Exception $e) {
