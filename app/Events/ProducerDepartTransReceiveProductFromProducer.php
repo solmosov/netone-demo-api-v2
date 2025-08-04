@@ -45,7 +45,7 @@ class ProducerDepartTransReceiveProductFromProducer implements ShouldBroadcastNo
 
     public function broadcastAs(): string
     {
-        return 'received-product-from-producer';
+        return 'department-received-product-from-producer';
     }
 
     public function broadcastWith(): array
@@ -57,7 +57,7 @@ class ProducerDepartTransReceiveProductFromProducer implements ShouldBroadcastNo
                     'id' => $this->producerProductTrans->id,
                 ],
                 'sender' => $this->senderProducerUser,
-                'type' => 'received-product-from-producer'
+                'type' => 'department-received-product-from-producer'
             ],
             'message' => "{$this->senderProducerUser->name} - foydalanuvchi yuborilgan yukni qabul qildi",
             'created_at' => now()->toISOString()
