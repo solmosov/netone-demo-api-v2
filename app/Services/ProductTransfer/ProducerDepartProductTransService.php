@@ -154,8 +154,9 @@ class ProducerDepartProductTransService
     $statusSendProduct = StatusService::findByCode('producerSendProduct');
 
     // Transfer
-    $transfer = ProducerProductTrans::with('depart.users')->where('status_id', $statusSendProduct->id)->findOrFail($id);
-    $departmentUsersIds = $transfer->depart->users->pluck('id')->toArray();
+    $transfer = ProducerProductTrans::with('producer')
+      ->where('status_id', $statusSendProduct->id)
+      ->findOrFail($id);
 
     // Status Received
     $statusReceived = DepartTransProcessService::getReceiveProductStatus();
@@ -193,7 +194,7 @@ class ProducerDepartProductTransService
       DB::commit();
 
       // Event
-      broadcast(new ProducerDepartTransReceiveProductFromProducer($authUser, $departmentUsersIds, $transfer));
+      broadcast(new ProducerDepartTransReceiveProductFromProducer($authUser, $transfer->producer, $transfer));
 
       return $transfer;
     } catch (\Exception $e) {
