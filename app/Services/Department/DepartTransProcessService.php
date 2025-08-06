@@ -2,9 +2,11 @@
 
 namespace App\Services\Department;
 
+use App\Events\DepartTransProcessCreated;
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\ServerErrorException;
+use App\Models\Depart;
 use App\Models\Department\DepartTransProcessDetail;
 use App\Models\DepartStock;
 use App\Models\DepartTransProcess;
@@ -139,6 +141,9 @@ class DepartTransProcessService
     // Status Process 
     $statusProcess = self::getSendProductStatus();
 
+    // Receive Department Users
+    $receiverUsersIds = Depart::with('users')->findOrFail($receiverDepartId)->users->pluck('id')->toArray();
+
     DB::beginTransaction();
 
     try {
@@ -175,6 +180,9 @@ class DepartTransProcessService
       $newProcess->details()->createMany($creatableDetails);
 
       DB::commit();
+
+      // Event
+      $this->sendNotificationToReceiverDepartment($newProcess, $receiverUsersIds);
 
       return [
         'message' => "Yuk muvaffaqiyatli yuborildi",
@@ -284,6 +292,8 @@ class DepartTransProcessService
     }
   }
 
+  // --- HELPER FUNCTIONS ---
+
   public static function getSendProductStatus(): Status
   {
     return StatusService::findByCode('departSendProduct');
@@ -295,5 +305,13 @@ class DepartTransProcessService
   public static function getCancelProductStatus(): Status
   {
     return StatusService::findByCode('departCancelProduct');
+  }
+
+  public function sendNotificationToReceiverDepartment(DepartTransProcess $departTransProcess, array $receiverDepartUsers)
+  {
+    // Auth User
+    $authUser = Auth::user();
+
+    broadcast(new DepartTransProcessCreated($departTransProcess, $authUser, $receiverDepartUsers));
   }
 }
