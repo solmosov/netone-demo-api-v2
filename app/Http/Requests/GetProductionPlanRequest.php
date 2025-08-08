@@ -10,7 +10,7 @@ class GetProductionPlanRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return Auth::user()->isProducer();
+        return Auth::user()->isProducer() || Auth::user()->isAdmin();
     }
 
 
