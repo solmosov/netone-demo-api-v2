@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Department;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetDepartByTransPermRequest;
+use App\Http\Requests\RemoveDepartAssignUserRequest;
 use App\Http\Requests\StoreAssignNewUserRequest;
 use App\Http\Requests\StoreDepartAssignPermRequest;
 use App\Http\Requests\StoreDepartRequest;
@@ -82,12 +83,12 @@ class DepartController extends Controller
         ], 201);
     }
 
-    public function removeAssignUser(string $departUserId)
+    public function removeAssignUser(RemoveDepartAssignUserRequest $request)
     {
         // Gate
         Gate::authorize('delete', Depart::class);
 
-        $result = $this->departService->removeAssignUser((int) $departUserId);
+        $result = $this->departService->removeAssignUser($request->validated());
 
         return response()->json([
             'message' => "{$result['attach_user']['name']} foydalanuvchi, {$result['depart']['name']} bo'limdan chiqarib yuborildi",

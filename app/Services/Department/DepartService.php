@@ -167,18 +167,16 @@ class DepartService
         ];
     }
 
-    public function removeAssignUser(int $departUserId)
+    public function removeAssignUser(array $reqData)
     {
-        // Req Data
-        $departUser = DB::table('depart_user')
-            ->where('id', $departUserId)
-            ->firstOrFail();
-
-        DB::table('depart_user')->where('id', $departUserId)->delete();
+        DB::table('depart_user')
+            ->where('depart_id', $reqData['depart_id'])
+            ->where('user_id', $reqData['user_id'])
+            ->delete();
 
         // Department
-        $attachUser = User::findOrFail($departUser->user_id);
-        $department = $this->findOne($departUser->depart_id);
+        $attachUser = User::findOrFail($reqData['depart_id']);
+        $department = $this->findOne($reqData['user_id']);
 
         return [
             'depart' => $department,

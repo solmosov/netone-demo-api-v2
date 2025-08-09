@@ -11,6 +11,6 @@ Route::group(['prefix' => 'departments', 'middleware' => ['auth:sanctum']], func
   Route::post('assign-permissions', [DepartController::class, 'assignPerm']);
   Route::post('assign-users', [DepartController::class, 'assignNewUser']);
   Route::put('/{department}', [DepartController::class, 'update']);
+  Route::delete('assign-users/remove', [DepartController::class, 'removeAssignUser']);
   Route::delete('/{department}', [DepartController::class, 'destroy']);
-  Route::delete('assign-users/{departUserId}', [DepartController::class, 'removeAssignUser']);
 });
