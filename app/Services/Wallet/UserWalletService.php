@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\Auth;
 
 class UserWalletService
 {
-  public function findAll()
+  public function findAll(array $reqParams)
   {
     // Auth User
     $authUser = Auth::user();
 
+    // Query Params
+    $isPaymentable = $reqParams['is_paymentable'] ?? null;
+
     $query = UserWallet::with(['user', 'wallet.currency']);
 
-    if (!$authUser->isAdmin()) {
+    if (!$authUser->isAdmin() || ($isPaymentable && $authUser->isAdmin())) {
       $query->where('user_id', $authUser->id);
     }
 
