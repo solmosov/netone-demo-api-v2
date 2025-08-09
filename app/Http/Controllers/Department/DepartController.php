@@ -78,8 +78,20 @@ class DepartController extends Controller
         $result = $this->departService->assignNewUser($request->validated());
 
         return response()->json([
-            'message' => "{$result['attach_user']['name']} foydalanuvchi {$result['depart']['name']} bo'limga qo'shildi",
-        ],201);
+            'message' => "{$result['attach_user']['name']} foydalanuvchi, {$result['depart']['name']} bo'limga qo'shildi",
+        ], 201);
+    }
+
+    public function removeAssignUser(string $departUserId)
+    {
+        // Gate
+        Gate::authorize('delete', Depart::class);
+
+        $result = $this->departService->removeAssignUser((int) $departUserId);
+
+        return response()->json([
+            'message' => "{$result['attach_user']['name']} foydalanuvchi, {$result['depart']['name']} bo'limdan chiqarib yuborildi",
+        ], 200);
     }
 
     public function show(string $id): JsonResponse
