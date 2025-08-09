@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Department;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\GetDepartByTransPermRequest;
+use App\Http\Requests\StoreAssignNewUserRequest;
 use App\Http\Requests\StoreDepartAssignPermRequest;
 use App\Http\Requests\StoreDepartRequest;
 use App\Http\Requests\UpdateDepartRequest;
@@ -36,7 +37,7 @@ class DepartController extends Controller
     {
         // Gate
         Gate::authorize('viewAny', Depart::class);
-        
+
         $result = $this->departService->findAllByTransPerm($request->validated());
 
         return response()->json([
@@ -69,6 +70,18 @@ class DepartController extends Controller
         ]);
     }
 
+    public function assignNewUser(StoreAssignNewUserRequest $request)
+    {
+        // Gate
+        Gate::authorize('create', Depart::class);
+
+        $result = $this->departService->assignNewUser($request->validated());
+
+        return response()->json([
+            'message' => "{$result['attach_user']['name']} foydalanuvchi {$result['depart']['name']} bo'limga qo'shildi",
+        ],201);
+    }
+
     public function show(string $id): JsonResponse
     {
         // Gate
@@ -77,7 +90,7 @@ class DepartController extends Controller
         $result = $this->departService->findOne((int) $id);
 
         return response()->json([
-            'data' => DepartShowResource::make($result['data']),
+            'data' => DepartShowResource::make($result),
         ]);
     }
 
