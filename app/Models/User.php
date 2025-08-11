@@ -101,4 +101,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DepartTransProcess::class, 'user_id');
     }
+
+    public function submittedOrders(): HasMany
+    {
+        return $this->hasMany(CompletedOrder::class, 'submitter_id');
+    }
 }
