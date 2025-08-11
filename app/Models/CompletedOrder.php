@@ -19,6 +19,8 @@ class CompletedOrder extends Model
         'customer_old_balance',
         'submitted_comment',
         'comment',
+        'submitter_id',
+        'submitted_date'
     ];
 
     public function user(): BelongsTo
@@ -34,5 +36,10 @@ class CompletedOrder extends Model
     public function status(): BelongsTo
     {
         return $this->belongsTo(Status::class, 'status_id');
+    }
+
+    public function submitter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'submitter_id');
     }
 }
