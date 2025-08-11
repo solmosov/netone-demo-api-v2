@@ -66,10 +66,15 @@ class User extends Authenticatable
     {
         return $this->roles()->where('name', 'producer')->exists();
     }
-    
+
+
     public function isDepartUser(): bool
     {
         return $this->roles()->where('name', 'depart_user')->exists();
+    }
+    public function isCourier(): bool
+    {
+        return $this->roles()->where('name', 'courier')->exists();
     }
 
     public function wallets(): BelongsToMany
