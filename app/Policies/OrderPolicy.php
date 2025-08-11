@@ -22,7 +22,7 @@ class OrderPolicy
      */
     public function view(User $user): bool
     {
-        $accessRoles = $user->roles()->whereIn('id', [1, 2])->get();
+        $accessRoles = $user->roles()->whereIn('id', [1, 2, 5])->get();
         return !$accessRoles->isEmpty();
     }
 
