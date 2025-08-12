@@ -57,7 +57,7 @@ class OrderService
             'user',
             'customer',
             'status',
-            'completedOrder'
+            'completedOrder',
         );
 
 

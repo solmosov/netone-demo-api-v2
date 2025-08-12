@@ -48,6 +48,7 @@ class Order extends Model
 
     public function completedOrder(): HasOne
     {
-        return $this->hasOne(CompletedOrder::class, 'order_id');
+        return $this->hasOne(CompletedOrder::class, 'order_id')
+            ->with(['submitter', 'status']);
     }
 }
