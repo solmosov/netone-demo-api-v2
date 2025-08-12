@@ -24,7 +24,8 @@ class CustomerController extends Controller
         $result = $this->customerService->findAll($request->validated());
 
         return response()->json([
-            "data" => CustomerResource::collection($result),
+            "data" => CustomerResource::collection($result['data']),
+            "total_balance" => (float) $result['total_balance'],
         ]);
     }
 

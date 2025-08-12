@@ -12,7 +12,9 @@ class StorePaymentSupplierRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return true;
+        $authUser = Auth::user();
+
+        return $authUser->isProducer() || $authUser->isAdmin();
     }
 
 

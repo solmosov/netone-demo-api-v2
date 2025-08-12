@@ -66,10 +66,15 @@ class User extends Authenticatable
     {
         return $this->roles()->where('name', 'producer')->exists();
     }
-    
+
+
     public function isDepartUser(): bool
     {
         return $this->roles()->where('name', 'depart_user')->exists();
+    }
+    public function isCourier(): bool
+    {
+        return $this->roles()->where('name', 'courier')->exists();
     }
 
     public function wallets(): BelongsToMany
@@ -95,5 +100,10 @@ class User extends Authenticatable
     public function departTransProcess(): HasMany
     {
         return $this->hasMany(DepartTransProcess::class, 'user_id');
+    }
+
+    public function submittedOrders(): HasMany
+    {
+        return $this->hasMany(CompletedOrder::class, 'submitter_id');
     }
 }

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 class CustomerService
 {
 
-  public function findAll(array $queryParams): Collection
+  public function findAll(array $queryParams): array
   {
     // Query Params
     $personCategoryId = $queryParams['person_category_id'] ?? null;
@@ -30,8 +30,12 @@ class CustomerService
     }
 
     $data = $query->get();
+    $totalBalance = $data->sum('balance');
 
-    return $data;
+    return [
+      'data' => $data,
+      'total_balance' => $totalBalance
+    ];
   }
 
   public function create(array $data): Customer

@@ -34,5 +34,12 @@ class UserSeeder extends Seeder
         $producer->roles()->attach($producerRole);
         $ordererRole = Role::where('name', 'orderer')->firstOrFail();
         $producer->roles()->attach($ordererRole);
+
+        $producer = User::create([
+            "name" => "Yetkazuvchi Toshmat",
+            "login" => "yetkazuvchi",
+            "phone" => "998123456789",
+            "password" => Hash::make("secret!@"),
+        ]);
     }
 }

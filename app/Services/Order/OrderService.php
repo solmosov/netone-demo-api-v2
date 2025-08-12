@@ -56,7 +56,8 @@ class OrderService
         $query = Order::with(
             'user',
             'customer',
-            'status'
+            'status',
+            'completedOrder',
         );
 
 
@@ -95,8 +96,11 @@ class OrderService
             $query->where('orders.user_id', $sellerId);
         }
 
-        // Only admin
-        if (!$authUser->isAdmin()) {
+        // For courier
+        if ($authUser->isCourier() && $statusCode !== 'orderCompleted') {
+            $query->whereRelation('completedOrder', 'submitter_id', '=', $authUser->id);
+        } else if (!$authUser->isAdmin() && !$authUser->isCourier()) {
+            // For other
             $query->where('orders.user_id', $authUser->id);
         }
 
@@ -479,8 +483,10 @@ class OrderService
             'completedOrder'
         )->where('id', $id);
 
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+        // For courier
+        if (!$authUser->isAdmin() && !$authUser->isCourier()) {
+            $query
+                ->where('user_id', $authUser->id);
         }
 
         $order = $query->firstOrFail();
@@ -706,6 +712,9 @@ class OrderService
      */
     public function submit(array $data, int $id)
     {
+        // Auth User
+        $authUser = Auth::user();
+
         // Data
         $comment = $data['comment'] ?? null;
 
@@ -734,6 +743,7 @@ class OrderService
             $order->save();
 
             // Completed Order
+            $completedOrder->submitter_id = $authUser->id;
             $completedOrder->submitted_comment = $comment;
             $completedOrder->status_id = $statusSubmitted->id;
             $completedOrder->customer_old_balance = $order->customer->balance;

@@ -16,7 +16,9 @@ class StorePaymentExpenseRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $authUser = Auth::user();
+
+        return $authUser->isProducer() || $authUser->isAdmin();
     }
 
     /**
@@ -49,14 +51,15 @@ class StorePaymentExpenseRequest extends FormRequest
         ];
     }
 
-    public function withValidator(Validator $validator){
+    public function withValidator(Validator $validator)
+    {
         $validator->after(function ($validator) {
             $userWalletId = $this->input('user_wallet_id');
             $amount = $this->input('amount');
-            
+
             $userWallet = UserWallet::with('wallet')->findOrFail($userWalletId);
 
-            if($userWallet->wallet->amount < $amount){
+            if ($userWallet->wallet->amount < $amount) {
                 $validator->errors()->add('amount', "{$userWallet->wallet->name} - hisobingizda mablag‘ yetarli emas! Hisobingizni tekshiring");
             }
         });

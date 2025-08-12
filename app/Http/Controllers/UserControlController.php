@@ -28,8 +28,7 @@ class UserControlController extends Controller
             Gate::authorize('viewAny', User::class);
         }
 
-        $query = User::with('roles')
-            ->where('id', '<>', 1);
+        $query = User::with('roles');
 
         if ($role) {
             $query->whereHas('roles', function ($q) use ($role) {
