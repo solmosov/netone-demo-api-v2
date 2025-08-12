@@ -712,6 +712,9 @@ class OrderService
      */
     public function submit(array $data, int $id)
     {
+        // Auth User
+        $authUser = Auth::user();
+
         // Data
         $comment = $data['comment'] ?? null;
 
@@ -740,6 +743,7 @@ class OrderService
             $order->save();
 
             // Completed Order
+            $completedOrder->submitter_id = $authUser->id;
             $completedOrder->submitted_comment = $comment;
             $completedOrder->status_id = $statusSubmitted->id;
             $completedOrder->customer_old_balance = $order->customer->balance;
