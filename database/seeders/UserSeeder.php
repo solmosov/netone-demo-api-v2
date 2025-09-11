@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
         $producer = User::create([
             "name" => "Yetkazuvchi Toshmat",
             "login" => "yetkazuvchi",
-            "phone" => "998123456789",
+            "phone" => "998123456788",
             "password" => Hash::make("secret!@"),
         ]);
     }
