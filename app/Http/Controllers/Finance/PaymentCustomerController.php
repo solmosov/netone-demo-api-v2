@@ -7,13 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\QueryParameterRequest;
 use App\Http\Requests\StorePaymentCustomerRequest;
 use App\Http\Resources\PaymentCustomerResource;
-use App\Models\Customer;
-use App\Models\Payment;
-use App\Models\Status;
-use App\Models\User;
 use App\Services\Payment\PaymentCustomerService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 class PaymentCustomerController extends Controller
 {

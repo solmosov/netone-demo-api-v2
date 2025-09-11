@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GetUserWalletRequest;
 use App\Http\Requests\StoreUserWalletRequest;
 use App\Http\Resources\UserWalletResource;
 use App\Models\UserWallet;
@@ -16,12 +17,12 @@ class UserWalletController extends Controller
         protected UserWalletService $userWalletService
     ) {}
 
-    public function index(): JsonResponse
+    public function index(GetUserWalletRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', UserWallet::class);
 
-        $result = $this->userWalletService->findAll();
+        $result = $this->userWalletService->findAll($request->validated());
 
         return response()->json([
             'data' => UserWalletResource::collection($result['data']),

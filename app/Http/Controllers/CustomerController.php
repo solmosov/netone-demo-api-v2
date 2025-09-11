@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\GetCustomerRequest;
 use App\Models\Customer;
 use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
@@ -15,15 +16,16 @@ class CustomerController extends Controller
         protected CustomerService $customerService
     ) {}
 
-    public function index()
+    public function index(GetCustomerRequest $request)
     {
         // Gate
         Gate::authorize('viewAny', Customer::class);
 
-        $result = $this->customerService->findAll();
+        $result = $this->customerService->findAll($request->validated());
 
         return response()->json([
             "data" => CustomerResource::collection($result['data']),
+            "total_balance" => (float) $result['total_balance'],
         ]);
     }
 
@@ -36,8 +38,8 @@ class CustomerController extends Controller
         $result = $this->customerService->create($request->validated());
 
         return response()->json([
-            'message' => $request['message'],
-            'data' => $result['data'],
+            'message' => "Yangi mijoz muvaffaqiyatli qo'shildi!",
+            'data' => CustomerResource::make($result),
         ], 201);
     }
 
@@ -50,7 +52,7 @@ class CustomerController extends Controller
         $result = $this->customerService->findOne((int) $id);
 
         return response()->json([
-            "data" => CustomerResource::make($result['data']),
+            "data" => CustomerResource::make($result),
         ]);
     }
 
@@ -66,8 +68,8 @@ class CustomerController extends Controller
 
 
         return response()->json([
-            'message' => $result['message'],
-            'data' => CustomerResource::make($result['data'])
+            'message' => "Mijoz muvaffaqiyatli tahrirlandi!",
+            'data' => CustomerResource::make($result)
         ]);
     }
 
@@ -81,8 +83,8 @@ class CustomerController extends Controller
         $result = $this->customerService->delete((int) $id);
 
         return response()->json([
-            'message' => $result['message'],
-            'data' => CustomerResource::make($result['data'])
+            'message' => "Mijoz muvaffaqiyatli o'chirildi!",
+            'data' => CustomerResource::make($result)
         ]);
     }
 }

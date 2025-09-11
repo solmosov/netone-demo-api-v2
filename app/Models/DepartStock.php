@@ -14,7 +14,9 @@ class DepartStock extends Model
         'polka_id',
         'amount_type_id',
         'product_id',
-        'amount'
+        'amount',
+        'min_amount',
+        'max_amount'
     ];
 
     public function depart(): BelongsTo

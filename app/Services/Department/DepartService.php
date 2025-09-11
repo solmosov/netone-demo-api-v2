@@ -8,6 +8,7 @@ use App\Models\Department\DepartStatus;
 use App\Models\DepartTransPermProperty;
 use App\Models\Polka;
 use App\Models\TransPerm;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class DepartService
@@ -46,9 +47,9 @@ class DepartService
             ->get();
     }
 
-    public function findOne(int $id): array
+    public function findOne(int $id): Depart
     {
-        $data = Depart::with([
+        return Depart::with([
             'users',
             'departStock.polka',
             'departStock.product',
@@ -56,10 +57,6 @@ class DepartService
             'transPermProperty',
             'polka',
         ])->findOrFail($id);
-
-        return [
-            'data' => $data
-        ];
     }
 
 
@@ -151,6 +148,40 @@ class DepartService
             DB::rollBack();
             throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
+    }
+
+    public function assignNewUser(array $data)
+    {
+        // Req Data
+        $departId = $data['depart_id'];
+        $userId = $data['user_id'];
+
+        $attachUser = User::findOrFail($userId);
+        $department = $this->findOne($departId);
+
+        $department->users()->attach($attachUser->id);
+
+        return [
+            'depart' => $department,
+            'attach_user' => $attachUser
+        ];
+    }
+
+    public function removeAssignUser(array $reqData)
+    {
+        DB::table('depart_user')
+            ->where('depart_id', $reqData['depart_id'])
+            ->where('user_id', $reqData['user_id'])
+            ->delete();
+
+        // Department
+        $attachUser = User::findOrFail($reqData['depart_id']);
+        $department = $this->findOne($reqData['user_id']);
+
+        return [
+            'depart' => $department,
+            'attach_user' => $attachUser
+        ];
     }
 
     public function update(array $data, int $id): array

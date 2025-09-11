@@ -37,8 +37,8 @@ class StorePaymentRentalPropertyRequest extends FormRequest
 
             $category = RentalPropertyCategory::findOrFail($rentalPropertyCategory);
             if (!$category->is_income) {
-                $userWallet = UserWallet::findOrFail($userWalletId);
-                if ($userWallet->amount < $amount) {
+                $userWallet = UserWallet::with('wallet')->findOrFail($userWalletId);
+                if ($userWallet->wallet->amount < $amount) {
                     $validator->errors()->add('amount', "Bu hisobingizda mablag' yetarli emas");
                 }
             }

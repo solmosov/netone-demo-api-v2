@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidDataException;
 use App\Exceptions\ServerErrorException;
+use App\Http\Requests\GetOrderRequest;
+use App\Http\Requests\StoreOrderPrintingWithExistsRecipe;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Requests\StoreSalePosOrderRequest;
+use App\Http\Requests\StoreOrderPrintingOrderRequest;
 use App\Http\Requests\UpdateOrderAddProductRequest;
 use App\Http\Requests\UpdateOrderCompletedRequest;
 use App\Http\Requests\UpdateOrderSubmittedRequest;
@@ -14,7 +17,6 @@ use App\Http\Resources\OrderShowResource;
 use App\Models\Order;
 use App\Services\Order\OrderService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class OrderController extends Controller
@@ -23,38 +25,18 @@ class OrderController extends Controller
         protected OrderService $orderService
     ) {}
 
-    public function index(Request $request): JsonResponse
+    public function index(GetOrderRequest $request): JsonResponse
     {
         // Gate
         Gate::authorize('viewAny', Order::class);
 
-        // Status
-        $allowedStatuses = [
-            'orderNew',
-            'orderInProgress',
-            'orderCancel',
-            'orderCompleted',
-            'orderSubmitted',
-        ];
-        $validated = $request->validate([
-            'status' => ['nullable', 'string', 'in:' . implode(',', $allowedStatuses)],
-            'startDate' => 'required|date|date_format:d-m-Y|before_or_equal:endDate',
-            'endDate' => 'required|date|date_format:d-m-Y|after_or_equal:startDate',
-        ]);
-
-        $status = $validated['status'] ?? null;
-
-        // Date
-        $this->orderService->setDate($validated['startDate'], $validated['endDate']);
-
         // Fetch Date
-        $result = $this->orderService->findAll($status);
+        $result = $this->orderService->findAll($request->validated());
 
         // Response
         return response()->json([
             'data' => OrderResource::collection($result['data']),
-            'total_sale_price' => $result['total_sale_price'],
-            'total_count' => $result['total_count'],
+            'totals' => $result['totals']
         ]);
     }
 
@@ -80,6 +62,32 @@ class OrderController extends Controller
         $result = $this->orderService->createSalePos($request->validated());
 
         return response()->json($result);
+    }
+
+    public function storePrintingOrder(StoreOrderPrintingOrderRequest $request)
+    {
+        // Gate
+        Gate::authorize('create', Order::class);
+
+        $result = $this->orderService->createPrintingOrder($request->validated());
+
+        return response()->json([
+            'message' => "Yangi retsept va yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",
+            'data' => $result
+        ]);
+    }
+
+    public function storePrintingWithExistsRecipe(StoreOrderPrintingWithExistsRecipe $request)
+    {
+        // Gate
+        Gate::authorize('create', Order::class);
+
+        $result = $this->orderService->createPrintingWithExistsRecipe($request->validated());
+
+        return response()->json([
+            'message' => "Yangi buyurtma yaratildi, bo'limlarga topshiriqlar yuborildi. Buyurtmaning holati yangi",
+            'data' => $result
+        ]);
     }
 
 

@@ -28,7 +28,9 @@ class StoreDepartStockRequest extends FormRequest
         return [
             'depart_id' => 'required|integer|exists:departs,id',
             'polka_id' => 'required|integer|exists:polkas,id',
-            'product_id' => 'required|integer|exists:products,id'
+            'product_id' => 'required|integer|exists:products,id',
+            'min_amount' => 'nullable|numeric|min:0|lte:max_amount',
+            'max_amount' => 'nullable|numeric|min:0|gte:min_amount',
         ];
     }
 

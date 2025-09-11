@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class GetChartRequest extends FormRequest
+class GetProductStockRequest extends FormRequest
 {
 
     public function authorize(): bool
@@ -16,7 +16,8 @@ class GetChartRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'year' => 'required|string|regex:/^\\d{4}$/',
+            'is_min' => 'nullable|boolean',
+            'is_max' => 'nullable|boolean'
         ];
     }
 }

@@ -18,36 +18,50 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\UserWallet;
 use App\Services\GenerateOrderCode;
+use App\Services\Product\ProductService;
+use App\Services\Production\ProductionPlanService;
+use App\Services\Production\ProductionRecipeService;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class OrderService
 {
-    private string|null $startDate = null;
-    private string|null $endDate = null;
+    public function __construct(
+        protected UserWalletService $userWalletService,
+        protected ProductionRecipeService $productionRecipeService,
+        protected ProductionPlanService $productionPlanService,
+        protected ProductService $productService
+    ) {}
 
-    public function setDate(string $start, string $end): void
-    {
-        $this->startDate = DateFormatter::format($start, 'start');
-        $this->endDate = DateFormatter::format($end, 'end');
-    }
 
-    public function findAll($statusCode): array
+    public function findAll(array $queryParams): array
     {
+        // Query Params
+        $statusCode = $queryParams['status_code'] ?? null;
+        $startDate = DateFormatter::format($queryParams['start_date'], 'start');
+        $endDate = DateFormatter::format($queryParams['end_date'], 'end');
+        $productCategoryId = $queryParams['product_category_id'] ?? null;
+        $productId = $queryParams['product_id'] ?? null;
+        $customerId = $queryParams['customer_id'] ?? null;
+        $sellerId = $queryParams['seller_id'] ?? null;
+
         // Auth User
-        $authUser = FacadesAuth::user();
+        $authUser = Auth::user();
 
         // Query
         $query = Order::with(
             'user',
             'customer',
-            'status'
+            'status',
+            'completedOrder',
         );
 
 
+        // Status
         if ($statusCode) {
             $status = StatusService::findByCode($statusCode);
 
@@ -58,25 +72,51 @@ class OrderService
                 $query->with('cancelOrder');
             }
 
-            $query->where('status_id', $status->id);
+            $query->where('orders.status_id', $status->id);
         }
 
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+        // Product Category
+        if ($productCategoryId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productCategoryId) {
+                $query->where('category_id', '=', $productCategoryId);
+            });
+        }
+        // Product 
+        if ($productId) {
+            $query->whereHas('orderDetails.product', function (Builder $query) use ($productId) {
+                $query->where('id', $productId);
+            });
+        }
+        // Customer
+        if ($customerId) {
+            $query->where('orders.customer_id', $customerId);
+        }
+        // Seller
+        if ($sellerId) {
+            $query->where('orders.user_id', $sellerId);
         }
 
-        $data = $query
-            ->orderByDesc('created_at')
-            ->whereBetween('updated_at', [$this->startDate, $this->endDate])
-            ->get();
+        // For courier
+        if ($authUser->isCourier() && $statusCode !== 'orderCompleted') {
+            $query->whereRelation('completedOrder', 'submitter_id', '=', $authUser->id);
+        } else if (!$authUser->isAdmin() && !$authUser->isCourier()) {
+            // For other
+            $query->where('orders.user_id', $authUser->id);
+        }
+
+        $query->whereBetween('orders.created_at', [$startDate, $endDate]);
 
         // Totals
-        $totals = $this->getTotalsByStatusCode($statusCode);
+        $totalQuery = clone $query;
+        $totals = $this->calculateOrderTotals($totalQuery);
+
+        $data = $query
+            ->orderByDesc('orders.created_at')
+            ->get();
 
         return [
             'data' => $data,
-            'total_sale_price' => $totals['total_amount'],
-            'total_count' => $totals['total_count'],
+            'totals' => $totals
         ];
     }
 
@@ -85,79 +125,11 @@ class OrderService
      */
     public function create(array $data): array
     {
-        // Auth User
-        $authUser = Auth::user();
-
-        // Req Body
-        $customerId = $data['customer_id'];
-        $productList = $data['product_list'];
-
-        // New Order status
-        $newOrderStatus = StatusService::findByCode('orderNew');
-
-        // Get Request Products
-        $productsId = array_column($productList ?? [], 'product_id');
-        $products = Product::whereIn('id', $productsId)->get();
-
-        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
-        $pluckedCostPrice = $products->pluck('cost_price', 'id');
-        $pluckedSalePrice = $products->pluck('sale_price', 'id');
-
-        // Generate Order Code
-        $orderCode = GenerateOrderCode::generate($customerId);
-
         DB::beginTransaction();
 
         try {
-            $newOrder = Order::create([
-                "user_id" => $authUser->id,
-                "customer_id" => $customerId,
-                "status_id" => $newOrderStatus->id,
-                'total_cost_price' => 0,
-                'total_sale_price' => 0,
-                'ord_code' => $orderCode
-            ]);
 
-
-            $totalCostPrice = 0;
-            $totalSalePrice = 0;
-
-            // Create Order Details
-            $detailItemList = [];
-            foreach ($productList as $item) {
-                // Req Item
-                $productId = $item['product_id'];
-                $amount = $item['amount'];
-                $amountTypeId = $item['amount_type_id'];
-                $salePriceAmount = $item['sale_price_amount'] ?? null;
-
-                // Prices
-                $costPrice = $pluckedCostPrice[$productId];
-                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
-                $sumCostPrice = $costPrice * $amount;
-                $sumSalePrice = $salePrice * $amount;
-
-                $detailItemList[] = [
-                    'product_id' => $productId,
-                    'amount' => $amount,
-                    'amount_type_id' => $amountTypeId,
-                    'cost_price' => $costPrice,
-                    'sale_price' => $salePrice,
-                    'sum_cost_price' => $sumCostPrice,
-                    'sum_sale_price' => $sumSalePrice,
-                ];
-
-                $totalCostPrice += $sumCostPrice;
-                $totalSalePrice += $sumSalePrice;
-            }
-
-            $newOrder->orderDetails()->createMany($detailItemList);
-
-
-            $newOrder->total_cost_price = $totalCostPrice;
-            $newOrder->total_sale_price = $totalSalePrice;
-
-            $newOrder->save();
+            $newOrder = $this->createWithoutTransaction($data);
 
             DB::commit();
 
@@ -233,7 +205,7 @@ class OrderService
 
                 // Prices
                 $costPrice = $pluckedCostPrice[$productId];
-                $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+                $salePrice = ($pluckIsChangePrice[$productId] && $salePriceAmount) ? $salePriceAmount : $pluckedSalePrice[$productId];
                 $sumCostPrice = $costPrice * $amount;
                 $sumSalePrice = $salePrice * $amount;
 
@@ -261,32 +233,35 @@ class OrderService
 
             $newOrder->save();
 
-            // Payment
-            $newPayment = new Payment([
-                'user_id' => $authUser->id,
-                'status_id' => $statusDebtCustomer->id,
-            ]);
+            $sumAmount = 0;
 
-            $customer->payments()->save($newPayment);
+            if ($payment['amount'] > 0) {
+                // Payment
+                $newPayment = new Payment([
+                    'user_id' => $authUser->id,
+                    'status_id' => $statusDebtCustomer->id,
+                ]);
 
-            // Sum Amount
-            $sumAmount = $payment['amount'] * $payment['currency_amount'];
+                $customer->payments()->save($newPayment);
 
-            // Wallet Attach 
-            $newPayment->wallets()->attach($userWallet->wallet_id, [
-                'amount' => $payment['amount'],
-                'rate_amount' => $payment['currency_amount'],
-                'sum_price' => $sumAmount,
-                'updated_at' => now(),
-                'created_at' => now(),
-            ]);
+                // Sum Amount
+                $sumAmount = $payment['amount'] * $payment['currency_amount'];
 
-            // Change User wallet amount
-            $userWallet->increment('amount', $payment['amount']);
+                // Wallet Attach
+                $newPayment->wallets()->attach($userWallet->wallet_id, [
+                    'amount' => $payment['amount'],
+                    'rate_amount' => $payment['currency_amount'],
+                    'sum_price' => $sumAmount,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]);
 
+                // Change User wallet amount
+                $this->userWalletService->increment($userWallet->id, $payment['amount']);
 
-            // Change Customer Balance
-            $customer->increment('balance', $sumAmount);
+                // Change Customer Balance
+                $customer->increment('balance', $sumAmount);
+            }
 
             DB::commit();
 
@@ -300,7 +275,197 @@ class OrderService
             ];
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new ServerErrorException($e->getMessage(), $e->getCode(), $e);
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function createPrintingOrder(array $data)
+    {
+        // Data
+        $customerId = $data['customer_id'];
+        $recipeName = $data['recipe_name'];
+        $outProductId = $data['recipe_out_product_id'];
+        // out amount
+        $outAmountTypeId = $data['recipe_out_amount_type_id'];
+        $outAmount = $data['recipe_out_amount'];
+        // plan amount
+        $planAmount = $data['plan_amount'];
+        $planAmountTypeId = $data['plan_amount_type_id'];
+
+        $itemsList = $data['items_list']; //[product_id,amount,amount_type_id,?is_change,depart_id?sale_price_amount]
+        $description = $data['description'];
+
+        // Recipe Items
+        $recipeItems = [];
+        foreach ($itemsList as $item) {
+            $recipeItems[] = [
+                'product_id' => $item['product_id'],
+                'amount' => $item['amount'],
+                'amount_type_id' => $item['amount_type_id'],
+                'is_change' => $item['is_change'] ?? false,
+            ];
+        }
+
+        // Order Items
+        $orderItems = [];
+        foreach ($itemsList as $item) {
+            $product = $this->productService->findOne($item['product_id']);
+            $salePriceAmount = $item['sale_price_amount'] ?? $product->sale_price;
+
+            if (!$product->is_change_price) {
+                $salePriceAmount = $product->sale_price;
+            }
+
+            $orderItems[] = [
+                'product_id' => $item['product_id'],
+                'amount_type_id' => $item['amount_type_id'],
+                'amount' => $item['amount'],
+                'sale_price_amount' => $salePriceAmount,
+            ];
+        }
+
+        // Transaction
+        DB::beginTransaction();
+
+        try {
+            // Create Production Recipe
+            $newProductionRecipe = $this->productionRecipeService->createWithoutTransaction([
+                'name' => $recipeName,
+                'out_product_id' => $outProductId,
+                'out_amount_type_id' => $outAmountTypeId,
+                'out_amount' => $outAmount,
+                'items_list' => $recipeItems
+            ]);
+
+            // Create Order
+            $newOrder = $this->createWithoutTransaction([
+                'customer_id'  => $customerId,
+                'product_list' => $orderItems
+            ]);
+
+            // Create Production Planning
+            $productionPlanItems = [];
+            foreach ($newProductionRecipe->recipeItems as $index => $item) {
+                $departId = $itemsList[$index]['depart_id'];
+
+                $productionPlanItems[] = [
+                    'recipe_item_id' => $item->id,
+                    'depart_id' => $departId
+                ];
+            }
+            $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
+                'recipe_id' => $newProductionRecipe->id,
+                'name' => $recipeName,
+                'amount' => $planAmount,
+                'amount_type_id' => $planAmountTypeId,
+                'comment' => $description,
+                'plan_item_list' => $productionPlanItems,
+            ]);
+
+
+            // Finish
+            DB::commit();
+
+            // Event
+            OrderCreatedEvent::dispatch($newOrder);
+
+            // Send Notifications
+            $departsIds = array_column($itemsList, 'depart_id');
+            $this->productionPlanService->sendNotificationsToDepartments($newProductionPlan, $departsIds);
+
+            return [
+                'production_recipe' => $newProductionRecipe,
+                'order' => $newOrder,
+                'production_pan' => $newProductionPlan,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    public function createPrintingWithExistsRecipe(array $data)
+    {
+        // Data
+        $customerId = $data['customer_id'];
+        $recipeId = $data['recipe_id'];
+        $reqAmount = $data['amount'];
+        $reqAmountTypeId = $data['amount_type_id'];
+
+        $reqSalePrice = $data['sale_price_amount'] ?? null;
+        $itemsList = $data['items_list']; //[recipe_item_id,depart_id]
+        $description = $data['description'] ?? null;
+
+        // Find Production Recipe
+        $productionRecipe = $this->productionRecipeService->findOne($recipeId);
+
+        // Transaction
+        DB::beginTransaction();
+
+
+        try {
+
+            // Create Production Planning
+            $productionPlanItems = [];
+            foreach ($productionRecipe->recipeItems as $recipeItem) {
+                $departId = null;
+
+                foreach ($itemsList as $item) {
+                    if ($item['recipe_item_id'] === $recipeItem->id) {
+                        $departId = $item['depart_id'];
+                        break;
+                    }
+                }
+
+                $productionPlanItems[] = [
+                    'recipe_item_id' => $recipeItem->id,
+                    'depart_id' => $departId,
+                ];
+            }
+
+            $newProductionPlan = $this->productionPlanService->createWithoutTransaction([
+                'recipe_id' => $productionRecipe->id,
+                'name' => $productionRecipe->name,
+                'amount' => $reqAmount,
+                'amount_type_id' => $reqAmountTypeId,
+                'comment' => $description,
+                'plan_item_list' => $productionPlanItems
+            ]);
+
+            // Create Order
+            $orderItems = [
+                [
+                    'product_id' => $productionRecipe->out_product_id,
+                    'amount_type_id' => $reqAmountTypeId,
+                    'amount' => $reqAmount,
+                    'sale_price_amount' => $reqSalePrice ?? $productionRecipe->outProduct->sale_price
+                ]
+            ];
+
+            $newOrder = $this->createWithoutTransaction([
+                'customer_id'  => $customerId,
+                'product_list' => $orderItems
+            ], false);
+
+            // Finish
+            DB::commit();
+
+            // Event
+            OrderCreatedEvent::dispatch($newOrder);
+
+            // Send Notifications
+            $departsIds = array_column($itemsList, 'depart_id');
+            $this->productionPlanService->sendNotificationsToDepartments($newProductionPlan, $departsIds);
+
+
+            return [
+                'production_recipe' => $productionRecipe,
+                'order' => $newOrder,
+                'production_pan' => $newProductionPlan,
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new ServerErrorException($e->getMessage(), (int)$e->getCode(), $e);
         }
     }
 
@@ -318,8 +483,10 @@ class OrderService
             'completedOrder'
         )->where('id', $id);
 
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
+        // For courier
+        if (!$authUser->isAdmin() && !$authUser->isCourier()) {
+            $query
+                ->where('user_id', $authUser->id);
         }
 
         $order = $query->firstOrFail();
@@ -420,9 +587,9 @@ class OrderService
 
             // Event
             OrderAddedNewProductEvent::dispatch($order, $product, [
-                "price" => (float) $productSalePrice,
-                "amount" => (float) $amount,
-                "sum_sale_price" => (float) $sumSalePrice,
+                "price" => (float)$productSalePrice,
+                "amount" => (float)$amount,
+                "sum_sale_price" => (float)$sumSalePrice,
             ]);
 
             return [
@@ -510,7 +677,7 @@ class OrderService
                 $orderItem->cost_price = $orderItemCostPrice;
                 $orderItem->sale_price = $orderItemSalePrice;
                 $orderItem->sum_cost_price = $sumCost;
-                $orderItem->sum_sale_price = $sumCost;
+                $orderItem->sum_sale_price = $sumPrice;
                 $orderItem->save();
             }
 
@@ -545,6 +712,9 @@ class OrderService
      */
     public function submit(array $data, int $id)
     {
+        // Auth User
+        $authUser = Auth::user();
+
         // Data
         $comment = $data['comment'] ?? null;
 
@@ -573,6 +743,7 @@ class OrderService
             $order->save();
 
             // Completed Order
+            $completedOrder->submitter_id = $authUser->id;
             $completedOrder->submitted_comment = $comment;
             $completedOrder->status_id = $statusSubmitted->id;
             $completedOrder->customer_old_balance = $order->customer->balance;
@@ -598,72 +769,6 @@ class OrderService
         }
     }
 
-    private function getTotalsByStatusCode(?string $statusCode): array
-    {
-        switch ($statusCode) {
-            case 'orderCompleted':
-            case 'orderSubmitted':
-                return $this->getTotalsOrderCompleted($statusCode);
-            default:
-                return $this->getTotalsOrderOther($statusCode);
-        }
-    }
-
-    private function getTotalsOrderCompleted(string $statusCode): array
-    {
-        $authUser = Auth::user();
-
-        $status = StatusService::findByCode($statusCode);
-
-        $query = DB::table('completed_orders')
-            ->select(
-                DB::raw('SUM(completed_orders.total_sale_price) as total_amount'),
-                DB::raw('COUNT(completed_orders.id) as total_count')
-            )
-            ->whereBetween('completed_orders.updated_at', [$this->startDate, $this->endDate])
-            ->where('completed_orders.status_id', $status->id);
-
-        if (!$authUser->isAdmin()) {
-            $query->where('user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float) $result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
-
-    private function getTotalsOrderOther(?string $statusCode): array
-    {
-        $authUser = Auth::user();
-
-        $query = DB::table('orders')
-            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
-            ->select(
-                DB::raw('SUM(IF(completed_orders.order_id IS NULL, orders.total_sale_price, completed_orders.total_sale_price)) as total_amount'),
-                DB::raw('COUNT(orders.id) as total_count')
-            )
-            ->whereBetween('orders.updated_at', [$this->startDate, $this->endDate]);
-
-        // Status When Exist
-        if ($statusCode) {
-            $statusId = StatusService::findByCode($statusCode);
-            $query->where('orders.status_id', $statusId->id);
-        }
-
-        if (!$authUser->isAdmin()) {
-            $query->where('orders.user_id', $authUser->id);
-        }
-
-        $result = $query->first();
-
-        return [
-            'total_amount' => (float) $result->total_amount,
-            'total_count' => $result->total_count,
-        ];
-    }
 
     /**
      * Create and instantly deliver a POS order (for /pos-order endpoint).
@@ -748,8 +853,8 @@ class OrderService
                 'updated_at' => now(),
                 'created_at' => now(),
             ]);
-            $userWallet->increment('amount', $payment['amount']);
-            $customer->increment('balance', $sumAmount);
+            $this->userWalletService->increment($userWallet->id, $payment['amount']);
+            $customer->increment('balance', $sumAmount - $totalSalePrice);
 
             // Create completed order record
             CompletedOrder::create([
@@ -803,5 +908,134 @@ class OrderService
             }
             $stock->decrement('amount', $item['amount']);
         }
+    }
+
+    public function getStatusCompleted()
+    {
+        return StatusService::findByCode('orderCompleted');
+    }
+
+    public function getStatusSubmitted()
+    {
+        return StatusService::findByCode('orderSubmitted');
+    }
+
+    // --- PUBLIC HELPER METHODS ---
+    public function createWithoutTransaction(array $data, bool $isNew = true): Order
+    {
+        // Auth User
+        $authUser = Auth::user();
+
+        // Req Body
+        $customerId = $data['customer_id'];
+        $productList = $data['product_list']; //[product_id, amount_type_id, amount, sale_price_amount]
+
+        // New Order status
+        $newOrderStatus = $isNew ? StatusService::findByCode('orderNew') : StatusService::findByCode('orderInProgress');
+
+        // Get Request Products
+        $productsId = array_column($productList ?? [], 'product_id');
+        $products = Product::whereIn('id', $productsId)->get();
+
+        $pluckIsChangePrice = $products->pluck('is_change_price', 'id');
+        $pluckedCostPrice = $products->pluck('cost_price', 'id');
+        $pluckedSalePrice = $products->pluck('sale_price', 'id');
+
+        // Generate Order Code
+        $orderCode = GenerateOrderCode::generate($customerId);
+
+        // Create New Order
+        $newOrder = Order::create([
+            "user_id" => $authUser->id,
+            "customer_id" => $customerId,
+            "status_id" => $newOrderStatus->id,
+            'total_cost_price' => 0,
+            'total_sale_price' => 0,
+            'ord_code' => $orderCode
+        ]);
+
+
+        $totalCostPrice = 0;
+        $totalSalePrice = 0;
+
+        // Create Order Details
+        $detailItemList = [];
+        foreach ($productList as $item) {
+            // Req Item
+            $productId = $item['product_id'];
+            $amount = $item['amount'];
+            $amountTypeId = $item['amount_type_id'];
+            $salePriceAmount = $item['sale_price_amount'] ?? null;
+
+            // Prices
+            $costPrice = $pluckedCostPrice[$productId];
+            $salePrice = $pluckIsChangePrice[$productId] && $salePriceAmount ? $salePriceAmount : $pluckedSalePrice[$productId];
+            $sumCostPrice = $costPrice * $amount;
+            $sumSalePrice = $salePrice * $amount;
+
+            $detailItemList[] = [
+                'product_id' => $productId,
+                'amount' => $amount,
+                'amount_type_id' => $amountTypeId,
+                'cost_price' => $costPrice,
+                'sale_price' => $salePrice,
+                'sum_cost_price' => $sumCostPrice,
+                'sum_sale_price' => $sumSalePrice,
+            ];
+
+            $totalCostPrice += $sumCostPrice;
+            $totalSalePrice += $sumSalePrice;
+        }
+
+        $newOrder->orderDetails()->createMany($detailItemList);
+
+
+        $newOrder->total_cost_price = $totalCostPrice;
+        $newOrder->total_sale_price = $totalSalePrice;
+
+        $newOrder->save();
+
+        return $newOrder;
+    }
+    // --- PRIVATE HELPER METHODS ---
+    private function calculateOrderTotals($baseQuery)
+    {
+        $totalsQuery = clone $baseQuery;
+
+        $mainTotals = $totalsQuery
+            ->leftJoin('completed_orders', 'orders.id', '=', 'completed_orders.order_id')
+            ->leftJoin('statuses', 'orders.status_id', '=', 'statuses.id')
+            ->selectRaw('
+            COUNT(*) as total_orders,
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_cost_price, 0)
+                    ELSE orders.total_cost_price
+                END
+            ), 0) as total_cost_price,
+            IFNULL(SUM(
+                CASE 
+                    WHEN statuses.code IN ("orderCompleted", "orderSubmitted") 
+                    THEN COALESCE(completed_orders.total_sale_price, 0)
+                    ELSE orders.total_sale_price
+                END
+            ), 0) as total_sale_price
+        ')
+            ->first();
+
+        // Calculate profit from the retrieved values
+        $totalProfit = $mainTotals->total_sale_price - $mainTotals->total_cost_price;
+
+        return [
+            'summary' => [
+                'total_orders' => (int) $mainTotals->total_orders,
+                'total_cost_price' => (float) $mainTotals->total_cost_price,
+                'total_sale_price' => (float) $mainTotals->total_sale_price,
+                'total_profit' => (float) $totalProfit,
+                'average_order_value' => $mainTotals->total_orders > 0 ? round($mainTotals->total_sale_price / $mainTotals->total_orders, 2) : 0,
+                'profit_margin_percentage' => $mainTotals->total_sale_price > 0 ? round(($totalProfit / $mainTotals->total_sale_price) * 100, 2) : 0,
+            ],
+        ];
     }
 }

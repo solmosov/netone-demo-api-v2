@@ -26,6 +26,7 @@ class StoreCustomerRequest extends FormRequest
             'last_name' => 'required|string|max:255',
             'phone' => 'required|numeric|unique:customers,phone',
             'telegram' => 'nullable|string|max:255|unique:customers,telegram',
+            'person_category_id' => 'nullable|integer|exists:person_categories,id',
         ];
     }
 

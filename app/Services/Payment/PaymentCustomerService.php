@@ -8,22 +8,38 @@ use App\Models\Payment;
 use App\Models\UserWallet;
 use App\Services\Status\StatusService;
 use App\Services\Utils\DateFormatter;
+use App\Services\Wallet\UserWalletService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PaymentCustomerService
 {
+    private $authUser;
+
+    public function __construct(
+        protected readonly UserWalletService $userWalletService,
+
+    ) {
+        $this->authUser = Auth::user();
+    }
+
     public function findAll(array $data): array
     {
         $startDate = DateFormatter::format($data['startDate'], 'start');
         $endDate = DateFormatter::format($data['endDate'], 'end');
         $customerId = $data['customer_id'] ?? null;
 
+        $paymentTotalsQuery = DB::table('payment_wallet')
+            ->select('payment_id', DB::raw('SUM(sum_price) as total_price'))
+            ->groupBy('payment_id');
+
         $query = Payment::with(['paymentable', 'user', 'wallets', 'status'])
-            ->select('payments.*', DB::raw('SUM(payment_wallet.sum_price) as total_price'))
-            ->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
+            ->joinSub($paymentTotalsQuery, 'payment_totals', function ($join) {
+                $join->on('payments.id', '=', 'payment_totals.payment_id');
+            })
+            ->select('payments.*', 'payment_totals.total_price')
             ->where('paymentable_type', 'App\Models\Customer')
             ->whereBetween('payments.created_at', [$startDate, $endDate])
-            ->groupBy('payments.id', 'payments.paymentable_type', 'payments.created_at')
             ->orderBy('payments.created_at', 'desc');
 
         if ($customerId) {
@@ -31,8 +47,8 @@ class PaymentCustomerService
         }
 
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         //  Data
@@ -52,6 +68,8 @@ class PaymentCustomerService
      */
     public function create(array $data): array
     {
+        $authUser = Auth::user();
+
         // Data
         $customerId = $data['customer_id'];
         $reqWalletList = $data['wallet_list'];
@@ -68,7 +86,7 @@ class PaymentCustomerService
         try {
             // New Payment For Customer
             $payment = new Payment([
-                "user_id" => auth()->id(),
+                "user_id" => $authUser->id,
                 'status_id' => $statusDebtCustomer->id,
                 "comment" => $comment,
             ]);
@@ -80,24 +98,32 @@ class PaymentCustomerService
 
             // Attach Wallets
             $walletAttachList = [];
-            foreach ($reqWalletList as $wallet) {
-                $sumPrice = $wallet['amount'] * $wallet['rate_amount'];
+            foreach ($reqWalletList as $item) {
+                $userWalletId = $item['user_wallet_id'];
+                $amount = $item['amount'];
+                $rateAmount = $item['rate_amount'];
 
-                $walletAttachList[$wallet['wallet_id']] = [
-                    'amount' => $wallet['amount'],
-                    'rate_amount' => $wallet['rate_amount'],
+                // User wallet
+                $userWallet = UserWallet::findOrFail($userWalletId);
+
+                $sumPrice = $amount * $rateAmount;
+
+                $walletAttachList[$userWallet->wallet_id] = [
+                    'amount' => $amount,
+                    'rate_amount' => $rateAmount,
                     'sum_price' => $sumPrice,
                     'updated_at' => now(),
                     'created_at' => now(),
                 ];
 
                 // Increment User Wallet
-                $this->incrementUserWallet($wallet['wallet_id'], $wallet['amount']);
+                $this->userWalletService->increment($userWalletId, $amount);
 
                 // Increment Sum Amount
                 $sumAmount += $sumPrice;
             }
 
+            // Set to payment section
             $payment->wallets()->attach($walletAttachList);
 
             // Change Customer Balance
@@ -118,15 +144,19 @@ class PaymentCustomerService
 
     public function findOne(int $id): array
     {
-        $query = Payment::with(['paymentable', 'user', 'wallets', 'status'])
-            ->select('payments.*', DB::raw('SUM(payment_wallet.sum_price) as total_price'))
-            ->join('payment_wallet', 'payments.id', '=', 'payment_wallet.payment_id')
-            ->where('paymentable_type', 'App\Models\Customer')
-            ->groupBy('payments.id', 'payments.paymentable_type', 'payments.created_at')
-            ->orderBy('payments.created_at', 'desc');
+        $paymentTotalsQuery = DB::table('payment_wallet')
+            ->select('payment_id', DB::raw('SUM(sum_price) as total_price'))
+            ->groupBy('payment_id');
 
-        if (!auth()->user()->isAdmin()) {
-            $query->where('user_id', auth()->id());
+        $query = Payment::with(['paymentable', 'user', 'wallets', 'status'])
+            ->joinSub($paymentTotalsQuery, 'payment_totals', function ($join) {
+                $join->on('payments.id', '=', 'payment_totals.payment_id');
+            })
+            ->select('payments.*', 'payment_totals.total_price')
+            ->where('paymentable_type', 'App\Models\Customer');
+
+        if (!$this->authUser->isAdmin()) {
+            $query->where('user_id', $this->authUser->id);
         }
 
         $data = $query->findOrFail($id);
@@ -159,15 +189,5 @@ class PaymentCustomerService
             "total_amount" => (float)$data->total_amount,
             "total_count" => (int)$data->total_count,
         ];
-    }
-
-    private function incrementUserWallet($walletId, $amount): void
-    {
-        $userId = auth()->id();
-        $userWallet = UserWallet::where('wallet_id', $walletId)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
-        $userWallet->increment('amount', $amount);
     }
 }
